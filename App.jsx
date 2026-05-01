@@ -367,7 +367,15 @@ function NewsGrid() {
             return (
               <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
                 {/* Foto de categoría */}
-                <div className="news-img" style={{ height: 200, position: "relative", backgroundImage: photo ? `url(${photo})` : undefined, background: photo ? undefined : "#2d2d2d", backgroundSize: "cover", backgroundPosition: "center" }}>
+                <div style={{ height: 200, position: "relative", background: "#2d2d2d", overflow: "hidden" }}>
+                  {photo && (
+                    <img
+                      src={photo}
+                      alt={n.cat}
+                      className="news-img"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                    />
+                  )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 60%)" }} />
                   <div style={{ position: "absolute", top: 12, left: 12 }}>
                     <Tag label={n.cat} />

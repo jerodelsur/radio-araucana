@@ -896,8 +896,9 @@ function Footer() {
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
 const WA_NUMBER = "56992872087";
 const WA_OPTIONS = [
-  { label: "Consulta general",   icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
-  { label: "Cotizar publicidad", icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
+  { label: "Consulta general",        icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
+  { label: "Cotizar publicidad",      icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
+  { label: "Contactar los estudios",  icon: "🎙️", phone: "56452213166", msg: "Hola, me gustaría comunicarme con los estudios de Radio Araucana 95.9 FM." },
 ];
 
 const SvgWhatsApp = ({ size = 28 }) => (
@@ -909,8 +910,10 @@ const SvgWhatsApp = ({ size = 28 }) => (
 function WhatsAppWidget() {
   const [open, setOpen] = useState(false);
 
-  const openChat = (msg) => {
-    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  const openChat = (opt) => {
+    const url = opt.phone
+      ? `tel:+${opt.phone}`
+      : `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(opt.msg)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -962,7 +965,7 @@ function WhatsAppWidget() {
           {/* Options */}
           <div style={{ background: "#ECE5DD", padding: "8px 16px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
             {WA_OPTIONS.map((opt, i) => (
-              <button key={i} className="wa-opt" onClick={() => openChat(opt.msg)}
+              <button key={i} className="wa-opt" onClick={() => openChat(opt)}
                 style={{ background: "#fff", border: "none", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, textAlign: "left", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", width: "100%" }}>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
                 <span style={{ fontWeight: 600, fontSize: 13, color: "#075E54" }}>{opt.label}</span>

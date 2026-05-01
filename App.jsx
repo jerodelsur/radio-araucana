@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { Menu, X, Play, Pause, Volume2, VolumeX, Share2 } from "lucide-react";
-import siteContent from "./src/content/site.json";
+import defaultContent from "./src/content/site.json";
 
-/* ─── Editable content (loaded from src/content/site.json) ───────────────────
-   This file is consumed by the (upcoming) /admin panel. Anything that the
-   content team is meant to be able to change lives in site.json.
-   Layout, design tokens, components and structural arrays (NAV_LINKS, etc.)
-   stay hardcoded in this file. ────────────────────────────────────────────── */
-const SETTINGS = siteContent.settings;
+/* ─── Editable content ──────────────────────────────────────────────────────
+   Runtime content is fetched from /api/content (which reads from Vercel Blob
+   and falls back to the bundled defaults). The /admin panel writes to the
+   same Blob via /api/admin/save. To change the *shape* of content, edit
+   src/content/site.json (defaults) and the corresponding field rendering
+   here in App.jsx. ────────────────────────────────────────────────────────── */
+const SiteContentContext = createContext(defaultContent);
+const useSiteContent = () => useContext(SiteContentContext);
 
 /* ─── Social SVGs ─────────────────────────────────────────────────────────── */
 const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
@@ -273,11 +275,13 @@ function Navbar() {
 
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
 function Hero({ playing, toggle }) {
-  const [progIdx, setProgIdx] = React.useState(getCurrentProgram);
+  const { programs: PROGRAMS } = useSiteContent();
+  const [progIdx, setProgIdx] = React.useState(() => getCurrentProgram(PROGRAMS));
   React.useEffect(() => {
-    const id = setInterval(() => setProgIdx(getCurrentProgram()), 60_000);
+    setProgIdx(getCurrentProgram(PROGRAMS));
+    const id = setInterval(() => setProgIdx(getCurrentProgram(PROGRAMS)), 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [PROGRAMS]);
   const currentProg = progIdx >= 0 ? PROGRAMS[progIdx] : null;
 
   return (
@@ -414,9 +418,10 @@ const CAT_PHOTOS = {
   ECONOMÍA: "/news/economia.png",
 };
 
-const NEWS = siteContent.news;
+// NEWS is consumed via useSiteContent() inside NewsGrid / NewsTicker
 
 function NewsGrid() {
+  const { news: NEWS } = useSiteContent();
   return (
     <section id="noticias" style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -460,9 +465,10 @@ function NewsGrid() {
 }
 
 /* ─── Video Section ───────────────────────────────────────────────────────── */
-const VIDEOS = siteContent.videos;
+// VIDEOS is consumed via useSiteContent() inside VideoSection
 
 function VideoSection() {
+  const { videos: VIDEOS } = useSiteContent();
   return (
     <section id="en-vivo" style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -506,11 +512,11 @@ function VideoSection() {
 }
 
 /* ─── Program Schedule ────────────────────────────────────────────────────── */
-const PROGRAMS = siteContent.programs;
+// PROGRAMS is consumed via useSiteContent() inside ProgramSchedule and Hero
 
 const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
-function getCurrentProgram() {
+function getCurrentProgram(programs) {
   const parts = new Intl.DateTimeFormat("es-CL", {
     timeZone: "America/Santiago",
     hour: "2-digit", minute: "2-digit", hour12: false,
@@ -518,17 +524,19 @@ function getCurrentProgram() {
   const h = Number(parts.find(p => p.type === "hour").value);
   const m = Number(parts.find(p => p.type === "minute").value);
   const cur = h * 60 + m;
-  return PROGRAMS.findIndex(p => cur >= toMinutes(p.start) && cur < toMinutes(p.end));
+  return (programs || []).findIndex(p => cur >= toMinutes(p.start) && cur < toMinutes(p.end));
 }
 
 function ProgramSchedule() {
-  const [activeIdx, setActiveIdx] = useState(getCurrentProgram);
+  const { programs: PROGRAMS } = useSiteContent();
+  const [activeIdx, setActiveIdx] = useState(() => getCurrentProgram(PROGRAMS));
 
   // Re-check every minute
   React.useEffect(() => {
-    const id = setInterval(() => setActiveIdx(getCurrentProgram()), 60_000);
+    setActiveIdx(getCurrentProgram(PROGRAMS));
+    const id = setInterval(() => setActiveIdx(getCurrentProgram(PROGRAMS)), 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [PROGRAMS]);
 
   return (
     <section id="programacion" style={{ background: "#fff", padding: "64px 24px" }}>
@@ -568,7 +576,7 @@ function ProgramSchedule() {
 }
 
 /* ─── Regional Stories ────────────────────────────────────────────────────── */
-const REGIONS = siteContent.regions;
+// REGIONS is consumed via useSiteContent() inside RegionalStories
 
 function ArticleModal({ region, onClose }) {
   React.useEffect(() => {
@@ -609,6 +617,7 @@ function ArticleModal({ region, onClose }) {
 }
 
 function RegionalStories() {
+  const { regions: REGIONS } = useSiteContent();
   const [active, setActive] = useState(null);
 
   return (
@@ -783,6 +792,7 @@ const FOOTER_LINKS = [
 ];
 
 function Footer() {
+  const { settings: SETTINGS } = useSiteContent();
   return (
     <footer id="contacto" style={{ background: "#191919", padding: "64px 24px 0" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -849,8 +859,7 @@ function Footer() {
 }
 
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
-const WA_NUMBER = SETTINGS.whatsappNumber;
-const WA_OPTIONS = siteContent.whatsappOptions;
+// WA_NUMBER and WA_OPTIONS are consumed via useSiteContent() inside WhatsAppWidget
 
 const SvgWhatsApp = ({ size = 28 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -859,6 +868,8 @@ const SvgWhatsApp = ({ size = 28 }) => (
 );
 
 function WhatsAppWidget() {
+  const { settings, whatsappOptions: WA_OPTIONS } = useSiteContent();
+  const WA_NUMBER = settings.whatsappNumber;
   const [open, setOpen] = useState(false);
 
   const openChat = (opt) => {
@@ -1021,8 +1032,7 @@ function FronteraSection({ playing, toggle }) {
 }
 
 /* ─── Streams ─────────────────────────────────────────────────────────────── */
-const STREAM_URL      = SETTINGS.streamAraucana;
-const STREAM_FRONTERA = SETTINGS.streamFrontera;
+// STREAM URLs are consumed via useSiteContent() inside the App component
 
 function FloatingPlayer({ station, play }) {
   const [muted, setMuted] = useState(false);
@@ -1124,7 +1134,11 @@ function FloatingPlayer({ station, play }) {
 }
 
 /* ─── App ─────────────────────────────────────────────────────────────────── */
-export default function App() {
+function AppInner() {
+  const { settings } = useSiteContent();
+  const STREAM_URL      = settings.streamAraucana;
+  const STREAM_FRONTERA = settings.streamFrontera;
+
   const [station, setStation] = useState(null); // null | "araucana" | "frontera"
   const audioRef = React.useRef(null);
 
@@ -1163,5 +1177,26 @@ export default function App() {
       <FloatingPlayer station={station} play={play} />
       <WhatsAppWidget />
     </>
+  );
+}
+
+export default function App() {
+  const [content, setContent] = useState(defaultContent);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/content", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (alive && data && typeof data === "object" && data.settings) setContent(data);
+      })
+      .catch(() => { /* keep bundled defaults */ });
+    return () => { alive = false; };
+  }, []);
+
+  return (
+    <SiteContentContext.Provider value={content}>
+      <AppInner />
+    </SiteContentContext.Provider>
   );
 }

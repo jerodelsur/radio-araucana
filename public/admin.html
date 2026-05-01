@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Admin · Radio Araucana</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#0e1a12;--surface:#13231a;--card:#19301f;--border:rgba(255,255,255,.08);
+    --bone:#f1f5f1;--bone-dim:rgba(241,245,241,.55);--muted:rgba(241,245,241,.3);
+    --green:#52b870;--green-dark:#29623a;--green-bright:#7dbb5e;
+    --red:#cc0000;--gold:#d4a017;
+    --f-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius:8px;
+  }
+  body{background:var(--ink);color:var(--bone);font-family:var(--f-sans);font-size:14px;line-height:1.5;min-height:100vh}
+  input,select,textarea,button{font-family:inherit;font-size:inherit;color:inherit}
+  a{color:var(--green-bright)}
+
+  /* ─── PASSWORD OVERLAY ─── */
+  #pwOverlay{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
+  .pw-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px 32px;width:100%;max-width:380px;text-align:center}
+  .pw-logo{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--green-bright);font-family:var(--f-mono);margin-bottom:20px}
+  .pw-title{font-size:22px;font-weight:600;margin-bottom:6px}
+  .pw-sub{font-size:13px;color:var(--bone-dim);margin-bottom:24px}
+  .pw-input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:11px 14px;outline:none;margin-bottom:12px;transition:border-color .15s}
+  .pw-input:focus{border-color:var(--green)}
+  .pw-input::placeholder{color:var(--muted)}
+  .pw-btn{width:100%;padding:12px;background:var(--green-dark);border:none;border-radius:8px;color:#fff;font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .15s}
+  .pw-btn:hover{background:var(--green)}
+  .pw-error{color:#f87171;font-size:12px;margin-top:10px;min-height:18px}
+
+  /* ─── MAIN LAYOUT ─── */
+  #adminPanel{display:none;flex-direction:column;min-height:100vh}
+  #adminPanel.visible{display:flex}
+
+  .adm-header{position:sticky;top:0;z-index:100;background:rgba(14,26,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;flex-shrink:0;gap:12px}
+  .adm-brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .adm-brand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+  .adm-brand-text{font-family:var(--f-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adm-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .adm-status{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+  .adm-status.ok{color:var(--green)}
+  .adm-status.err{color:#f87171}
+  .btn{padding:8px 18px;background:var(--green-dark);border:none;border-radius:7px;color:#fff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .15s, opacity .15s}
+  .btn:hover{background:var(--green)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--bone-dim)}
+  .btn-ghost:hover{background:rgba(255,255,255,.04);color:var(--bone)}
+  .btn-danger{background:#7f1d1d}
+  .btn-danger:hover{background:#991b1b}
+
+  /* ─── TABS ─── */
+  .adm-tabs{display:flex;gap:2px;padding:14px 24px 0;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+  .adm-tab{padding:9px 16px;border:none;background:transparent;color:var(--bone-dim);font-size:13px;cursor:pointer;border-radius:7px 7px 0 0;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;font-weight:500}
+  .adm-tab:hover{color:var(--bone)}
+  .adm-tab.active{color:var(--bone);background:rgba(125,187,94,.08);border-bottom-color:var(--green-bright)}
+
+  /* ─── CONTENT ─── */
+  .adm-body{padding:28px 24px 60px;max-width:1100px;width:100%;margin:0 auto;flex:1}
+  .panel{display:none}
+  .panel.active{display:block}
+  .panel-title{font-size:18px;font-weight:600;margin-bottom:6px}
+  .panel-sub{font-size:13px;color:var(--bone-dim);margin-bottom:20px}
+
+  .field{margin-bottom:14px}
+  .field-label{display:block;font-size:12px;font-weight:600;color:var(--bone-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+  .field-hint{font-size:11px;color:var(--muted);margin-top:4px}
+  input[type=text],input[type=email],input[type=tel],input[type=url],select,textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:7px;padding:10px 12px;outline:none;transition:border-color .15s}
+  input[type=text]:focus,input[type=email]:focus,input[type=tel]:focus,input[type=url]:focus,select:focus,textarea:focus{border-color:var(--green)}
+  textarea{resize:vertical;min-height:80px;font-family:inherit}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.field-row{grid-template-columns:1fr}}
+
+  /* ─── ITEM CARDS (lists) ─── */
+  .item-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+  .item-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+  .item-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+  .item-card-title{font-size:13px;font-weight:600;color:var(--bone-dim);text-transform:uppercase;letter-spacing:.06em}
+  .item-card-actions{display:flex;gap:6px;flex-shrink:0}
+  .icon-btn{width:30px;height:30px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--bone-dim);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s;padding:0}
+  .icon-btn:hover{background:rgba(255,255,255,.04);color:var(--bone)}
+  .icon-btn.danger:hover{background:#7f1d1d;border-color:#7f1d1d;color:#fff}
+  .icon-btn:disabled{opacity:.3;cursor:not-allowed}
+  .add-btn{padding:10px 16px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--bone-dim);width:100%;cursor:pointer;font-size:13px;transition:all .15s}
+  .add-btn:hover{border-color:var(--green);color:var(--green-bright);background:rgba(125,187,94,.04)}
+
+  /* ─── IMAGE FIELD ─── */
+  .img-field{display:flex;gap:12px;align-items:flex-start}
+  .img-thumb{width:100px;height:70px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px}
+  .img-actions{display:flex;flex-direction:column;gap:6px;flex:1}
+  .img-actions input{font-size:12px}
+
+  /* ─── BODY (paragraphs) ─── */
+  .body-list{display:flex;flex-direction:column;gap:8px}
+  .body-row{display:flex;gap:8px;align-items:flex-start}
+  .body-row textarea{flex:1}
+  .body-row .icon-btn{flex-shrink:0}
+
+  /* ─── TOAST ─── */
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--card);border:1px solid var(--border);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transition:transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  #toast.visible{transform:translateX(-50%) translateY(0)}
+  #toast.ok{border-color:var(--green);color:var(--green-bright)}
+  #toast.err{border-color:#7f1d1d;color:#f87171}
+</style>
+</head>
+<body>
+
+<!-- ─── Password Overlay ─── -->
+<div id="pwOverlay">
+  <div class="pw-box">
+    <p class="pw-logo">Radio Araucana</p>
+    <h1 class="pw-title">Panel de Edición</h1>
+    <p class="pw-sub">Ingresá la clave para continuar</p>
+    <input id="pwInput" type="password" class="pw-input" placeholder="Contraseña" autocomplete="current-password" />
+    <button id="pwBtn" class="pw-btn">Entrar</button>
+    <p id="pwError" class="pw-error"></p>
+  </div>
+</div>
+
+<!-- ─── Main Panel ─── -->
+<div id="adminPanel">
+  <header class="adm-header">
+    <div class="adm-brand">
+      <div class="adm-brand-dot"></div>
+      <div class="adm-brand-text">Radio Araucana · Edición</div>
+    </div>
+    <div class="adm-actions">
+      <span id="status" class="adm-status">Cargando…</span>
+      <button id="saveBtn" class="btn" disabled>Guardar cambios</button>
+      <button id="logoutBtn" class="btn btn-ghost">Salir</button>
+    </div>
+  </header>
+
+  <nav class="adm-tabs" id="tabs"></nav>
+  <main class="adm-body" id="body"></main>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  /* ───────── State ───────── */
+  const PW_KEY = "radio-araucana.admin.pw";
+  let pw = sessionStorage.getItem(PW_KEY) || "";
+  let content = null;
+  let dirty = false;
+
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, props = {}, ...children) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "class") e.className = v;
+      else if (k === "html") e.innerHTML = v;
+      else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (v !== undefined && v !== null) e.setAttribute(k, v);
+    }
+    for (const c of children.flat()) {
+      if (c == null) continue;
+      e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return e;
+  };
+  const toast = (msg, kind = "ok") => {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.className = kind;
+    requestAnimationFrame(() => t.classList.add("visible"));
+    setTimeout(() => t.classList.remove("visible"), 2400);
+  };
+  const markDirty = () => {
+    dirty = true;
+    $("#saveBtn").disabled = false;
+    $("#status").textContent = "Cambios sin guardar";
+    $("#status").className = "adm-status";
+  };
+
+  /* ───────── Auth + Load ───────── */
+  async function tryLogin(password) {
+    // We probe the save endpoint with an empty body. A correct password
+    // returns 400 (invalid body), wrong password returns 401.
+    const res = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${password}` },
+      body: JSON.stringify({}),
+    });
+    return res.status !== 401;
+  }
+
+  async function loadContent() {
+    const res = await fetch("/api/content", { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to load content");
+    return res.json();
+  }
+
+  async function saveContent() {
+    if (!pw || !content) return;
+    $("#saveBtn").disabled = true;
+    $("#status").textContent = "Guardando…";
+    $("#status").className = "adm-status";
+    try {
+      const res = await fetch("/api/admin/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${pw}` },
+        body: JSON.stringify(content),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      dirty = false;
+      $("#status").textContent = "Guardado ✓";
+      $("#status").className = "adm-status ok";
+      toast("Guardado correctamente", "ok");
+    } catch (err) {
+      $("#status").textContent = "Error";
+      $("#status").className = "adm-status err";
+      $("#saveBtn").disabled = false;
+      toast(`Error al guardar: ${err.message}`, "err");
+    }
+  }
+
+  async function uploadImage(file) {
+    if (!file) throw new Error("Sin archivo");
+    if (file.size > 5 * 1024 * 1024) throw new Error("Imagen demasiado grande (máx 5MB)");
+    const url = `/api/admin/upload?password=${encodeURIComponent(pw)}&filename=${encodeURIComponent(file.name)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data.url;
+  }
+
+  /* ───────── Tabs ───────── */
+  const TABS = [
+    { id: "settings", label: "Configuración",  render: renderSettings },
+    { id: "news",     label: "Noticias",       render: () => renderList("news", newsCard) },
+    { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
+    { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
+    { id: "videos",   label: "Videos",         render: () => renderList("videos", videoCard) },
+    { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
+  ];
+  let currentTab = "settings";
+
+  function renderTabs() {
+    const tabsEl = $("#tabs");
+    tabsEl.innerHTML = "";
+    TABS.forEach((t) => {
+      const b = el("button", {
+        class: "adm-tab" + (t.id === currentTab ? " active" : ""),
+        onClick: () => { currentTab = t.id; renderTabs(); renderBody(); },
+      }, t.label);
+      tabsEl.appendChild(b);
+    });
+  }
+
+  function renderBody() {
+    const tab = TABS.find((t) => t.id === currentTab);
+    const body = $("#body");
+    body.innerHTML = "";
+    body.appendChild(tab.render());
+  }
+
+  /* ───────── Settings panel ───────── */
+  function settingField(key, label, type = "text", hint = "") {
+    const input = el("input", {
+      type,
+      value: content.settings[key] ?? "",
+      oninput: (e) => { content.settings[key] = e.target.value; markDirty(); },
+    });
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, label),
+      input,
+      hint ? el("p", { class: "field-hint" }, hint) : null,
+    );
+  }
+
+  function renderSettings() {
+    const wrap = el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, "Configuración del sitio"),
+      el("p", { class: "panel-sub" }, "Datos de transmisión, contacto e información que aparece en el footer."),
+
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px" }, "Streaming"),
+      settingField("streamAraucana", "URL stream Radio Araucana", "text", "Si usás el proxy /stream dejá ese valor."),
+      settingField("streamFrontera", "URL stream Radio La Frontera", "url"),
+
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Contacto general (footer)"),
+      settingField("address", "Dirección"),
+      settingField("contactEmail", "Email de contacto", "email"),
+      el("div", { class: "field-row" },
+        settingField("whatsappNumber", "Número WhatsApp (sin +)", "tel", "Ej: 56992872087"),
+        el("div"),
+      ),
+
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Datos de pauta publicitaria"),
+      settingField("adminPhone", "Teléfono publicidad"),
+      settingField("adminEmail", "Email publicidad", "email"),
+      settingField("adminHours", "Horario de atención"),
+    );
+    return wrap;
+  }
+
+  /* ───────── List renderer ───────── */
+  function renderList(key, cardFn) {
+    const items = content[key] || [];
+    const list = el("div", { class: "item-list" });
+    items.forEach((item, i) => list.appendChild(cardFn(item, i, items)));
+    const addBtn = el("button", { class: "add-btn", onClick: () => {
+      content[key] = [...(content[key] || []), cardFn.empty()];
+      markDirty();
+      renderBody();
+    } }, "+ Agregar");
+
+    return el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, panelTitleFor(key)),
+      el("p", { class: "panel-sub" }, panelSubFor(key)),
+      list,
+      addBtn,
+    );
+  }
+
+  function panelTitleFor(key) {
+    return ({
+      news: "Noticias",
+      programs: "Programación",
+      regions: "Destinos / Historias regionales",
+      videos: "Videos",
+      whatsappOptions: "Mensajes pre-armados de WhatsApp",
+    })[key] || key;
+  }
+  function panelSubFor(key) {
+    return ({
+      news: "Las 4 noticias más recientes que aparecen en la portada.",
+      programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
+      regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
+      videos: "Carrusel horizontal de videos en la sección 'En directo y en video'.",
+      whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
+    })[key] || "";
+  }
+
+  /* ───────── Item helpers ───────── */
+  function cardHeader(title, idx, list) {
+    return el("div", { class: "item-card-head" },
+      el("div", { class: "item-card-title" }, title),
+      el("div", { class: "item-card-actions" },
+        el("button", { class: "icon-btn", title: "Subir", disabled: idx === 0 ? "" : null,
+          onClick: () => { [list[idx-1], list[idx]] = [list[idx], list[idx-1]]; markDirty(); renderBody(); } }, "↑"),
+        el("button", { class: "icon-btn", title: "Bajar", disabled: idx === list.length - 1 ? "" : null,
+          onClick: () => { [list[idx+1], list[idx]] = [list[idx], list[idx+1]]; markDirty(); renderBody(); } }, "↓"),
+        el("button", { class: "icon-btn danger", title: "Eliminar",
+          onClick: () => { if (confirm("¿Eliminar este item?")) { list.splice(idx, 1); markDirty(); renderBody(); } } }, "×"),
+      ),
+    );
+  }
+
+  function textField(label, value, onChange, type = "text") {
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, label),
+      el("input", { type, value: value ?? "", oninput: (e) => onChange(e.target.value) }),
+    );
+  }
+  function textAreaField(label, value, onChange) {
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, label),
+      el("textarea", { oninput: (e) => onChange(e.target.value) }, value ?? ""),
+    );
+  }
+
+  function imageField(label, value, onChange) {
+    const thumb = el("div", { class: "img-thumb" }, value ? "" : "Sin imagen");
+    if (value) thumb.style.backgroundImage = `url(${JSON.stringify(value)})`;
+    const urlInput = el("input", { type: "text", placeholder: "URL de imagen", value: value ?? "",
+      oninput: (e) => { onChange(e.target.value); thumb.style.backgroundImage = e.target.value ? `url(${JSON.stringify(e.target.value)})` : ""; thumb.textContent = e.target.value ? "" : "Sin imagen"; } });
+    const fileInput = el("input", { type: "file", accept: "image/*", onChange: async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        toast("Subiendo imagen…", "ok");
+        const url = await uploadImage(file);
+        urlInput.value = url;
+        onChange(url);
+        thumb.style.backgroundImage = `url(${JSON.stringify(url)})`;
+        thumb.textContent = "";
+        toast("Imagen subida", "ok");
+      } catch (err) { toast(`Error: ${err.message}`, "err"); }
+    } });
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, label),
+      el("div", { class: "img-field" },
+        thumb,
+        el("div", { class: "img-actions" }, urlInput, fileInput),
+      ),
+    );
+  }
+
+  /* ─── Card renderers (one per list type) ─── */
+  function newsCard(item, idx, list) {
+    return el("div", { class: "item-card" },
+      cardHeader(`Noticia ${idx + 1}`, idx, list),
+      el("div", { class: "field-row" },
+        el("div", { class: "field" },
+          el("label", { class: "field-label" }, "Categoría"),
+          (() => {
+            const sel = el("select", { onchange: (e) => { item.cat = e.target.value; markDirty(); } });
+            ["DEPORTE","POLÍTICA","REGIÓN","CULTURA","ECONOMÍA","SUCESOS"].forEach(c => {
+              const o = el("option", { value: c }, c);
+              if (item.cat === c) o.setAttribute("selected", "");
+              sel.appendChild(o);
+            });
+            return sel;
+          })(),
+        ),
+        textField("Fecha", item.time, (v) => { item.time = v; markDirty(); }),
+      ),
+      textField("Titular", item.headline, (v) => { item.headline = v; markDirty(); }),
+      textAreaField("Bajada", item.bajada, (v) => { item.bajada = v; markDirty(); }),
+    );
+  }
+  newsCard.empty = () => ({ cat: "REGIÓN", headline: "", bajada: "", time: "" });
+
+  function programCard(item, idx, list) {
+    return el("div", { class: "item-card" },
+      cardHeader(`Bloque ${idx + 1}`, idx, list),
+      el("div", { class: "field-row" },
+        textField("Hora inicio (HH:MM)", item.start, (v) => { item.start = v; markDirty(); }),
+        textField("Hora fin (HH:MM)", item.end, (v) => { item.end = v; markDirty(); }),
+      ),
+      textField("Nombre del programa", item.name, (v) => { item.name = v; markDirty(); }),
+      textField("Conductor / Locutor", item.host, (v) => { item.host = v; markDirty(); }),
+      textField("Color (HEX, ej. #29623a)", item.color, (v) => { item.color = v; markDirty(); }),
+    );
+  }
+  programCard.empty = () => ({ start: "00:00", end: "01:00", name: "", host: "", color: "#29623a" });
+
+  function regionCard(item, idx, list) {
+    return el("div", { class: "item-card" },
+      cardHeader(`Destino ${idx + 1}`, idx, list),
+      textField("Nombre", item.name, (v) => { item.name = v; markDirty(); }),
+      textField("Bajada / subtítulo", item.sub, (v) => { item.sub = v; markDirty(); }),
+      imageField("Imagen", item.img, (v) => { item.img = v; markDirty(); }),
+      el("div", { class: "field" },
+        el("label", { class: "field-label" }, "Cuerpo (un párrafo por línea)"),
+        (() => {
+          const list = el("div", { class: "body-list" });
+          (item.body || []).forEach((p, pi) => {
+            const row = el("div", { class: "body-row" });
+            const ta = el("textarea", { rows: 3, oninput: (e) => { item.body[pi] = e.target.value; markDirty(); } }, p);
+            const del = el("button", { class: "icon-btn danger", title: "Eliminar párrafo",
+              onClick: () => { item.body.splice(pi, 1); markDirty(); renderBody(); } }, "×");
+            row.appendChild(ta); row.appendChild(del);
+            list.appendChild(row);
+          });
+          const add = el("button", { class: "add-btn", style: "margin-top:8px", onClick: () => {
+            item.body = [...(item.body || []), ""]; markDirty(); renderBody();
+          } }, "+ Agregar párrafo");
+          return el("div", null, list, add);
+        })(),
+      ),
+    );
+  }
+  regionCard.empty = () => ({ name: "", sub: "", img: "", body: [""] });
+
+  function videoCard(item, idx, list) {
+    return el("div", { class: "item-card" },
+      cardHeader(`Video ${idx + 1}`, idx, list),
+      textField("Título", item.title, (v) => { item.title = v; markDirty(); }),
+      el("div", { class: "field-row" },
+        textField("Duración (ej. 24:18)", item.dur, (v) => { item.dur = v; markDirty(); }),
+        textField("Vistas (ej. 12.4K vistas)", item.views, (v) => { item.views = v; markDirty(); }),
+      ),
+      textField("Fondo (CSS gradient o color)", item.bg, (v) => { item.bg = v; markDirty(); }),
+    );
+  }
+  videoCard.empty = () => ({ title: "", dur: "0:00", views: "0 vistas", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
+
+  function waCard(item, idx, list) {
+    return el("div", { class: "item-card" },
+      cardHeader(`Mensaje ${idx + 1}`, idx, list),
+      el("div", { class: "field-row" },
+        textField("Etiqueta del botón", item.label, (v) => { item.label = v; markDirty(); }),
+        textField("Emoji / icono", item.icon, (v) => { item.icon = v; markDirty(); }),
+      ),
+      textAreaField("Mensaje pre-armado (lo que se envía al WhatsApp)", item.msg, (v) => { item.msg = v; markDirty(); }),
+    );
+  }
+  waCard.empty = () => ({ label: "", icon: "💬", msg: "" });
+
+  /* ───────── Boot ───────── */
+  async function showPanel() {
+    try {
+      content = await loadContent();
+    } catch (err) {
+      toast("Error cargando contenido: " + err.message, "err");
+      return;
+    }
+    $("#pwOverlay").style.display = "none";
+    $("#adminPanel").classList.add("visible");
+    $("#status").textContent = "Sin cambios";
+    $("#status").className = "adm-status ok";
+    renderTabs();
+    renderBody();
+  }
+
+  async function attemptLogin() {
+    const val = $("#pwInput").value.trim();
+    $("#pwError").textContent = "";
+    if (!val) { $("#pwError").textContent = "Ingresá la contraseña"; return; }
+    $("#pwBtn").disabled = true;
+    try {
+      const ok = await tryLogin(val);
+      if (!ok) {
+        $("#pwError").textContent = "Contraseña incorrecta";
+        $("#pwBtn").disabled = false;
+        return;
+      }
+      pw = val;
+      sessionStorage.setItem(PW_KEY, pw);
+      await showPanel();
+    } catch (err) {
+      $("#pwError").textContent = "Error: " + err.message;
+    } finally {
+      $("#pwBtn").disabled = false;
+    }
+  }
+
+  $("#pwBtn").addEventListener("click", attemptLogin);
+  $("#pwInput").addEventListener("keydown", (e) => { if (e.key === "Enter") attemptLogin(); });
+  $("#saveBtn").addEventListener("click", saveContent);
+  $("#logoutBtn").addEventListener("click", () => {
+    sessionStorage.removeItem(PW_KEY);
+    location.reload();
+  });
+
+  // beforeunload guard
+  window.addEventListener("beforeunload", (e) => {
+    if (dirty) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  // Auto-login if pw in sessionStorage
+  if (pw) {
+    tryLogin(pw).then((ok) => {
+      if (ok) showPanel();
+      else sessionStorage.removeItem(PW_KEY);
+    }).catch(() => sessionStorage.removeItem(PW_KEY));
+  }
+
+  // Focus input on load
+  setTimeout(() => $("#pwInput").focus(), 200);
+</script>
+</body>
+</html>

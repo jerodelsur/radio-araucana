@@ -398,15 +398,12 @@ function VideoSection() {
 
 /* ─── Program Schedule ────────────────────────────────────────────────────── */
 const PROGRAMS = [
-  { time: "00:00", name: "Madrugada Musical",                  host: "Programación automática", color: "#6b7280", active: false },
-  { time: "06:00", name: "Sube que Te Llevo",                  host: "Lun – Sáb",               color: "#29623a", active: true  },
-  { time: "10:00", name: "La Gran Manada",                     host: "Lun – Sáb",               color: "#4a7c59", active: false },
-  { time: "13:00", name: "La Región al Día",                   host: "Noticias · Lun – Sáb",    color: "#8B0000", active: false },
-  { time: "14:00", name: "Bloque Musical",                     host: "Lun – Vie",               color: "#29623a", active: false },
-  { time: "16:00", name: "Tarde a Tarde",                      host: "Clásicos · Lun – Vie",    color: "#1a3a5c", active: false },
-  { time: "18:00", name: "Al Fondo a la Derecha",              host: "Lun – Vie",               color: "#4a7c59", active: false },
-  { time: "21:00", name: "Conversando las Noches de Nuestro Sur", host: "Lun – Sáb",            color: "#5c4033", active: false },
-  { time: "Dom 09:00", name: "Controversia",                   host: "Análisis político",       color: "#8B0000", active: false },
+  { time: "06:00 – 10:00", name: "Sube que Te Llevo",       host: "Alejandro Contreras",              color: "#29623a", active: true  },
+  { time: "10:00 – 13:00", name: "La Gran Manada",          host: "Miguel Ángel Contreras",           color: "#4a7c59", active: false },
+  { time: "13:30 – 14:30", name: "La Voz Albiverde",        host: "Mariela González · Lun, Mié, Vie", color: "#8B0000", active: false },
+  { time: "15:00 – 16:00", name: "Contra el Reloj",         host: "Cristian Neira",                   color: "#1a3a5c", active: false },
+  { time: "16:00 – 18:00", name: "Tarde a Tarde de Clásicos", host: "Luis Vega",                      color: "#5c4033", active: false },
+  { time: "18:00 – 20:00", name: "Al Fondo a la Derecha",   host: "Rolando Gómez",                    color: "#4a7c59", active: false },
 ];
 
 function ProgramSchedule() {
@@ -659,7 +656,7 @@ function FloatingPlayer({ playing, toggle }) {
         <LogoSVG height={22} color="#ffffff" />
         <div style={{ marginLeft: 4 }}>
           <p style={K({ fontWeight: 400, fontSize: 12, color: "#fff", lineHeight: 1.2 })}>
-            En vivo · <span style={{ color: "#9ca3af" }}>Sube que Te Llevo</span>
+            En vivo · <span style={{ color: "#9ca3af" }}>Sube que Te Llevo — Alejandro Contreras</span>
           </p>
           <p style={K({ fontWeight: 300, fontSize: 11, color: "#4ade80" })}>95.9 FM</p>
         </div>

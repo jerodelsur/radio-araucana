@@ -6,7 +6,7 @@ const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill=
 const SvgTwitter  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>;
 const SvgYoutube  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>;
 const SvgFacebook = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
-const SOC = [SvgInstagram, SvgTwitter, SvgYoutube, SvgFacebook];
+const SOC = [SvgInstagram, SvgYoutube, SvgFacebook];
 
 /* ─── Official brand logo SVG (from araucanayfrontera.cl) ─────────────────── */
 const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
@@ -532,7 +532,7 @@ function SocialFeeds() {
     <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 40 })}>SÍGUENOS</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
           <div>
             <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanaradio</p>
@@ -542,23 +542,6 @@ function SocialFeeds() {
             </div>
             <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
               style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver en Instagram →</a>
-          </div>
-
-          <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanaradio</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>X / Twitter</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {TWEETS.map((t, i) => (
-                <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 16 }}>
-                  <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>{t.txt}</p>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{t.time}</span>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>♥ {t.likes}</span>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>↺ {t.rts}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div>

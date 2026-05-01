@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Menu, X, Play, Pause, Volume2, Share2 } from "lucide-react";
 
 /* ─── Social SVGs ─────────────────────────────────────────────────────────── */
@@ -106,10 +106,10 @@ const GlobalStyles = () => (
     .sponsor-block:hover { opacity: 1; }
 
     .footer-link { transition: color 150ms ease; }
-    .footer-link:hover { color: #29623a !important; }
+    .footer-link:hover { color: #52b870 !important; }
 
     .nav-link { transition: color 150ms ease; }
-    .nav-link:hover { color: #29623a !important; }
+    .nav-link:hover { color: #52b870 !important; }
 
     .social-icon-btn { transition: background 200ms ease; }
     .social-icon-btn:hover { background: #29623a !important; }
@@ -171,7 +171,7 @@ function Navbar() {
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div className="live-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "#29623a" }} />
-            <span style={K({ fontWeight: 700, fontSize: 13, color: "#29623a", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
+            <span style={K({ fontWeight: 700, fontSize: 13, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
           </div>
           <button onClick={() => setOpen(!open)} className="md:hidden"
             style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}>
@@ -205,14 +205,14 @@ function Hero() {
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div className="fiu-0" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#29623a" }} />
-              <span style={K({ fontWeight: 600, fontSize: 12, color: "#29623a", textTransform: "uppercase", letterSpacing: "0.14em" })}>
+              <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.14em" })}>
                 TRANSMITIENDO EN VIVO · 95.9 FM
               </span>
             </div>
 
             <h1 className="fiu-1" style={K({ fontWeight: 900, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04 })}>
               La voz de<br />
-              <span style={{ color: "#29623a" }}>Temuco y la Araucanía,</span><br />
+              <span style={{ color: "#52b870" }}>Temuco y la Araucanía,</span><br />
               en directo.
             </h1>
 
@@ -370,7 +370,7 @@ function VideoSection() {
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
-            <span style={K({ fontWeight: 500, fontSize: 14, color: "#29623a" })}>En vivo ahora · 95.9 FM</span>
+            <span style={K({ fontWeight: 500, fontSize: 14, color: "#52b870" })}>En vivo ahora · 95.9 FM</span>
             <Share2 size={16} color="#fff" style={{ marginLeft: 12, cursor: "pointer" }} />
           </div>
         </div>
@@ -440,7 +440,7 @@ function ProgramSchedule() {
         </div>
 
         <a href="https://araucanayfrontera.cl/programacion" target="_blank" rel="noreferrer"
-          style={K({ display: "inline-block", fontWeight: 600, fontSize: 15, color: "#29623a", textDecoration: "none", marginTop: 24 })}>
+          style={K({ display: "inline-block", fontWeight: 600, fontSize: 15, color: "#52b870", textDecoration: "none", marginTop: 24 })}>
           Ver programación completa →
         </a>
       </div>
@@ -461,7 +461,7 @@ function RegionalStories() {
     <section style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: 40 })}>
-          <span style={{ color: "#29623a" }}>NUESTRA</span> REGIÓN, NUESTRA CASA
+          <span style={{ color: "#52b870" }}>NUESTRA</span> REGIÓN, NUESTRA CASA
         </h2>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -471,7 +471,7 @@ function RegionalStories() {
               <div style={{ padding: 24 }}>
                 <h3 style={K({ fontWeight: 800, fontSize: "clamp(22px, 2.8vw, 36px)", color: "#fff", lineHeight: 1.1, marginBottom: 4 })}>{r.name}</h3>
                 <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8 })}>{r.sub}</p>
-                <span style={K({ fontWeight: 500, fontSize: 12, color: "#29623a" })}>{r.n} historias esta semana</span>
+                <span style={K({ fontWeight: 500, fontSize: 12, color: "#52b870" })}>{r.n} historias esta semana</span>
               </div>
             </div>
           ))}
@@ -507,7 +507,7 @@ function SocialFeeds() {
               {IG_GRADS.map((g, i) => <div key={i} className="social-tile" style={{ background: g }} />)}
             </div>
             <a href="https://instagram.com/araucanafm" target="_blank" rel="noreferrer"
-              style={K({ fontWeight: 600, fontSize: 13, color: "#29623a", textDecoration: "none" })}>Ver en Instagram →</a>
+              style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver en Instagram →</a>
           </div>
 
           <div>
@@ -538,7 +538,7 @@ function SocialFeeds() {
               <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>hace 1 h · 234 Me gusta · 45 comentarios</span>
             </div>
             <div style={{ textAlign: "center" }}>
-              <p style={K({ fontWeight: 700, fontSize: 36, color: "#29623a", lineHeight: 1 })}>+50.000</p>
+              <p style={K({ fontWeight: 700, fontSize: 36, color: "#52b870", lineHeight: 1 })}>+50.000</p>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginTop: 4 })}>auditores diarios</p>
             </div>
           </div>
@@ -588,7 +588,7 @@ function Footer() {
             <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
               Las radios que han acompañado a Temuco<br />y la Araucanía por generaciones.
             </p>
-            <p style={K({ fontWeight: 600, fontSize: 13, color: "#29623a", marginBottom: 24 })}>Desde 1944 · Más de 80 años en el aire</p>
+            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 24 })}>Desde 1944 · Más de 80 años en el aire</p>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               {SOC.map((Icon, i) => (
@@ -630,35 +630,68 @@ function Footer() {
 }
 
 /* ─── Floating Player ─────────────────────────────────────────────────────── */
+const STREAM_URL = "http://audio.streaminghd.cl:9020/stream";
+
 function FloatingPlayer() {
   const [playing, setPlaying] = useState(false);
-  return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
+  const audioRef = React.useRef(null);
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ flexShrink: 0 }}>
-          <LogoSVG height={22} color="#ffffff" />
-        </div>
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      audio.src = "";
+    } else {
+      audio.src = STREAM_URL;
+      audio.play().catch(() => {});
+    }
+    setPlaying(!playing);
+  };
+
+  const share = () => {
+    if (navigator.share) {
+      navigator.share({ title: "Radio Araucana 95.9 FM", url: "https://araucanayfrontera.cl" });
+    } else {
+      navigator.clipboard?.writeText("https://araucanayfrontera.cl");
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <audio ref={audioRef} preload="none" />
+
+      {/* Logo — oculto en móvil */}
+      <div className="hidden sm:flex" style={{ alignItems: "center", gap: 10 }}>
+        <LogoSVG height={22} color="#ffffff" />
         <div style={{ marginLeft: 4 }}>
           <p style={K({ fontWeight: 400, fontSize: 12, color: "#fff", lineHeight: 1.2 })}>
             En vivo · <span style={{ color: "#9ca3af" }}>Sube que Te Llevo</span>
           </p>
-          <p style={K({ fontWeight: 300, fontSize: 11, color: "#29623a" })}>95.9 FM</p>
+          <p style={K({ fontWeight: 300, fontSize: 11, color: "#4ade80" })}>95.9 FM</p>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <Waveform color={playing ? "#29623a" : "#374151"} height={20} />
-        <button className="play-btn" onClick={() => setPlaying(!playing)}
-          style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #29623a", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          {playing ? <Pause size={17} color="#fff" /> : <Play size={17} color="#fff" fill="#fff" />}
-        </button>
-        <Waveform color={playing ? "#29623a" : "#374151"} height={20} />
+      {/* Nombre en móvil */}
+      <div className="flex sm:hidden" style={{ alignItems: "center", gap: 6 }}>
+        <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
+        <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>95.9 FM · En vivo</span>
       </div>
 
+      {/* Play + waveform */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Volume2 size={18} color="#fff" />
-        <Share2 size={18} color="#fff" style={{ cursor: "pointer" }} />
+        <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
+        <button className="play-btn" onClick={toggle}
+          style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #29623a", background: playing ? "#29623a" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          {playing ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" fill="#fff" />}
+        </button>
+        <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
+      </div>
+
+      {/* Volumen + compartir */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <Volume2 size={20} color="#fff" style={{ cursor: "default" }} />
+        <Share2 size={20} color="#fff" style={{ cursor: "pointer" }} onClick={share} />
       </div>
     </div>
   );

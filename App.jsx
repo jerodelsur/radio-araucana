@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, X, Play, Pause, Volume2, Share2 } from "lucide-react";
+import { Menu, X, Play, Pause, Volume2, VolumeX, Share2 } from "lucide-react";
 
 /* ─── Social SVGs ─────────────────────────────────────────────────────────── */
 const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
@@ -797,15 +797,13 @@ function WhatsAppWidget() {
 const STREAM_URL = "/stream";
 
 function FloatingPlayer({ playing, toggle }) {
-  const [volume, setVolume] = useState(80);
-  const [showVolume, setShowVolume] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const changeVolume = (v) => {
-    setVolume(v);
-    // volume is controlled on the shared audio element in App
+  const toggleMute = () => {
     const audio = document.querySelector("audio");
-    if (audio) audio.volume = v / 100;
+    if (audio) audio.muted = !muted;
+    setMuted(!muted);
   };
 
   const share = () => {
@@ -854,22 +852,14 @@ function FloatingPlayer({ playing, toggle }) {
         <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
       </div>
 
-      {/* Volumen + compartir */}
+      {/* Mute + compartir */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative" }}>
 
-        {/* Slider de volumen */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-          {showVolume && (
-            <div style={{ position: "absolute", bottom: 52, right: -8, background: "#2d2d2d", borderRadius: 8, padding: "10px 14px", border: "1px solid #374151", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <span style={K({ fontSize: 11, color: "#9ca3af" })}>{volume}%</span>
-              <input type="range" min={0} max={100} value={volume}
-                onChange={(e) => changeVolume(Number(e.target.value))}
-                style={{ writingMode: "vertical-lr", direction: "rtl", width: 6, height: 80, cursor: "pointer", accentColor: "#29623a" }} />
-            </div>
-          )}
-          <Volume2 size={20} color="#fff" style={{ cursor: "pointer" }}
-            onClick={() => setShowVolume(!showVolume)} />
-        </div>
+        {/* Botón mute — funciona en todos los dispositivos incluido iOS */}
+        <button onClick={toggleMute}
+          style={{ background: "none", border: "none", cursor: "pointer", color: muted ? "#6b7280" : "#fff", display: "flex", alignItems: "center", padding: 6 }}>
+          {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+        </button>
 
         {/* Compartir */}
         <div style={{ position: "relative" }}>

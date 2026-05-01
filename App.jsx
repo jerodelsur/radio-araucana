@@ -152,7 +152,7 @@ function Navbar() {
   const links = ["Inicio", "Noticias", "Programación", "Destinos", "En Vivo", "Contacto"];
 
   return (
-    <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
+    <nav style={{ background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
 
         {/* Official logo */}
@@ -196,7 +196,8 @@ function Hero({ playing, toggle }) {
   return (
     <section style={{
       background: "#191919",
-      backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 22px)",
+      backgroundImage: "url(/mapuche.svg), repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 22px)",
+      backgroundSize: "60px 60px, auto",
       display: "flex", alignItems: "center", padding: "clamp(60px, 8vw, 120px) 24px",
     }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%" }}>
@@ -649,7 +650,7 @@ function FloatingPlayer({ playing, toggle }) {
   };
 
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
 
       {/* Logo — oculto en móvil */}
       <div className="hidden sm:flex" style={{ alignItems: "center", gap: 10 }}>

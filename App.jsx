@@ -1030,9 +1030,7 @@ function FronteraSection({ playing, toggle }) {
             </div>
 
             <div>
-              <p style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 })}>Radio</p>
-              <h2 style={K({ fontWeight: 900, fontSize: "clamp(48px, 7vw, 88px)", color: "#fff", lineHeight: 0.95, margin: 0 })}>La Frontera</h2>
-              <p style={K({ fontWeight: 400, fontSize: 16, color: "#7dbb5e", marginTop: 12, letterSpacing: "0.02em" })}>Pionera en las comunicaciones del Sur de Chile</p>
+              <img src="/frontera-logo.svg" alt="Radio La Frontera — La Primera del Sur de Chile" style={{ width: "100%", maxWidth: 480, height: "auto", display: "block" }} />
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: 420 })}>

@@ -328,9 +328,6 @@ const CARDS = [
   { cat: "CULTURA",  headline: "Feria de artesanía mapuche recibe récord de visitantes en Semana Santa",    author: "Redacción Araucana", time: "hace 4 h", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
   { cat: "REGIÓN",   headline: "Alumnos de La Araucanía ganan concurso nacional de robótica en Santiago",   author: "Redacción Araucana", time: "hace 5 h", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
   { cat: "POLÍTICA", headline: "Gobierno anuncia inversión de $12 mil millones en salud rural para la región", author: "Redacción Araucana", time: "hace 6 h", bg: "linear-gradient(135deg, #191919, #2d2d2d)" },
-  { cat: "MAPUCHE",  headline: "Lonko de Lumaco recibe reconocimiento internacional por conservación cultural", author: "Redacción Araucana", time: "hace 7 h", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
-  { cat: "ECONOMÍA", headline: "Exportaciones forestales de la región crecen un 18% en el primer trimestre",   author: "Redacción Araucana", time: "hace 8 h", bg: "linear-gradient(135deg, #0f1a3a, #1a3a5c)" },
-  { cat: "REGIÓN",   headline: "Nueva ruta ciclista conectará Temuco con Padre Las Casas antes de fin de año", author: "Redacción Araucana", time: "hace 9 h", bg: "linear-gradient(135deg, #0f2d1a, #29623a)" },
 ];
 
 function NewsGrid() {

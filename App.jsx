@@ -58,6 +58,7 @@ const GlobalStyles = () => (
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Open Sans', sans-serif; background: #191919; }
+    html { scroll-behavior: smooth; }
 
     @keyframes livePulse {
       0%, 100% { transform: scale(1);   opacity: 1;   }
@@ -194,23 +195,36 @@ const Tag = ({ label }) => (
 );
 
 /* ─── Navbar ──────────────────────────────────────────────────────────────── */
+const NAV_LINKS = [
+  { label: "Inicio",       href: "#inicio" },
+  { label: "Noticias",     href: "#noticias" },
+  { label: "Programación", href: "#programacion" },
+  { label: "Destinos",     href: "#destinos" },
+  { label: "En Vivo",      href: "#en-vivo" },
+  { label: "Contacto",     href: "mailto:contacto@araucanayfrontera.cl", external: true },
+];
+
 function Navbar() {
   const [open, setOpen] = useState(false);
-  const links = ["Inicio", "Noticias", "Programación", "Destinos", "En Vivo", "Contacto"];
 
   return (
     <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
 
         {/* Official logo */}
-        <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+        <a href="#inicio" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
           <LogoSVG height={44} color="#ffffff" />
         </a>
 
         {/* Center nav */}
         <div className="hidden md:flex" style={{ gap: 28 }}>
-          {links.map((l) => (
-            <a key={l} href="#" className="nav-link" style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none" })}>{l}</a>
+          {NAV_LINKS.map((l) => (
+            <a key={l.label} href={l.href}
+              {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
+              className="nav-link"
+              style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none" })}>
+              {l.label}
+            </a>
           ))}
         </div>
 
@@ -229,8 +243,13 @@ function Navbar() {
 
       {open && (
         <div className="md:hidden" style={{ background: "#191919", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
-          {links.map((l) => (
-            <a key={l} href="#" style={K({ display: "block", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>{l}</a>
+          {NAV_LINKS.map((l) => (
+            <a key={l.label} href={l.href}
+              {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
+              onClick={() => setOpen(false)}
+              style={K({ display: "block", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>
+              {l.label}
+            </a>
           ))}
         </div>
       )}
@@ -241,7 +260,7 @@ function Navbar() {
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
 function Hero({ playing, toggle }) {
   return (
-    <section style={{
+    <section id="inicio" style={{
       background: "#191919",
       backgroundImage: "url(/mapuche.svg), repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 22px)",
       backgroundSize: "60px 60px, auto",
@@ -401,7 +420,7 @@ const NEWS = [
 
 function NewsGrid() {
   return (
-    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
+    <section id="noticias" style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 32 }}>
           <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
@@ -452,7 +471,7 @@ const VIDEOS = [
 
 function VideoSection() {
   return (
-    <section style={{ background: "#191919", padding: "64px 24px" }}>
+    <section id="en-vivo" style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", marginBottom: 40, letterSpacing: "-0.01em" })}>
           EN DIRECTO Y EN VIDEO
@@ -526,7 +545,7 @@ function ProgramSchedule() {
   }, []);
 
   return (
-    <section style={{ background: "#fff", padding: "64px 24px" }}>
+    <section id="programacion" style={{ background: "#fff", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32, letterSpacing: "0.01em" })}>
           PROGRAMACIÓN DE HOY
@@ -651,7 +670,7 @@ function RegionalStories() {
   const [active, setActive] = useState(null);
 
   return (
-    <section style={{ background: "#191919", padding: "64px 24px" }}>
+    <section id="destinos" style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: 40 })}>
           <span style={{ color: "#52b870" }}>NUESTRA</span> REGIÓN, NUESTRA CASA

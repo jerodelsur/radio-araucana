@@ -821,21 +821,27 @@ function FloatingPlayer({ playing, toggle }) {
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
 
-      {/* Logo — oculto en móvil */}
-      <div className="hidden sm:flex" style={{ alignItems: "center", gap: 10 }}>
-        <LogoSVG height={22} color="#ffffff" />
-        <div style={{ marginLeft: 4 }}>
-          <p style={K({ fontWeight: 400, fontSize: 12, color: "#fff", lineHeight: 1.2 })}>
-            En vivo · <span style={{ color: "#9ca3af" }}>Sube que Te Llevo — Alejandro Contreras</span>
-          </p>
-          <p style={K({ fontWeight: 300, fontSize: 11, color: "#4ade80" })}>95.9 FM</p>
+      {/* Foto + info — oculto en móvil */}
+      <div className="hidden sm:flex" style={{ alignItems: "center", gap: 12 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "1px solid #29623a" }}>
+          <img src="/player-photo.png" alt="Radio Araucana" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+        </div>
+        <div>
+          <p style={K({ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.2 })}>Radio Araucana 95.9 FM</p>
+          <p style={K({ fontWeight: 300, fontSize: 11, color: "#9ca3af", lineHeight: 1.4 })}>Sube que Te Llevo · Alejandro Contreras</p>
+          <p style={K({ fontWeight: 600, fontSize: 10, color: "#52b870", letterSpacing: "0.06em", textTransform: "uppercase" })}>En vivo</p>
         </div>
       </div>
 
       {/* Nombre en móvil */}
-      <div className="flex sm:hidden" style={{ alignItems: "center", gap: 6 }}>
-        <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
-        <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>95.9 FM · En vivo</span>
+      <div className="flex sm:hidden" style={{ alignItems: "center", gap: 8 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 5, overflow: "hidden", flexShrink: 0, border: "1px solid #29623a" }}>
+          <img src="/player-photo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+        </div>
+        <div>
+          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>95.9 FM</span>
+          <p style={K({ fontWeight: 300, fontSize: 10, color: "#52b870" })}>En vivo</p>
+        </div>
       </div>
 
       {/* Play + waveform */}

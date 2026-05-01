@@ -315,19 +315,22 @@ function NewsTicker() {
 
 /* ─── News Grid ───────────────────────────────────────────────────────────── */
 const FEATURED = {
-  cat: "MAPUCHE", headline: "Comunidades mapuche de Ercilla inician diálogo con gobierno regional",
-  excerpt: "Representantes de 14 comunidades se reunieron con el Delegado Presidencial para abordar demandas históricas de tierras y reconocimiento cultural en la Araucanía.",
-  author: "Redacción Araucana", time: "hace 23 min", bg: "linear-gradient(135deg, #1d4a2b, #29623a)",
+  cat: "SALUD",
+  headline: "Troi Araucanía abre sus puertas y marca un hito para la salud infantil de todo el sur de Chile",
+  excerpt: "El nuevo centro médico especializado en salud infantil representa un avance histórico para la región, beneficiando a miles de familias del sur del país.",
+  author: "El Diario Austral de Temuco", time: "30 abr 2026",
+  img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175436_37571b86-53a7-49a1-bd1f-48e5c5747e81.png",
+  url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/4/",
 };
 const SECONDARY = [
-  { cat: "REGIÓN",   headline: "Temuco lidera ranking de calidad del aire en Chile 2026",            time: "hace 1 h",  bg: "linear-gradient(135deg, #0f2d1a, #1d4a2b)" },
-  { cat: "CULTURA",  headline: "El renacer del canelo: especie sagrada vuelve a los bosques del sur", time: "hace 2 h",  bg: "linear-gradient(135deg, #2d4a1a, #4a7c59)" },
-  { cat: "DEPORTE",  headline: "Deportes Temuco avanza a cuartos de final de la Copa Chile",          time: "hace 3 h",  bg: "linear-gradient(135deg, #3a0f0f, #8B0000)" },
+  { cat: "DEPORTE",  headline: "La Araucanía atrapa seis medallas en los Juegos Sudamericanos de la Juventud", time: "30 abr 2026", bg: "linear-gradient(135deg, #3a0f0f, #8B0000)", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/12/" },
+  { cat: "CULTURA",  headline: "Más de 600 bailarines dieron vida al encuentro 'Ko, Fluir en la Danza' en el Teatro Municipal", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175453_d9b20381-522d-4cff-a435-8bda61b84978.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/18/" },
+  { cat: "REGIÓN",   headline: "110 jóvenes talentos son premiados por su aporte al desarrollo de La Araucanía", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175418_8afd51e1-5476-4876-a9e4-0115d3d186de.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/2/" },
 ];
 const CARDS = [
-  { cat: "CULTURA",  headline: "Feria de artesanía mapuche recibe récord de visitantes en Semana Santa",    author: "Redacción Araucana", time: "hace 4 h", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
-  { cat: "REGIÓN",   headline: "Alumnos de La Araucanía ganan concurso nacional de robótica en Santiago",   author: "Redacción Araucana", time: "hace 5 h", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
-  { cat: "POLÍTICA", headline: "Gobierno anuncia inversión de $12 mil millones en salud rural para la región", author: "Redacción Araucana", time: "hace 6 h", bg: "linear-gradient(135deg, #191919, #2d2d2d)" },
+  { cat: "REGIÓN",   headline: "$9 mil millones para modernizar el transporte público y no depender de los combustibles fósiles", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175448_69da918e-e045-48d0-88f2-88871ae9600d.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/6/" },
+  { cat: "POLÍTICA", headline: "Presidente Kast a dirigentes de la Salud: 'No va a haber recortes que puedan afectar la vida de un niño'", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175443_5469d97f-4492-46b9-86c6-10a1179b58a0.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/5/" },
+  { cat: "DEPORTE",  headline: "Mauro Salinas deja la dirección regional del Instituto Nacional del Deporte tras tres años", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175343_80889fd0-5d13-44d8-b4a7-7ba6d80504ed.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/7/" },
 ];
 
 function NewsGrid() {
@@ -339,42 +342,52 @@ function NewsGrid() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-          <article className="news-card lg:col-span-3" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
-            <div style={{ background: FEATURED.bg, height: 240, padding: 16, display: "flex", alignItems: "flex-start" }}>
-              <Tag label={FEATURED.cat} />
-            </div>
-            <div style={{ padding: 20 }}>
-              <h3 style={K({ fontWeight: 700, fontSize: 24, color: "#191919", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
-              <p style={K({ fontWeight: 300, fontSize: 15, color: "#6b7280", lineHeight: 1.5, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
-              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {FEATURED.author} · {FEATURED.time}</span>
-            </div>
-          </article>
+          <a href={FEATURED.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }} className="lg:col-span-3">
+            <article className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden", height: "100%" }}>
+              <div style={{ height: 240, padding: 16, display: "flex", alignItems: "flex-start", backgroundImage: `url(${FEATURED.img})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
+                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
+                <div style={{ position: "relative", zIndex: 1 }}><Tag label={FEATURED.cat} /></div>
+              </div>
+              <div style={{ padding: 20 }}>
+                <h3 style={K({ fontWeight: 700, fontSize: 24, color: "#191919", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
+                <p style={K({ fontWeight: 300, fontSize: 15, color: "#6b7280", lineHeight: 1.5, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
+                <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Fuente: {FEATURED.author} · {FEATURED.time}</span>
+              </div>
+            </article>
+          </a>
 
           <div className="lg:col-span-2" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
             {SECONDARY.map((a, i) => (
-              <article key={i} className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #e5e7eb" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{ background: a.bg, width: 64, height: 64, borderRadius: 4, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Tag label={a.cat} />
-                  <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#191919", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
-                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{a.time}</span>
-                </div>
-              </article>
+              <a key={i} href={a.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                <article className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #e5e7eb" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 4, flexShrink: 0, overflow: "hidden", background: a.bg || "#2d2d2d" }}>
+                    {a.img && <img src={a.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Tag label={a.cat} />
+                    <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#191919", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{a.time}</span>
+                  </div>
+                </article>
+              </a>
             ))}
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARDS.map((a, i) => (
-            <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
-              <div style={{ background: a.bg, height: 180, padding: 12, display: "flex", alignItems: "flex-start" }}>
-                <Tag label={a.cat} />
-              </div>
-              <div style={{ padding: 16 }}>
-                <h4 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
-                <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {a.author} · {a.time}</span>
-              </div>
-            </article>
+            <a key={i} href={a.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+              <article className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+                <div style={{ height: 180, padding: 12, display: "flex", alignItems: "flex-start", backgroundImage: a.img ? `url(${a.img})` : undefined, background: a.img ? undefined : a.bg, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
+                  {a.img && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />}
+                  <div style={{ position: "relative", zIndex: 1 }}><Tag label={a.cat} /></div>
+                </div>
+                <div style={{ padding: 16 }}>
+                  <h4 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
+                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Fuente: {a.author} · {a.time}</span>
+                </div>
+              </article>
+            </a>
           ))}
         </div>
       </div>

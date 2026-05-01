@@ -535,17 +535,17 @@ function SocialFeeds() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanaradio</p>
             <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Instagram</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, marginBottom: 16 }}>
               {IG_GRADS.map((g, i) => <div key={i} className="social-tile" style={{ background: g }} />)}
             </div>
-            <a href="https://instagram.com/araucanafm" target="_blank" rel="noreferrer"
+            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
               style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver en Instagram →</a>
           </div>
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanaradio</p>
             <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>X / Twitter</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {TWEETS.map((t, i) => (

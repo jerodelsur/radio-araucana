@@ -988,7 +988,7 @@ function WhatsAppWidget() {
       {/* FAB */}
       {!open && (
         <div style={{ position: "fixed", bottom: 88, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ background: "#191919", border: "1px solid #29623a", borderRadius: 6, padding: "6px 12px", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
+          <div className="hidden sm:block" style={{ background: "#191919", border: "1px solid #29623a", borderRadius: 6, padding: "6px 12px", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
             <p style={K({ fontWeight: 700, fontSize: 12, color: "#fff", margin: 0, whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
             <p style={K({ fontWeight: 300, fontSize: 11, color: "#52b870", margin: 0, whiteSpace: "nowrap" })}>Escríbenos aquí →</p>
           </div>

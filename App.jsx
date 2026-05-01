@@ -858,11 +858,15 @@ function Footer() {
               ))}
             </div>
 
-            {[
-              "Caupolicán 110, Of. 2003, Temuco, IX Región",
-              "+56 45 2213166",
-              "contacto@araucanayfrontera.cl",
-            ].map((t) => <p key={t} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 6 })}>{t}</p>)}
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>Caupolicán 110, Of. 2003, Temuco, IX Región</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 20 })}>Estudios: +56 45 2213166</p>
+
+            <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
+              <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>¿Quiere cotizar una campaña con nosotros?</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 +56 9 9287 2087</p>
+              <a href="mailto:administracion@araucanayfrontera.cl" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ administracion@araucanayfrontera.cl</a>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 Lunes a Viernes, 9:00 a 18:00 hrs.</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-8">

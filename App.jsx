@@ -360,7 +360,7 @@ function NewsTicker() {
   }, []);
 
   const tickerText = weather.length > 0
-    ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("          ·          ") + "          ·          "
+    ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("     ·     ") + "     ·     "
     : "CARGANDO DATOS METEOROLÓGICOS DE LA ARAUCANÍA...";
 
   return (
@@ -372,7 +372,7 @@ function NewsTicker() {
       <div style={{ overflow: "hidden", flex: 1, padding: "10px 0" }}>
         <div className="marquee-track">
           <span style={K({ fontWeight: 500, fontSize: 13, color: "#fff", letterSpacing: "0.04em" })}>
-            {tickerText}{tickerText}{tickerText}
+            {tickerText}{tickerText}
           </span>
         </div>
       </div>

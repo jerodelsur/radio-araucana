@@ -192,7 +192,7 @@ function Navbar() {
 }
 
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
-function Hero() {
+function Hero({ playing, toggle }) {
   return (
     <section style={{
       background: "#191919",
@@ -229,13 +229,10 @@ function Hero() {
             </div>
 
             <div className="fiu-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button className="cta-btn" style={K({ background: "#cc0000", color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 28px", borderRadius: 3, border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase" })}>
-                Escúchanos en el 95.9 FM
+              <button className="cta-btn" onClick={toggle} style={K({ background: "#cc0000", color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 28px", borderRadius: 3, border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 })}>
+                {playing ? <Pause size={16} /> : <Play size={16} fill="#fff" />}
+                {playing ? "En vivo — pausar" : "Escúchanos en el 95.9 FM"}
               </button>
-              <a href="https://araucanayfrontera.cl" target="_blank" rel="noreferrer"
-                style={K({ display: "flex", alignItems: "center", fontWeight: 600, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", padding: "12px 0" })}>
-                Sitio oficial →
-              </a>
             </div>
           </div>
 
@@ -632,30 +629,16 @@ function Footer() {
 /* ─── Floating Player ─────────────────────────────────────────────────────── */
 const STREAM_URL = "/stream";
 
-function FloatingPlayer() {
-  const [playing, setPlaying] = useState(false);
+function FloatingPlayer({ playing, toggle }) {
   const [volume, setVolume] = useState(80);
   const [showVolume, setShowVolume] = useState(false);
   const [copied, setCopied] = useState(false);
-  const audioRef = React.useRef(null);
-
-  const toggle = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (playing) {
-      audio.pause();
-      audio.src = "";
-    } else {
-      audio.src = STREAM_URL;
-      audio.volume = volume / 100;
-      audio.play().catch(() => {});
-    }
-    setPlaying(!playing);
-  };
 
   const changeVolume = (v) => {
     setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v / 100;
+    // volume is controlled on the shared audio element in App
+    const audio = document.querySelector("audio");
+    if (audio) audio.volume = v / 100;
   };
 
   const share = () => {
@@ -670,7 +653,6 @@ function FloatingPlayer() {
 
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
-      <audio ref={audioRef} preload="none" />
 
       {/* Logo — oculto en móvil */}
       <div className="hidden sm:flex" style={{ alignItems: "center", gap: 10 }}>
@@ -693,7 +675,7 @@ function FloatingPlayer() {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
         <button className="play-btn" onClick={toggle}
-          style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #29623a", background: playing ? "#29623a" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #cc0000", background: playing ? "#cc0000" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           {playing ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" fill="#fff" />}
         </button>
         <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
@@ -732,12 +714,29 @@ function FloatingPlayer() {
 
 /* ─── App ─────────────────────────────────────────────────────────────────── */
 export default function App() {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = React.useRef(null);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      audio.src = "";
+    } else {
+      audio.src = STREAM_URL;
+      audio.play().catch(() => {});
+    }
+    setPlaying(!playing);
+  };
+
   return (
     <>
+      <audio ref={audioRef} preload="none" />
       <GlobalStyles />
       <Navbar />
       <main style={{ paddingBottom: 64 }}>
-        <Hero />
+        <Hero playing={playing} toggle={toggle} />
         <NewsTicker />
         <NewsGrid />
         <VideoSection />
@@ -747,7 +746,7 @@ export default function App() {
         <SponsorStrip />
         <Footer />
       </main>
-      <FloatingPlayer />
+      <FloatingPlayer playing={playing} setPlaying={setPlaying} toggle={toggle} />
     </>
   );
 }

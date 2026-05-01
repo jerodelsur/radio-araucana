@@ -4,16 +4,14 @@
            V33 H54 V36 H51 V39 H48 V42 H45 V45 H42 V48 H39 V51 H36 V54 H33 V57 H30
            H27 V54 H24 V51 H21 V48 H18 V45 H15 V42 H12 V39 H9 V36 H6 V33 H3 V30
            V27 H6 V24 H9 V21 H12 V18 H15 V15 H18 V12 H21 V9 H24 V6 H27 V3 Z"
-        fill="none" stroke="white" stroke-width="1.5" opacity="0.18"/>
+        fill="none" stroke="white" stroke-width="1" opacity="0.07"/>
   <!-- Inner stepped diamond -->
   <path d="M30,18 H33 V21 H36 V24 H39 V27 H42 V30
            V33 H39 V36 H36 V39 H33 V42 H30
            H27 V39 H24 V36 H21 V33 H18 V30
            V27 H21 V24 H24 V21 H27 V18 Z"
-        fill="none" stroke="white" stroke-width="1" opacity="0.12"/>
+        fill="none" stroke="white" stroke-width="0.75" opacity="0.05"/>
   <!-- Center cross -->
-  <rect x="25" y="28" width="10" height="4" fill="white" opacity="0.12"/>
-  <rect x="28" y="25" width="4" height="10" fill="white" opacity="0.12"/>
-  <!-- Center dot -->
-  <rect x="29" y="29" width="2" height="2" fill="white" opacity="0.14"/>
+  <rect x="25" y="28" width="10" height="4" fill="white" opacity="0.05"/>
+  <rect x="28" y="25" width="4" height="10" fill="white" opacity="0.05"/>
 </svg>

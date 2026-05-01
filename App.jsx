@@ -197,10 +197,10 @@ const Tag = ({ label }) => (
 /* ─── Navbar ──────────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
   { label: "Inicio",       href: "#inicio" },
+  { label: "En Vivo",      href: "#en-vivo" },
   { label: "Noticias",     href: "#noticias" },
   { label: "Programación", href: "#programacion" },
   { label: "Destinos",     href: "#destinos" },
-  { label: "En Vivo",      href: "#en-vivo" },
   { label: "Contacto",     href: "mailto:contacto@araucanayfrontera.cl", external: true },
 ];
 

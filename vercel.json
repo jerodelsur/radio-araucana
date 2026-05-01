@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/stream",
+      "destination": "http://audio.streaminghd.cl:9020/stream"
+    }
+  ]
+}

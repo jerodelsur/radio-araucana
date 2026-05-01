@@ -630,7 +630,7 @@ function Footer() {
 }
 
 /* ─── Floating Player ─────────────────────────────────────────────────────── */
-const STREAM_URL = "http://audio.streaminghd.cl:9020/stream";
+const STREAM_URL = "/stream";
 
 function FloatingPlayer() {
   const [playing, setPlaying] = useState(false);

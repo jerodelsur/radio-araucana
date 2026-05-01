@@ -152,12 +152,12 @@ function Navbar() {
   const links = ["Inicio", "Noticias", "Programación", "Destinos", "En Vivo", "Contacto"];
 
   return (
-    <nav style={{ background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
+    <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
 
         {/* Official logo */}
         <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          <LogoSVG height={34} color="#ffffff" />
+          <LogoSVG height={44} color="#ffffff" />
         </a>
 
         {/* Center nav */}

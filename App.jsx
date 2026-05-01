@@ -156,7 +156,21 @@ const Waveform = ({ color = "#29623a", height = 24 }) => (
 );
 
 /* ─── Live Placeholder ────────────────────────────────────────────────────── */
-const LivePlaceholder = () => (
+const LivePlaceholder = () => {
+  const { settings } = useSiteContent();
+  const ytId = getYouTubeId(settings.liveStreamUrl);
+  if (ytId) {
+    return (
+      <iframe
+        title="Transmisión en vivo"
+        src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+  return (
   <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
     {/* Looping background video */}
     <video
@@ -194,7 +208,8 @@ const LivePlaceholder = () => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const CAT_COLORS = {
   REGIÓN: "#29623a", POLÍTICA: "#191919", CULTURA: "#4a7c59",

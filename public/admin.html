@@ -286,11 +286,15 @@
       el("h2", { class: "panel-title" }, "Configuración del sitio"),
       el("p", { class: "panel-sub" }, "Datos de transmisión, contacto e información que aparece en el footer."),
 
-      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px" }, "Streaming"),
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px" }, "Streaming de audio (radios)"),
       settingField("streamAraucana", "URL stream Radio Araucana", "text",
         "⚠️ Por defecto: /stream (proxy de Vercel hacia http://audio.streaminghd.cl:9020/stream). NO cambiar si la fuente sigue siendo el SHOUTcast HTTP — sin el proxy, el navegador bloquea el audio."),
       settingField("streamFrontera", "URL stream Radio La Frontera", "url",
         "URL completa del stream HTTPS. Por defecto: https://audio.streaminghd.cl:2000/stream/radiofrontera1110"),
+
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Transmisión en vivo (YouTube)"),
+      settingField("liveStreamUrl", "URL del stream en vivo de YouTube", "url",
+        "Pegá el link de YouTube cuando la radio esté transmitiendo en vivo (ej: https://www.youtube.com/watch?v=ABC123 o https://youtu.be/ABC123). Cuando se llena, reemplaza el placeholder en el hero y en 'EN DIRECTO Y EN VIDEO' por el video embebido. Dejalo vacío para volver al placeholder cuando no transmiten."),
 
       el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Contacto general (footer)"),
       settingField("address", "Dirección"),

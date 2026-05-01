@@ -2,6 +2,7 @@
   "settings": {
     "streamAraucana": "/stream",
     "streamFrontera": "https://audio.streaminghd.cl:2000/stream/radiofrontera1110",
+    "liveStreamUrl": "",
     "whatsappNumber": "56992872087",
     "address": "Caupolicán 110, Of. 2003, Temuco, IX Región",
     "contactEmail": "contacto@araucanayfrontera.cl",

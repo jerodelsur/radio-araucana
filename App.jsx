@@ -92,6 +92,8 @@ const GlobalStyles = () => (
 
     .news-card { transition: transform 200ms ease, box-shadow 200ms ease; cursor: pointer; }
     .news-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
+    .news-img { filter: contrast(1.08) saturate(0.82) brightness(0.96); transition: filter 300ms ease; }
+    .news-card:hover .news-img { filter: contrast(1.05) saturate(0.95) brightness(1.0); }
 
     .video-card { transition: transform 200ms ease; cursor: pointer; }
     .video-card:hover { transform: scale(1.03); }
@@ -314,23 +316,54 @@ function NewsTicker() {
 }
 
 /* ─── News Grid ───────────────────────────────────────────────────────────── */
-const FEATURED = {
-  cat: "SALUD",
-  headline: "Troi Araucanía abre sus puertas y marca un hito para la salud infantil de todo el sur de Chile",
-  excerpt: "El nuevo centro médico especializado en salud infantil representa un avance histórico para la región, beneficiando a miles de familias del sur del país.",
-  author: "El Diario Austral de Temuco", time: "30 abr 2026",
-  img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175436_37571b86-53a7-49a1-bd1f-48e5c5747e81.png",
-  url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/4/",
+// Foto por categoría — reutilizable en cualquier noticia de ese tipo
+const CAT_PHOTOS = {
+  SALUD:    "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180129_e64ad2db-a604-455b-8b69-88fe1d8d309f.png",
+  DEPORTE:  "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180134_64a69c7d-5b8d-468b-a9ef-88d044082c5e.png",
+  CULTURA:  "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180240_485f5e65-1974-410b-9854-b7ef94957fa2.png",
+  REGIÓN:   "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180247_518083b9-fa50-4ae4-b50d-dc3a605f8c92.png",
+  POLÍTICA: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180252_2f83fe1c-74ec-4e71-97dd-09b04075d485.png",
+  MAPUCHE:  "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175453_d9b20381-522d-4cff-a435-8bda61b84978.png",
+  ECONOMÍA: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175448_69da918e-e045-48d0-88f2-88871ae9600d.png",
 };
-const SECONDARY = [
-  { cat: "DEPORTE",  headline: "La Araucanía atrapa seis medallas en los Juegos Sudamericanos de la Juventud", time: "30 abr 2026", bg: "linear-gradient(135deg, #3a0f0f, #8B0000)", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/12/" },
-  { cat: "CULTURA",  headline: "Más de 600 bailarines dieron vida al encuentro 'Ko, Fluir en la Danza' en el Teatro Municipal", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175453_d9b20381-522d-4cff-a435-8bda61b84978.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/18/" },
-  { cat: "REGIÓN",   headline: "110 jóvenes talentos son premiados por su aporte al desarrollo de La Araucanía", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175418_8afd51e1-5476-4876-a9e4-0115d3d186de.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/2/" },
-];
-const CARDS = [
-  { cat: "REGIÓN",   headline: "$9 mil millones para modernizar el transporte público y no depender de los combustibles fósiles", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175448_69da918e-e045-48d0-88f2-88871ae9600d.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/6/" },
-  { cat: "POLÍTICA", headline: "Presidente Kast a dirigentes de la Salud: 'No va a haber recortes que puedan afectar la vida de un niño'", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175443_5469d97f-4492-46b9-86c6-10a1179b58a0.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/5/" },
-  { cat: "DEPORTE",  headline: "Mauro Salinas deja la dirección regional del Instituto Nacional del Deporte tras tres años", author: "El Diario Austral de Temuco", time: "30 abr 2026", img: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175343_80889fd0-5d13-44d8-b4a7-7ba6d80504ed.png", url: "https://www.australtemuco.cl/impresa/2026/04/30/full/cuerpo-principal/7/" },
+
+const NEWS = [
+  {
+    cat: "SALUD",
+    headline: "Troi Araucanía abre sus puertas y marca un hito para la salud infantil del sur",
+    bajada: "El nuevo centro médico especializado beneficiará a miles de familias de la región, con atención de especialistas disponible por primera vez en la Araucanía.",
+    time: "30 abr 2026",
+  },
+  {
+    cat: "DEPORTE",
+    headline: "La Araucanía conquista seis medallas en los Juegos Sudamericanos de la Juventud",
+    bajada: "Destacada actuación de los deportistas regionales en la competencia continental, consolidando a la región como semillero de talentos.",
+    time: "30 abr 2026",
+  },
+  {
+    cat: "CULTURA",
+    headline: "Más de 600 bailarines llenan el Teatro Municipal en el encuentro 'Ko, Fluir en la Danza'",
+    bajada: "El evento reunió a elencos de toda la región en una celebración del movimiento y las artes escénicas que desbordó las butacas.",
+    time: "30 abr 2026",
+  },
+  {
+    cat: "REGIÓN",
+    headline: "110 jóvenes talentos son reconocidos por su aporte al desarrollo de La Araucanía",
+    bajada: "La ceremonia destacó iniciativas juveniles en innovación, medio ambiente y cultura, premiando a las nuevas generaciones de la región.",
+    time: "30 abr 2026",
+  },
+  {
+    cat: "REGIÓN",
+    headline: "$9 mil millones para modernizar el transporte público de la Araucanía",
+    bajada: "La inversión permitirá renovar la flota con vehículos eléctricos y reducir la dependencia de combustibles fósiles en la región.",
+    time: "30 abr 2026",
+  },
+  {
+    cat: "POLÍTICA",
+    headline: "Kast reafirma compromiso con la salud pública ante dirigentes del sector",
+    bajada: "El Presidente aseguró que no habrá recortes que afecten la atención infantil y se comprometió a mantener los presupuestos vigentes.",
+    time: "30 abr 2026",
+  },
 ];
 
 function NewsGrid() {
@@ -341,54 +374,27 @@ function NewsGrid() {
           <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-          <a href={FEATURED.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }} className="lg:col-span-3">
-            <article className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden", height: "100%" }}>
-              <div style={{ height: 240, padding: 16, display: "flex", alignItems: "flex-start", backgroundImage: `url(${FEATURED.img})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
-                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
-                <div style={{ position: "relative", zIndex: 1 }}><Tag label={FEATURED.cat} /></div>
-              </div>
-              <div style={{ padding: 20 }}>
-                <h3 style={K({ fontWeight: 700, fontSize: 24, color: "#191919", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
-                <p style={K({ fontWeight: 300, fontSize: 15, color: "#6b7280", lineHeight: 1.5, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
-                <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Fuente: {FEATURED.author} · {FEATURED.time}</span>
-              </div>
-            </article>
-          </a>
-
-          <div className="lg:col-span-2" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
-            {SECONDARY.map((a, i) => (
-              <a key={i} href={a.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                <article className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #e5e7eb" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 64, height: 64, borderRadius: 4, flexShrink: 0, overflow: "hidden", background: a.bg || "#2d2d2d" }}>
-                    {a.img && <img src={a.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {NEWS.map((n, i) => {
+            const photo = CAT_PHOTOS[n.cat];
+            return (
+              <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+                {/* Foto de categoría */}
+                <div className="news-img" style={{ height: 200, position: "relative", backgroundImage: photo ? `url(${photo})` : undefined, background: photo ? undefined : "#2d2d2d", backgroundSize: "cover", backgroundPosition: "center" }}>
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 60%)" }} />
+                  <div style={{ position: "absolute", top: 12, left: 12 }}>
+                    <Tag label={n.cat} />
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Tag label={a.cat} />
-                    <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#191919", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{a.time}</span>
-                  </div>
-                </article>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CARDS.map((a, i) => (
-            <a key={i} href={a.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-              <article className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{ height: 180, padding: 12, display: "flex", alignItems: "flex-start", backgroundImage: a.img ? `url(${a.img})` : undefined, background: a.img ? undefined : a.bg, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
-                  {a.img && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />}
-                  <div style={{ position: "relative", zIndex: 1 }}><Tag label={a.cat} /></div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <h4 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
-                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Fuente: {a.author} · {a.time}</span>
+                {/* Texto */}
+                <div style={{ padding: "16px 18px 20px" }}>
+                  <h3 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{n.headline}</h3>
+                  <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55, marginBottom: 12 })}>{n.bajada}</p>
+                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Redacción Araucana · {n.time}</span>
                 </div>
               </article>
-            </a>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

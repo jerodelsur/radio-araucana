@@ -653,12 +653,12 @@ function SocialFeeds() {
           <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", margin: 0 })}>SÍGUENOS</h2>
           <div style={{ display: "flex", gap: 10 }}>
             <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 13, color: "#fff", textDecoration: "none", background: "#dc2743", padding: "9px 18px", borderRadius: 6 })}>
+              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 13, color: "#191919", textDecoration: "none", background: "transparent", border: "1.5px solid #191919", padding: "8px 18px", borderRadius: 4 })}>
               <SvgInstagramColor />
               Seguir en Instagram
             </a>
             <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
-              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 13, color: "#fff", textDecoration: "none", background: "#1877F2", padding: "9px 18px", borderRadius: 6 })}>
+              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 13, color: "#191919", textDecoration: "none", background: "transparent", border: "1.5px solid #191919", padding: "8px 18px", borderRadius: 4 })}>
               <SvgFacebookColor />
               Seguir en Facebook
             </a>

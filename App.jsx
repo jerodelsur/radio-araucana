@@ -1,5 +1,13 @@
 import React, { useState } from "react";
 import { Menu, X, Play, Pause, Volume2, VolumeX, Share2 } from "lucide-react";
+import siteContent from "./src/content/site.json";
+
+/* ─── Editable content (loaded from src/content/site.json) ───────────────────
+   This file is consumed by the (upcoming) /admin panel. Anything that the
+   content team is meant to be able to change lives in site.json.
+   Layout, design tokens, components and structural arrays (NAV_LINKS, etc.)
+   stay hardcoded in this file. ────────────────────────────────────────────── */
+const SETTINGS = siteContent.settings;
 
 /* ─── Social SVGs ─────────────────────────────────────────────────────────── */
 const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
@@ -406,32 +414,7 @@ const CAT_PHOTOS = {
   ECONOMÍA: "/news/economia.png",
 };
 
-const NEWS = [
-  {
-    cat: "DEPORTE",
-    headline: "Seis medallas se trae la Araucanía desde los Juegos Sudamericanos de la Juventud",
-    bajada: "Los jóvenes deportistas regionales volvieron con el pecho lleno. Te contamos quiénes son y en qué disciplinas brillaron.",
-    time: "30 abr 2026",
-  },
-  {
-    cat: "POLÍTICA",
-    headline: "El Presidente habló fuerte sobre salud: qué prometió y qué inquieta al sector",
-    bajada: "Dirigentes de la salud se reunieron con Kast para plantear sus dudas. Radio Araucana estuvo ahí para contarlo.",
-    time: "30 abr 2026",
-  },
-  {
-    cat: "REGIÓN",
-    headline: "Millonaria inversión busca sacar el transporte público de la Araucanía del siglo pasado",
-    bajada: "Buses eléctricos y rutas modernizadas son parte del plan que el gobierno presentó esta semana para la movilidad regional.",
-    time: "30 abr 2026",
-  },
-  {
-    cat: "CULTURA",
-    headline: "El Teatro Municipal vibró con más de 600 bailarines en una noche para el recuerdo",
-    bajada: "La danza tomó el centro de Temuco en un encuentro que reunió a elencos de toda la región durante una jornada única.",
-    time: "30 abr 2026",
-  },
-];
+const NEWS = siteContent.news;
 
 function NewsGrid() {
   return (
@@ -477,12 +460,7 @@ function NewsGrid() {
 }
 
 /* ─── Video Section ───────────────────────────────────────────────────────── */
-const VIDEOS = [
-  { title: "Arturo Sanhueza, DT de Deportes Temuco, en La Voz Albiverde",                   dur: "24:18",   views: "12.4K vistas", bg: "linear-gradient(135deg, #0f2d1a, #1a3a5c)" },
-  { title: "El Alcalde de Temuco habla con Radio Araucana sobre los proyectos del año",      dur: "38:45",   views: "9.7K vistas",  bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
-  { title: "Araucana y Frontera: la historia de las radios más antiguas del sur de Chile",   dur: "52:10",   views: "31.2K vistas", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
-  { title: "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",     dur: "1:04:33", views: "7.1K vistas",  bg: "linear-gradient(135deg, #1a1a1a, #2d2d2d)" },
-];
+const VIDEOS = siteContent.videos;
 
 function VideoSection() {
   return (
@@ -528,14 +506,7 @@ function VideoSection() {
 }
 
 /* ─── Program Schedule ────────────────────────────────────────────────────── */
-const PROGRAMS = [
-  { start: "06:00", end: "10:00", name: "Sube que Te Llevo",         host: "Alejandro Contreras",              color: "#29623a" },
-  { start: "10:00", end: "13:00", name: "La Gran Manada",            host: "Miguel Ángel Contreras",           color: "#4a7c59" },
-  { start: "13:30", end: "14:30", name: "La Voz Albiverde",          host: "Mariela González · Lun, Mié, Vie", color: "#8B0000" },
-  { start: "15:00", end: "16:00", name: "Contra el Reloj",           host: "Cristian Neira",                   color: "#1a3a5c" },
-  { start: "16:00", end: "18:00", name: "Tarde a Tarde de Clásicos", host: "Luis Vega",                        color: "#5c4033" },
-  { start: "18:00", end: "20:00", name: "Al Fondo a la Derecha",     host: "Rolando Gómez",                    color: "#4a7c59" },
-];
+const PROGRAMS = siteContent.programs;
 
 const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
@@ -597,51 +568,7 @@ function ProgramSchedule() {
 }
 
 /* ─── Regional Stories ────────────────────────────────────────────────────── */
-const REGIONS = [
-  {
-    name: "Araucanía Andina",
-    sub: "Montañas, cultura y aventura al pie del Volcán Llaima",
-    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ANDINA.jpg",
-    body: [
-      "La Araucanía Andina es la puerta de entrada norte a la Región de La Araucanía. Este territorio de montañas atrae a aventureros, amantes de los deportes de invierno y quienes buscan parques nacionales y el patrimonio mapuche-pehuenche.",
-      "El Volcán Llaima es el rasgo geográfico dominante, anclando uno de los destinos más impresionantes de Chile: el Parque Nacional Conguillío. Esta área alberga bosques de araucarias milenarias, lagunas de origen glaciar, senderos de trekking, avistamiento de aves y presencia cultural indígena.",
-      "Las actividades disponibles incluyen esquí en centros de invierno como Las Araucarias, recorridos por los senderos de Conguillío para contemplar el contraste entre flujos de lava y vegetación, visitas a comunidades que ofrecen turismo cultural, y la experiencia de ríos y aguas termales rodeados de montañas.",
-      "El destino atrae tanto a quienes buscan aventura como a quienes desean reconectarse con una naturaleza prístina e inalterada.",
-    ],
-  },
-  {
-    name: "Costa Araucana",
-    sub: "Donde la naturaleza y la cultura mapuche se encuentran con el mar",
-    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-COSTA.jpg",
-    body: [
-      "La Costa Araucanía es un destino inexplorado y sorprendente. Se extiende desde el borde costero del sur de Chile hasta zonas interiores donde las raíces del pueblo Mapuche Lafkenche permanecen fuertes, viviendo en profunda conexión con el mar (lafken significa mar en mapudungun).",
-      "Este destino ofrece una experiencia única que combina playas prístinas, humedales, bosques costeros y comunidades que mantienen vivas sus tradiciones. Lugares como Puerto Saavedra, Toltén, Carahue y la zona del Lago Budi son ideales para quienes buscan un turismo con sentido: más cercano, auténtico y respetuoso con el entorno.",
-      "Entre las actividades principales destacan: pasear por playas tranquilas y poco intervenidas, degustar la gastronomía local basada en mariscos, algas y productos nativos, vivir el turismo rural y etnoturismo junto a familias Mapuche-Lafkenche, y explorar rutas y espacios patrimoniales como el Museo del Budi.",
-    ],
-  },
-  {
-    name: "Araucanía Lacustre",
-    sub: "Entre lagos, volcanes y tradición mapuche",
-    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ARAUCANIA.jpg",
-    body: [
-      "La Araucanía Lacustre es uno de los destinos más encantadores del sur de Chile, ubicado al pie de la cordillera de los Andes. La región cuenta con imponentes volcanes, bosques nativos, aguas termales naturales y lagos de origen glaciar.",
-      "Ciudades como Pucón, Villarrica, Lican Ray y Curarrehue combinan naturaleza prístina con infraestructura turística de primer nivel para el descanso, la aventura y el turismo familiar.",
-      "El área representa territorio ancestral mapuche donde la cultura indígena permanece viva. Los visitantes pueden realizar tours culturales, visitar comunidades, conocer rucas tradicionales, aprender sobre la cosmovisión mapuche y degustar la cocina regional.",
-      "El destino atrae durante todo el año: el invierno invita a las termas y centros de esquí como el Volcán Villarrica; el verano ofrece lagos, playas y senderos de montaña para quienes buscan aire fresco y desconexión.",
-    ],
-  },
-  {
-    name: "Temuco",
-    sub: "Corazón urbano de la Araucanía",
-    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-TEMUCO.jpg",
-    body: [
-      "Temuco es una ciudad moderna y vibrante, considerada el corazón urbano de la Región de La Araucanía. Fundada en 1881 como fuerte militar, se ha transformado en un importante centro cultural, comercial y universitario del sur de Chile.",
-      "La ciudad representa un punto de encuentro entre la cultura mapuche y la tradición europea de sus colonos, diversidad que se expresa en su arquitectura, gastronomía y su gente.",
-      "Entre sus atractivos destacan el Mercado Municipal, el Museo Regional, el parque Cerro Ñielol y una creciente escena de cafés, ferias y eventos culturales que la convierten en una ciudad dinámica y acogedora.",
-      "Temuco funciona como una excelente base para explorar los alrededores: desde Pucón y Villarrica, hasta la Araucanía Andina o la Costa Mapuche, todos a un par de horas de distancia.",
-    ],
-  },
-];
+const REGIONS = siteContent.regions;
 
 function ArticleModal({ region, onClose }) {
   React.useEffect(() => {
@@ -887,14 +814,14 @@ function Footer() {
               ))}
             </div>
 
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>Caupolicán 110, Of. 2003, Temuco, IX Región</p>
-            <a href="mailto:contacto@araucanayfrontera.cl" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 20, textDecoration: "none" })}>✉ contacto@araucanayfrontera.cl</a>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>{SETTINGS.address}</p>
+            <a href={`mailto:${SETTINGS.contactEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 20, textDecoration: "none" })}>✉ {SETTINGS.contactEmail}</a>
 
             <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
               <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>¿Quiere cotizar una campaña con nosotros?</p>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 +56 9 9287 2087</p>
-              <a href="mailto:administracion@araucanayfrontera.cl" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ administracion@araucanayfrontera.cl</a>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 Lunes a Viernes, 9:00 a 18:00 hrs.</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 {SETTINGS.adminPhone}</p>
+              <a href={`mailto:${SETTINGS.adminEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ {SETTINGS.adminEmail}</a>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 {SETTINGS.adminHours}</p>
             </div>
           </div>
 
@@ -922,11 +849,8 @@ function Footer() {
 }
 
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
-const WA_NUMBER = "56992872087";
-const WA_OPTIONS = [
-  { label: "Consulta general",   icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
-  { label: "Cotizar publicidad", icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
-];
+const WA_NUMBER = SETTINGS.whatsappNumber;
+const WA_OPTIONS = siteContent.whatsappOptions;
 
 const SvgWhatsApp = ({ size = 28 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -1097,8 +1021,8 @@ function FronteraSection({ playing, toggle }) {
 }
 
 /* ─── Streams ─────────────────────────────────────────────────────────────── */
-const STREAM_URL      = "/stream";
-const STREAM_FRONTERA = "https://audio.streaminghd.cl:2000/stream/radiofrontera1110";
+const STREAM_URL      = SETTINGS.streamAraucana;
+const STREAM_FRONTERA = SETTINGS.streamFrontera;
 
 function FloatingPlayer({ station, play }) {
   const [muted, setMuted] = useState(false);

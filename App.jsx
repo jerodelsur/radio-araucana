@@ -898,7 +898,7 @@ const WA_NUMBER = "56992872087";
 const WA_OPTIONS = [
   { label: "Consulta general",        icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
   { label: "Cotizar publicidad",      icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
-  { label: "Contactar los estudios",  icon: "🎙️", phone: "56452213166", msg: "Hola, me gustaría comunicarme con los estudios de Radio Araucana 95.9 FM." },
+  { label: "Contactar los estudios",  icon: "🎙️", msg: "Hola, me gustaría comunicarme con los estudios de Radio Araucana 95.9 FM.", wa: "56452213166" },
 ];
 
 const SvgWhatsApp = ({ size = 28 }) => (
@@ -911,9 +911,8 @@ function WhatsAppWidget() {
   const [open, setOpen] = useState(false);
 
   const openChat = (opt) => {
-    const url = opt.phone
-      ? `tel:+${opt.phone}`
-      : `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(opt.msg)}`;
+    const number = opt.wa ?? WA_NUMBER;
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(opt.msg)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

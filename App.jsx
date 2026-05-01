@@ -896,10 +896,8 @@ function Footer() {
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
 const WA_NUMBER = "56992872087";
 const WA_OPTIONS = [
-  { label: "Consulta general",       icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
-  { label: "Cotizar publicidad",     icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
-  { label: "Enviar una dedicatoria", icon: "🎵", msg: "Hola, me gustaría enviar una dedicatoria al aire en el 95.9 FM. " },
-  { label: "Enviar una noticia",     icon: "📰", msg: "Hola, tengo información que podría ser de interés para Radio Araucana." },
+  { label: "Consulta general",   icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
+  { label: "Cotizar publicidad", icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
 ];
 
 const SvgWhatsApp = ({ size = 28 }) => (
@@ -978,7 +976,7 @@ function WhatsAppWidget() {
       {!open && (
         <div style={{ position: "fixed", bottom: 88, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ background: "#191919", border: "1px solid #29623a", borderRadius: 6, padding: "6px 12px", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
-            <p style={K({ fontWeight: 700, fontSize: 12, color: "#fff", margin: 0, whiteSpace: "nowrap" })}>¿Cotiza tu pauta?</p>
+            <p style={K({ fontWeight: 700, fontSize: 12, color: "#fff", margin: 0, whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
             <p style={K({ fontWeight: 300, fontSize: 11, color: "#52b870", margin: 0, whiteSpace: "nowrap" })}>Escríbenos aquí →</p>
           </div>
           <button className="wa-fab" onClick={() => setOpen(true)} style={{

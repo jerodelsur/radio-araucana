@@ -250,9 +250,9 @@ function Hero({ playing, toggle }) {
             </div>
 
             <h1 className="fiu-1" style={K({ fontWeight: 900, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04 })}>
-              La voz histórica<br />
-              <span style={{ color: "#52b870" }}>desde Temuco</span><br />
-              al mundo, en directo.
+              La radio histórica de<br />
+              <span style={{ color: "#52b870" }}>Temuco y la Araucanía,</span><br />
+              en directo.
             </h1>
 
             <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>

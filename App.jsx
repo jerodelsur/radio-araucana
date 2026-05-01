@@ -438,15 +438,31 @@ function VideoSection() {
 
 /* ─── Program Schedule ────────────────────────────────────────────────────── */
 const PROGRAMS = [
-  { time: "06:00 – 10:00", name: "Sube que Te Llevo",       host: "Alejandro Contreras",              color: "#29623a", active: true  },
-  { time: "10:00 – 13:00", name: "La Gran Manada",          host: "Miguel Ángel Contreras",           color: "#4a7c59", active: false },
-  { time: "13:30 – 14:30", name: "La Voz Albiverde",        host: "Mariela González · Lun, Mié, Vie", color: "#8B0000", active: false },
-  { time: "15:00 – 16:00", name: "Contra el Reloj",         host: "Cristian Neira",                   color: "#1a3a5c", active: false },
-  { time: "16:00 – 18:00", name: "Tarde a Tarde de Clásicos", host: "Luis Vega",                      color: "#5c4033", active: false },
-  { time: "18:00 – 20:00", name: "Al Fondo a la Derecha",   host: "Rolando Gómez",                    color: "#4a7c59", active: false },
+  { start: "06:00", end: "10:00", name: "Sube que Te Llevo",         host: "Alejandro Contreras",              color: "#29623a" },
+  { start: "10:00", end: "13:00", name: "La Gran Manada",            host: "Miguel Ángel Contreras",           color: "#4a7c59" },
+  { start: "13:30", end: "14:30", name: "La Voz Albiverde",          host: "Mariela González · Lun, Mié, Vie", color: "#8B0000" },
+  { start: "15:00", end: "16:00", name: "Contra el Reloj",           host: "Cristian Neira",                   color: "#1a3a5c" },
+  { start: "16:00", end: "18:00", name: "Tarde a Tarde de Clásicos", host: "Luis Vega",                        color: "#5c4033" },
+  { start: "18:00", end: "20:00", name: "Al Fondo a la Derecha",     host: "Rolando Gómez",                    color: "#4a7c59" },
 ];
 
+const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+
+function getCurrentProgram() {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  return PROGRAMS.findIndex(p => cur >= toMinutes(p.start) && cur < toMinutes(p.end));
+}
+
 function ProgramSchedule() {
+  const [activeIdx, setActiveIdx] = useState(getCurrentProgram);
+
+  // Re-check every minute
+  React.useEffect(() => {
+    const id = setInterval(() => setActiveIdx(getCurrentProgram()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <section style={{ background: "#fff", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -455,28 +471,30 @@ function ProgramSchedule() {
         </h2>
 
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16 }}>
-          {PROGRAMS.map((p, i) => (
-            <div key={i} className="prog-card" style={{
-              minWidth: 172, padding: 14, borderRadius: 4,
-              border: p.active ? "2px solid #29623a" : "1px solid #e5e7eb",
-              background: p.active ? "#29623a" : "#fff",
-              flexShrink: 0, position: "relative", paddingBottom: 18,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                {p.active && <div className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", flexShrink: 0 }} />}
-                <span style={K({ fontWeight: 700, fontSize: 13, color: p.active ? "#fff" : "#29623a" })}>{p.time}</span>
+          {PROGRAMS.map((p, i) => {
+            const active = i === activeIdx;
+            return (
+              <div key={i} className="prog-card" style={{
+                minWidth: 172, padding: 14, borderRadius: 4,
+                border: active ? "2px solid #29623a" : "1px solid #e5e7eb",
+                background: active ? "#29623a" : "#fff",
+                flexShrink: 0, position: "relative", paddingBottom: 18,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  {active && <div className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", flexShrink: 0 }} />}
+                  <span style={K({ fontWeight: 700, fontSize: 13, color: active ? "#fff" : "#29623a" })}>{p.start} – {p.end}</span>
+                </div>
+                <p style={K({ fontWeight: 600, fontSize: 14, color: active ? "#fff" : "#191919", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
+                <p style={K({ fontWeight: 300, fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "#9ca3af" })}>{p.host}</p>
+                {!active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: p.color, borderRadius: "0 0 4px 4px" }} />}
               </div>
-              <p style={K({ fontWeight: 600, fontSize: 14, color: p.active ? "#fff" : "#191919", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
-              <p style={K({ fontWeight: 300, fontSize: 11, color: p.active ? "rgba(255,255,255,0.8)" : "#9ca3af" })}>{p.host}</p>
-              {!p.active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: p.color, borderRadius: "0 0 4px 4px" }} />}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <a href="https://araucanayfrontera.cl/programacion" target="_blank" rel="noreferrer"
-          style={K({ display: "inline-block", fontWeight: 600, fontSize: 15, color: "#52b870", textDecoration: "none", marginTop: 24 })}>
-          Ver programación completa →
-        </a>
+        {activeIdx === -1 && (
+          <p style={K({ fontWeight: 400, fontSize: 14, color: "#9ca3af", marginTop: 12 })}>Sin programa en este horario</p>
+        )}
       </div>
     </section>
   );

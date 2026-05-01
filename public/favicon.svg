@@ -3,5 +3,5 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@700');</style>
   </defs>
   <rect width="64" height="64" rx="12" fill="#191919"/>
-  <text x="32" y="48" text-anchor="middle" font-family="'Open Sans', sans-serif" font-weight="700" font-size="50" fill="#ffffff">A</text>
+  <text x="32" y="48" text-anchor="middle" font-family="'Open Sans', sans-serif" font-weight="700" font-size="50" fill="#52b870">A</text>
 </svg>

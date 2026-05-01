@@ -54,21 +54,10 @@ const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
 /* ─── Global Styles ───────────────────────────────────────────────────────── */
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #0d0d0d; }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      opacity: 0.038;
-      pointer-events: none;
-      z-index: 9997;
-    }
+    body { font-family: 'Kanit', sans-serif; background: #191919; }
 
     @keyframes livePulse {
       0%, 100% { transform: scale(1);   opacity: 1;   }
@@ -131,15 +120,14 @@ const GlobalStyles = () => (
     .cta-btn { transition: background 150ms ease, transform 120ms ease; }
     .cta-btn:hover { background: #aa0000 !important; transform: translateY(-1px); }
 
-    ::-webkit-scrollbar { height: 4px; width: 4px; }
-    ::-webkit-scrollbar-track { background: #0d0d0d; }
+    ::-webkit-scrollbar { height: 4px; }
+    ::-webkit-scrollbar-track { background: #191919; }
     ::-webkit-scrollbar-thumb { background: #29623a; border-radius: 2px; }
   `}</style>
 );
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
-const K = (style) => ({ fontFamily: "'Inter', sans-serif", ...style });
-const S = (style) => ({ fontFamily: "'Syne', sans-serif", ...style });
+const K = (style) => ({ fontFamily: "'Kanit', sans-serif", ...style });
 
 const Waveform = ({ color = "#29623a", height = 24 }) => (
   <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height }}>
@@ -164,7 +152,7 @@ function Navbar() {
   const links = ["Inicio", "Noticias", "Programación", "Destinos", "En Vivo", "Contacto"];
 
   return (
-    <nav style={{ background: "#0d0d0d", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
+    <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
 
         {/* Official logo */}
@@ -193,7 +181,7 @@ function Navbar() {
       </div>
 
       {open && (
-        <div className="md:hidden" style={{ background: "#0d0d0d", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
+        <div className="md:hidden" style={{ background: "#191919", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
           {links.map((l) => (
             <a key={l} href="#" style={K({ display: "block", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>{l}</a>
           ))}
@@ -207,7 +195,7 @@ function Navbar() {
 function Hero() {
   return (
     <section style={{
-      background: "#0d0d0d",
+      background: "#191919",
       backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 22px)",
       display: "flex", alignItems: "center", padding: "clamp(60px, 8vw, 120px) 24px",
     }}>
@@ -222,13 +210,13 @@ function Hero() {
               </span>
             </div>
 
-            <h1 className="fiu-1" style={S({ fontWeight: 800, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04, letterSpacing: "-0.01em" })}>
+            <h1 className="fiu-1" style={K({ fontWeight: 900, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04 })}>
               La voz de<br />
               <span style={{ color: "#52b870" }}>Temuco y la Araucanía,</span><br />
               en directo.
             </h1>
 
-            <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, maxWidth: 440 })}>
+            <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
               Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 80 años siendo la voz de nuestra gente.
             </p>
 
@@ -308,32 +296,32 @@ const CARDS = [
 
 function NewsGrid() {
   return (
-    <section style={{ background: "#0d0d0d", padding: "64px 24px" }}>
+    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={S({ fontWeight: 800, fontSize: 28, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" })}>Lo Más Reciente</h2>
+        <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 32 }}>
+          <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-          <article className="news-card lg:col-span-3" style={{ background: "#161616", borderRadius: 6, overflow: "hidden", border: "1px solid #222" }}>
+          <article className="news-card lg:col-span-3" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
             <div style={{ background: FEATURED.bg, height: 240, padding: 16, display: "flex", alignItems: "flex-start" }}>
               <Tag label={FEATURED.cat} />
             </div>
             <div style={{ padding: 20 }}>
-              <h3 style={S({ fontWeight: 700, fontSize: 24, color: "#f0f0f0", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
-              <p style={K({ fontWeight: 300, fontSize: 15, color: "#888", lineHeight: 1.6, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
-              <span style={K({ fontWeight: 300, fontSize: 12, color: "#555" })}>Por {FEATURED.author} · {FEATURED.time}</span>
+              <h3 style={K({ fontWeight: 700, fontSize: 24, color: "#191919", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
+              <p style={K({ fontWeight: 300, fontSize: 15, color: "#6b7280", lineHeight: 1.5, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
+              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {FEATURED.author} · {FEATURED.time}</span>
             </div>
           </article>
 
-          <div className="lg:col-span-2" style={{ background: "#161616", borderRadius: 6, overflow: "hidden", border: "1px solid #222" }}>
+          <div className="lg:col-span-2" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
             {SECONDARY.map((a, i) => (
-              <article key={i} className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #222" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <article key={i} className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #e5e7eb" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{ background: a.bg, width: 64, height: 64, borderRadius: 4, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Tag label={a.cat} />
-                  <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#e8e8e8", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
-                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#555" })}>{a.time}</span>
+                  <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#191919", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
+                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{a.time}</span>
                 </div>
               </article>
             ))}
@@ -342,13 +330,13 @@ function NewsGrid() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARDS.map((a, i) => (
-            <article key={i} className="news-card" style={{ background: "#161616", borderRadius: 6, overflow: "hidden", border: "1px solid #222" }}>
+            <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
               <div style={{ background: a.bg, height: 180, padding: 12, display: "flex", alignItems: "flex-start" }}>
                 <Tag label={a.cat} />
               </div>
               <div style={{ padding: 16 }}>
-                <h4 style={S({ fontWeight: 700, fontSize: 17, color: "#f0f0f0", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
-                <span style={K({ fontWeight: 300, fontSize: 12, color: "#555" })}>Por {a.author} · {a.time}</span>
+                <h4 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
+                <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {a.author} · {a.time}</span>
               </div>
             </article>
           ))}
@@ -368,10 +356,10 @@ const VIDEOS = [
 
 function VideoSection() {
   return (
-    <section style={{ background: "#0d0d0d", padding: "64px 24px" }}>
+    <section style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={S({ fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", marginBottom: 40, letterSpacing: "0.02em", textTransform: "uppercase" })}>
-          En directo y en video
+        <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", marginBottom: 40, letterSpacing: "-0.01em" })}>
+          EN DIRECTO Y EN VIDEO
         </h2>
 
         <div style={{ maxWidth: 800, margin: "0 auto 48px" }}>
@@ -426,27 +414,27 @@ const PROGRAMS = [
 
 function ProgramSchedule() {
   return (
-    <section style={{ background: "#111", padding: "64px 24px" }}>
+    <section style={{ background: "#fff", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={S({ fontWeight: 800, fontSize: 32, color: "#fff", marginBottom: 32, letterSpacing: "0.04em", textTransform: "uppercase" })}>
-          Programación de hoy
+        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32, letterSpacing: "0.01em" })}>
+          PROGRAMACIÓN DE HOY
         </h2>
 
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16 }}>
           {PROGRAMS.map((p, i) => (
             <div key={i} className="prog-card" style={{
-              minWidth: 172, padding: 14, borderRadius: 6,
-              border: p.active ? "1px solid #29623a" : "1px solid #222",
-              background: p.active ? "#29623a" : "#161616",
+              minWidth: 172, padding: 14, borderRadius: 4,
+              border: p.active ? "2px solid #29623a" : "1px solid #e5e7eb",
+              background: p.active ? "#29623a" : "#fff",
               flexShrink: 0, position: "relative", paddingBottom: 18,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                 {p.active && <div className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", flexShrink: 0 }} />}
-                <span style={K({ fontWeight: 600, fontSize: 12, color: p.active ? "#fff" : "#52b870", letterSpacing: "0.05em" })}>{p.time}</span>
+                <span style={K({ fontWeight: 700, fontSize: 13, color: p.active ? "#fff" : "#29623a" })}>{p.time}</span>
               </div>
-              <p style={K({ fontWeight: 600, fontSize: 14, color: p.active ? "#fff" : "#e8e8e8", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
-              <p style={K({ fontWeight: 300, fontSize: 11, color: p.active ? "rgba(255,255,255,0.7)" : "#555" })}>{p.host}</p>
-              {!p.active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: p.color, borderRadius: "0 0 6px 6px" }} />}
+              <p style={K({ fontWeight: 600, fontSize: 14, color: p.active ? "#fff" : "#191919", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
+              <p style={K({ fontWeight: 300, fontSize: 11, color: p.active ? "rgba(255,255,255,0.8)" : "#9ca3af" })}>{p.host}</p>
+              {!p.active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: p.color, borderRadius: "0 0 4px 4px" }} />}
             </div>
           ))}
         </div>
@@ -470,10 +458,10 @@ const REGIONS = [
 
 function RegionalStories() {
   return (
-    <section style={{ background: "#0d0d0d", padding: "64px 24px" }}>
+    <section style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={S({ fontWeight: 800, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 40 })}>
-          <span style={{ color: "#52b870" }}>Nuestra</span> Región, Nuestra Casa
+        <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: 40 })}>
+          <span style={{ color: "#52b870" }}>NUESTRA</span> REGIÓN, NUESTRA CASA
         </h2>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -507,14 +495,14 @@ const IG_GRADS = [
 
 function SocialFeeds() {
   return (
-    <section style={{ background: "#0d0d0d", padding: "64px 24px" }}>
+    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={S({ fontWeight: 800, fontSize: 32, color: "#fff", marginBottom: 40, textTransform: "uppercase", letterSpacing: "0.04em" })}>Síguenos</h2>
+        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 40 })}>SÍGUENOS</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#e8e8e8", marginBottom: 4 })}>@araucanafm</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#555", marginBottom: 16 })}>Instagram</p>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Instagram</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, marginBottom: 16 }}>
               {IG_GRADS.map((g, i) => <div key={i} className="social-tile" style={{ background: g }} />)}
             </div>
@@ -523,16 +511,16 @@ function SocialFeeds() {
           </div>
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#e8e8e8", marginBottom: 4 })}>@araucanafm</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#555", marginBottom: 16 })}>X / Twitter</p>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>X / Twitter</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {TWEETS.map((t, i) => (
-                <div key={i} style={{ background: "#161616", border: "1px solid #222", borderRadius: 6, padding: 16 }}>
-                  <p style={K({ fontWeight: 400, fontSize: 14, color: "#ccc", lineHeight: 1.55, marginBottom: 8 })}>{t.txt}</p>
+                <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 16 }}>
+                  <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>{t.txt}</p>
                   <div style={{ display: "flex", gap: 16 }}>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#444" })}>{t.time}</span>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#555" })}>♥ {t.likes}</span>
-                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#555" })}>↺ {t.rts}</span>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{t.time}</span>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>♥ {t.likes}</span>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>↺ {t.rts}</span>
                   </div>
                 </div>
               ))}
@@ -540,18 +528,18 @@ function SocialFeeds() {
           </div>
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#e8e8e8", marginBottom: 4 })}>araucanafm</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#555", marginBottom: 16 })}>Facebook</p>
-            <div style={{ background: "#161616", border: "1px solid #222", borderRadius: 6, padding: 20, marginBottom: 16 }}>
-              <div style={{ background: "linear-gradient(135deg, #1d4a2b, #29623a)", height: 140, borderRadius: 4, marginBottom: 12 }} />
-              <p style={K({ fontWeight: 400, fontSize: 14, color: "#ccc", lineHeight: 1.55, marginBottom: 8 })}>
-                Esta mañana en Sube que Te Llevo: entrevista con el Delegado Presidencial sobre el plan de desarrollo regional. Sintoniza el 95.9.
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Facebook</p>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 20, marginBottom: 16 }}>
+              <div style={{ background: "linear-gradient(135deg, #1d4a2b, #29623a)", height: 140, borderRadius: 3, marginBottom: 12 }} />
+              <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>
+                Esta mañana en Sube que Te Llevo: entrevista con el Delegado Presidencial sobre el plan de desarrollo regional. ¡Sintoniza el 95.9!
               </p>
-              <span style={K({ fontWeight: 300, fontSize: 12, color: "#444" })}>hace 1 h · 234 Me gusta · 45 comentarios</span>
+              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>hace 1 h · 234 Me gusta · 45 comentarios</span>
             </div>
             <div style={{ textAlign: "center" }}>
-              <p style={S({ fontWeight: 800, fontSize: 40, color: "#52b870", lineHeight: 1 })}>+50.000</p>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "#555", marginTop: 4 })}>auditores diarios</p>
+              <p style={K({ fontWeight: 700, fontSize: 36, color: "#52b870", lineHeight: 1 })}>+50.000</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginTop: 4 })}>auditores diarios</p>
             </div>
           </div>
 
@@ -564,7 +552,7 @@ function SocialFeeds() {
 /* ─── Sponsor Strip ───────────────────────────────────────────────────────── */
 function SponsorStrip() {
   return (
-    <div style={{ background: "#0d0d0d", padding: "28px 24px" }}>
+    <div style={{ background: "#191919", padding: "28px 24px" }}>
       <p style={K({ fontWeight: 500, fontSize: 12, color: "rgba(255,255,255,0.5)", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20 })}>
         EMPRESAS QUE CONFÍAN EN NOSOTROS
       </p>
@@ -589,7 +577,7 @@ const FOOTER_LINKS = [
 
 function Footer() {
   return (
-    <footer style={{ background: "#0d0d0d", padding: "64px 24px 0" }}>
+    <footer style={{ background: "#191919", padding: "64px 24px 0" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
 
@@ -681,7 +669,7 @@ function FloatingPlayer() {
   };
 
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#0d0d0d", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
       <audio ref={audioRef} preload="none" />
 
       {/* Logo — oculto en móvil */}

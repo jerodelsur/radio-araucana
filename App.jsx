@@ -975,16 +975,22 @@ function WhatsAppWidget() {
       )}
 
       {/* FAB */}
-      <button className="wa-fab" onClick={() => setOpen(!open)} style={{
-        position: "fixed", bottom: 88, right: 20, zIndex: 9997,
-        width: 56, height: 56, borderRadius: "50%",
-        background: "#25D366", border: "none", cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
-        boxShadow: "0 4px 18px rgba(37,211,102,0.35)",
-        ...(open && { display: "none" }),
-      }}>
-        <SvgWhatsApp size={28} />
-      </button>
+      {!open && (
+        <div style={{ position: "fixed", bottom: 88, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: "#191919", border: "1px solid #29623a", borderRadius: 6, padding: "6px 12px", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
+            <p style={K({ fontWeight: 700, fontSize: 12, color: "#fff", margin: 0, whiteSpace: "nowrap" })}>¿Cotiza tu pauta?</p>
+            <p style={K({ fontWeight: 300, fontSize: 11, color: "#52b870", margin: 0, whiteSpace: "nowrap" })}>Escríbenos aquí →</p>
+          </div>
+          <button className="wa-fab" onClick={() => setOpen(true)} style={{
+            width: 56, height: 56, borderRadius: "50%", flexShrink: 0,
+            background: "#25D366", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+            boxShadow: "0 4px 18px rgba(37,211,102,0.35)",
+          }}>
+            <SvgWhatsApp size={28} />
+          </button>
+        </div>
+      )}
     </>
   );
 }

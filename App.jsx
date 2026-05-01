@@ -484,10 +484,30 @@ function ProgramSchedule() {
 
 /* ─── Regional Stories ────────────────────────────────────────────────────── */
 const REGIONS = [
-  { name: "Araucanía Andina",  sub: "Volcanes, bosques y comunidades", n: 14, bg: "linear-gradient(160deg, #0f2d1a, #29623a, #1d4a2b)" },
-  { name: "Costa Araucana",    sub: "Mar, pesca y tradición",          n:  9, bg: "linear-gradient(160deg, #0f1d2d, #1a3a5c, #0f2d40)" },
-  { name: "Araucanía Lacustre",sub: "Lagos, ríos y naturaleza",        n: 11, bg: "linear-gradient(160deg, #0f2535, #1a4a5c, #0f3545)" },
-  { name: "Temuco",            sub: "Ciudad, cultura y progreso",      n:  7, bg: "linear-gradient(160deg, #1a1a1a, #2d2d2d, #191919)" },
+  {
+    name: "Araucanía Andina",
+    sub: "Montañas, cultura y aventura al pie del Volcán Llaima",
+    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ANDINA.jpg",
+    url: "https://araucanayfrontera.cl/araucania-andina-montanas-cultura-y-aventura-al-pie-del-volcan-llaima/",
+  },
+  {
+    name: "Costa Araucana",
+    sub: "Donde la naturaleza y la cultura mapuche se encuentran con el mar",
+    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-COSTA.jpg",
+    url: "https://araucanayfrontera.cl/costa-araucania-donde-la-naturaleza-y-la-cultura-mapuche-se-encuentran-con-el-mar/",
+  },
+  {
+    name: "Araucanía Lacustre",
+    sub: "Entre lagos, volcanes y tradición mapuche",
+    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ARAUCANIA.jpg",
+    url: "https://araucanayfrontera.cl/araucania-lacustre-entre-lagos-volcanes-y-tradicion-mapuche/",
+  },
+  {
+    name: "Temuco",
+    sub: "Corazón urbano de la Araucanía",
+    img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-TEMUCO.jpg",
+    url: "https://araucanayfrontera.cl/temuco-corazon-urbano-de-la-araucania/",
+  },
 ];
 
 function RegionalStories() {
@@ -500,14 +520,22 @@ function RegionalStories() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {REGIONS.map((r, i) => (
-            <div key={i} className="region-card" style={{ background: r.bg, borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #29623a 0px, #29623a 8px, transparent 8px, transparent 16px)" }} />
-              <div style={{ padding: 24 }}>
-                <h3 style={K({ fontWeight: 800, fontSize: "clamp(22px, 2.8vw, 36px)", color: "#fff", lineHeight: 1.1, marginBottom: 4 })}>{r.name}</h3>
-                <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8 })}>{r.sub}</p>
-                <span style={K({ fontWeight: 500, fontSize: 12, color: "#52b870" })}>{r.n} historias esta semana</span>
+            <a key={i} href={r.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+              <div className="region-card" style={{ borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                {/* Foto real */}
+                <img src={r.img} alt={r.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                {/* Overlay degradado */}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,20,14,0.92) 0%, rgba(10,20,14,0.3) 55%, transparent 100%)" }} />
+                {/* Franja superior */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #52b870 0px, #52b870 8px, transparent 8px, transparent 16px)" }} />
+                {/* Texto */}
+                <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
+                  <h3 style={K({ fontWeight: 800, fontSize: "clamp(18px, 2.4vw, 30px)", color: "#fff", lineHeight: 1.1, marginBottom: 6 })}>{r.name}</h3>
+                  <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 10 })}>{r.sub}</p>
+                  <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870" })}>Leer artículo →</span>
+                </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </div>

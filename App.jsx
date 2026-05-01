@@ -736,16 +736,29 @@ const SvgFacebookColor = () => (
 );
 
 function SocialFeeds() {
+  // Brand palette: greens (deep → bright), yellows/gold, blacks
   const IG_GRADS = [
-    "linear-gradient(135deg,#0f2d1a,#29623a)",
-    "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
-    "linear-gradient(135deg,#2d4a1a,#4a7c59)",
-    "linear-gradient(135deg,#2d1a0f,#5c4033)",
-    "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
-    "linear-gradient(135deg,#3a0f0f,#8B0000)",
-    "linear-gradient(135deg,#1d4a2b,#52b870)",
-    "linear-gradient(135deg,#0f2535,#1a4a5c)",
-    "linear-gradient(135deg,#2d2d1a,#5c5c1a)",
+    "linear-gradient(135deg,#0f2d1a,#29623a)",  // deep → mid green
+    "linear-gradient(135deg,#191919,#29623a)",  // black → green
+    "linear-gradient(135deg,#2d4a1a,#7dbb5e)",  // forest → leaf
+    "linear-gradient(135deg,#b8860b,#f5b800)",  // mustard → gold
+    "linear-gradient(135deg,#0a0a0a,#2d2d2d)",  // pure dark
+    "linear-gradient(135deg,#1d4a2b,#52b870)",  // deep → bright green
+    "linear-gradient(135deg,#5c5c1a,#d4a017)",  // olive → amber
+    "linear-gradient(135deg,#29623a,#7dbb5e)",  // mid → leaf green
+    "linear-gradient(135deg,#3a6e28,#c9a227)",  // green → warm gold
+  ];
+
+  const FB_GRADS = [
+    "linear-gradient(135deg,#0a0a0a,#1d4a2b)",  // black → deep green
+    "linear-gradient(135deg,#29623a,#d4a017)",  // green → gold (signature)
+    "linear-gradient(135deg,#2d4a1a,#4a7c59)",  // forest tones
+    "linear-gradient(135deg,#1a3a1e,#52b870)",  // dark → bright green
+    "linear-gradient(135deg,#c9a227,#f5b800)",  // amber → gold
+    "linear-gradient(135deg,#191919,#3a6e28)",  // dark → green
+    "linear-gradient(135deg,#0f2d1a,#7dbb5e)",  // deep → leaf
+    "linear-gradient(135deg,#6b8e23,#d4a017)",  // olive → gold
+    "linear-gradient(135deg,#1d4a2b,#52b870)",  // green gradient
   ];
 
   return (
@@ -800,17 +813,7 @@ function SocialFeeds() {
               </a>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
-              {[
-                "linear-gradient(135deg,#1a3a5c,#1877F2)",
-                "linear-gradient(135deg,#0f2d1a,#29623a)",
-                "linear-gradient(135deg,#2d1a0f,#5c4033)",
-                "linear-gradient(135deg,#1877F2,#0f2d4a)",
-                "linear-gradient(135deg,#1d4a2b,#52b870)",
-                "linear-gradient(135deg,#3a0f0f,#8B0000)",
-                "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
-                "linear-gradient(135deg,#0f1d2d,#1877F2)",
-                "linear-gradient(135deg,#2d4a1a,#4a7c59)",
-              ].map((g, i) => (
+              {FB_GRADS.map((g, i) => (
                 <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
               ))}
             </div>

@@ -365,14 +365,14 @@ function NewsTicker() {
 
   return (
     <div style={{ background: "#29623a", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
-      <div style={{ background: "#1c4a28", padding: "10px 18px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
+      <div className="hidden sm:flex" style={{ background: "#1c4a28", padding: "10px 18px", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
         <span style={{ fontSize: 15 }}>🌡️</span>
         <span style={K({ fontWeight: 700, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em", whiteSpace: "nowrap" })}>METEO ARAUCANÍA</span>
       </div>
       <div style={{ overflow: "hidden", flex: 1, padding: "10px 0" }}>
         <div className="marquee-track">
           <span style={K({ fontWeight: 500, fontSize: 13, color: "#fff", letterSpacing: "0.04em" })}>
-            {tickerText}{tickerText}
+            {tickerText}{tickerText}{tickerText}
           </span>
         </div>
       </div>

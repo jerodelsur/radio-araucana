@@ -516,49 +516,98 @@ function RegionalStories() {
 }
 
 /* ─── Social Feeds ────────────────────────────────────────────────────────── */
-const TWEETS = [
-  { txt: "El volcán Llaima mantiene alerta amarilla. Las autoridades monitorean la actividad sísmica en la zona. Sintoniza Radio Araucana 95.9 FM para toda la información.", time: "hace 2 h", likes: 48, rts: 12 },
-  { txt: "Festival Kimün: la gran celebración de la cultura mapuche llega a Padre Las Casas este junio. ¡La información la escuchas primero en el 95.9!", time: "hace 4 h", likes: 134, rts: 67 },
-  { txt: "Nueva ruta ciclista Temuco–Padre Las Casas: ¿La usarías? Cuéntanos en comentarios o al +56 45 2213166.", time: "hace 6 h", likes: 89, rts: 23 },
-];
-const IG_GRADS = [
-  "linear-gradient(135deg,#0f2d1a,#29623a)", "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
-  "linear-gradient(135deg,#2d1a0f,#5c4033)", "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
-  "linear-gradient(135deg,#2d4a1a,#4a7c59)", "linear-gradient(135deg,#3a0f0f,#8B0000)",
-];
+const SvgInstagramColor = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#f09433"/>
+        <stop offset="25%" stopColor="#e6683c"/>
+        <stop offset="50%" stopColor="#dc2743"/>
+        <stop offset="75%" stopColor="#cc2366"/>
+        <stop offset="100%" stopColor="#bc1888"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#ig)" strokeWidth="2"/>
+    <circle cx="12" cy="12" r="4" stroke="url(#ig)" strokeWidth="2"/>
+    <circle cx="17.5" cy="6.5" r="1" fill="#dc2743"/>
+  </svg>
+);
+const SvgFacebookColor = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
 
 function SocialFeeds() {
   return (
     <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 40 })}>SÍGUENOS</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-          <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanaradio</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Instagram</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, marginBottom: 16 }}>
-              {IG_GRADS.map((g, i) => <div key={i} className="social-tile" style={{ background: g }} />)}
-            </div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
+          <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", margin: 0 })}>SÍGUENOS</h2>
+          <div style={{ display: "flex", gap: 10 }}>
             <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-              style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver en Instagram →</a>
+              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 13, color: "#fff", textDecoration: "none", background: "#dc2743", padding: "9px 18px", borderRadius: 6 })}>
+              <SvgInstagramColor />
+              Seguir en Instagram
+            </a>
+            <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
+              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 13, color: "#fff", textDecoration: "none", background: "#1877F2", padding: "9px 18px", borderRadius: 6 })}>
+              <SvgFacebookColor />
+              Seguir en Facebook
+            </a>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+          {/* Instagram */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <SvgInstagramColor />
+              <div>
+                <p style={K({ fontWeight: 700, fontSize: 15, color: "#191919", margin: 0 })}>@araucanaradio</p>
+                <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Instagram</p>
+              </div>
+            </div>
+            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3, borderRadius: 6, overflow: "hidden", marginBottom: 14 }}>
+                {[
+                  "linear-gradient(135deg,#0f2d1a,#29623a)",
+                  "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
+                  "linear-gradient(135deg,#2d4a1a,#4a7c59)",
+                  "linear-gradient(135deg,#2d1a0f,#5c4033)",
+                  "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
+                  "linear-gradient(135deg,#3a0f0f,#8B0000)",
+                  "linear-gradient(135deg,#1d4a2b,#52b870)",
+                  "linear-gradient(135deg,#0f2535,#1a4a5c)",
+                  "linear-gradient(135deg,#2d2d1a,#5c5c1a)",
+                ].map((g, i) => (
+                  <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
+                ))}
+              </div>
+            </a>
+            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
+              style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver perfil completo →</a>
           </div>
 
+          {/* Facebook Page Plugin */}
           <div>
-            <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-              <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>radioaraucana</p>
-            </a>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Facebook</p>
-            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 20, marginBottom: 16 }}>
-              <div style={{ background: "linear-gradient(135deg, #1d4a2b, #29623a)", height: 140, borderRadius: 3, marginBottom: 12 }} />
-              <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>
-                Esta mañana en Sube que Te Llevo: entrevista con el Delegado Presidencial sobre el plan de desarrollo regional. ¡Sintoniza el 95.9!
-              </p>
-              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>hace 1 h · 234 Me gusta · 45 comentarios</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <SvgFacebookColor />
+              <div>
+                <p style={K({ fontWeight: 700, fontSize: 15, color: "#191919", margin: 0 })}>radioaraucana</p>
+                <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Facebook</p>
+              </div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <p style={K({ fontWeight: 700, fontSize: 36, color: "#52b870", lineHeight: 1 })}>+50.000</p>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginTop: 4 })}>auditores diarios</p>
+            <div style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #e5e7eb", background: "#fff" }}>
+              <iframe
+                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fradioaraucana&tabs=timeline&width=500&height=480&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
+                width="100%" height="480"
+                style={{ border: "none", display: "block" }}
+                scrolling="no"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              />
             </div>
           </div>
 

@@ -1084,7 +1084,7 @@ function FronteraSection({ playing, toggle }) {
 
 /* ─── Streams ─────────────────────────────────────────────────────────────── */
 const STREAM_URL      = "/stream";
-const STREAM_FRONTERA = "https://audio.streaminghd.cl:2020/public/radiofrontera1110";
+const STREAM_FRONTERA = "https://audio.streaminghd.cl:2000/stream/radiofrontera1110";
 
 function FloatingPlayer({ station, play }) {
   const [muted, setMuted] = useState(false);

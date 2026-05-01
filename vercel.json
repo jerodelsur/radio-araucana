@@ -6,7 +6,7 @@
     },
     {
       "source": "/stream-frontera",
-      "destination": "https://audio.streaminghd.cl:2020/public/radiofrontera1110"
+      "destination": "https://audio.streaminghd.cl:2000/stream/radiofrontera1110"
     }
   ]
 }

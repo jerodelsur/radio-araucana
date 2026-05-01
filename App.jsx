@@ -1039,13 +1039,13 @@ function FronteraSection({ playing, toggle }) {
               Fundada en octubre de 1939, Radio La Frontera A.M. es una de las radios más antiguas del sur de Chile. Décadas de historia acompañando a la Araucanía en el 1110 AM.
             </p>
 
-            <button className="play-btn" onClick={toggle} style={K({
+            <button className="play-btn w-full sm:w-fit" onClick={toggle} style={K({
               background: playing ? "#29623a" : "transparent",
               color: "#fff", fontWeight: 700, fontSize: 15,
-              padding: "14px 32px", borderRadius: 3,
+              padding: "20px 32px", borderRadius: 3,
               border: "2px solid #52b870",
               cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase",
-              display: "flex", alignItems: "center", gap: 10, width: "fit-content",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
               transition: "background 200ms ease",
             })}>
               {playing ? <Pause size={16} /> : <Play size={16} fill="#fff" />}

@@ -75,6 +75,10 @@ const GlobalStyles = () => (
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0);    }
     }
+    @keyframes signalRing {
+      0%   { transform: scale(0.4); opacity: 0.7; }
+      100% { transform: scale(2.6); opacity: 0;   }
+    }
 
     .live-dot      { animation: livePulse 1.5s ease-in-out infinite; }
     .wave-bar      { animation: waveform 0.8s ease-in-out alternate infinite; transform-origin: bottom; }
@@ -135,6 +139,40 @@ const Waveform = ({ color = "#29623a", height = 24 }) => (
       <div key={i} className="wave-bar"
         style={{ width: 4, height, background: color, borderRadius: 2, animationDelay: `${d}s` }} />
     ))}
+  </div>
+);
+
+/* ─── Live Placeholder ────────────────────────────────────────────────────── */
+const LivePlaceholder = () => (
+  <div style={{
+    position: "absolute", inset: 0,
+    background: "#191919",
+    backgroundImage: "radial-gradient(ellipse at center, rgba(41,98,58,0.18) 0%, transparent 68%), url(/mapuche.svg)",
+    backgroundSize: "auto, 60px 60px",
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+    gap: 24,
+  }}>
+    {/* Animated signal rings */}
+    <div style={{ position: "relative", width: 88, height: 88, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {[0, 0.5, 1.0].map((delay, i) => (
+        <div key={i} style={{
+          position: "absolute", inset: 0, borderRadius: "50%",
+          border: "1px solid rgba(41,98,58,0.7)",
+          animation: `signalRing 2.4s ease-out ${delay}s infinite`,
+        }} />
+      ))}
+      <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#29623a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Play size={22} color="#fff" fill="#fff" />
+      </div>
+    </div>
+
+    <LogoSVG height={40} color="#ffffff" />
+
+    <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={K({ fontWeight: 700, fontSize: 20, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
+      <p style={K({ fontWeight: 400, fontSize: 14, color: "rgba(255,255,255,0.55)" })}>Sin transmisión en directo en este momento</p>
+      <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 })}>Sintoniza el 95.9 FM en Temuco y la Araucanía</p>
+    </div>
   </div>
 );
 
@@ -218,7 +256,7 @@ function Hero({ playing, toggle }) {
             </h1>
 
             <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
-              Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 80 años siendo la voz de nuestra gente.
+              Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 65 años siendo la voz de nuestra gente.
             </p>
 
             <div className="fiu-2" style={{ background: "#2d2d2d", borderLeft: "3px solid #29623a", padding: "16px 20px", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -239,11 +277,7 @@ function Hero({ playing, toggle }) {
 
           <div className="fiu-4" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 60px rgba(41,98,58,0.4)" }}>
-              <iframe style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
-                src="https://www.youtube.com/embed/live_stream?channel=UCxxxxxxx"
-                title="Radio Araucana FM 95.9 — En Vivo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen />
+              <LivePlaceholder />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
@@ -362,9 +396,7 @@ function VideoSection() {
 
         <div style={{ maxWidth: 800, margin: "0 auto 48px" }}>
           <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 80px rgba(41,98,58,0.5)" }}>
-            <iframe style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
-              src="https://www.youtube.com/embed/live_stream?channel=UCxxxxxxx"
-              title="Radio Araucana — En Directo" allowFullScreen />
+            <LivePlaceholder />
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
@@ -581,9 +613,9 @@ function Footer() {
               <LogoSVG height={30} color="#ffffff" />
             </div>
             <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
-              Las radios que han acompañado a Temuco<br />y la Araucanía por generaciones.
+              Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
             </p>
-            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 24 })}>Desde 1944 · Más de 80 años en el aire</p>
+            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 24 })}>Desde 1960 · Más de 65 años en el aire</p>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               {SOC.map((Icon, i) => (

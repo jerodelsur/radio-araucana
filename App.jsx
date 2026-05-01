@@ -488,29 +488,88 @@ const REGIONS = [
     name: "Araucanía Andina",
     sub: "Montañas, cultura y aventura al pie del Volcán Llaima",
     img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ANDINA.jpg",
-    url: "https://araucanayfrontera.cl/araucania-andina-montanas-cultura-y-aventura-al-pie-del-volcan-llaima/",
+    body: [
+      "La Araucanía Andina es la puerta de entrada norte a la Región de La Araucanía. Este territorio de montañas atrae a aventureros, amantes de los deportes de invierno y quienes buscan parques nacionales y el patrimonio mapuche-pehuenche.",
+      "El Volcán Llaima es el rasgo geográfico dominante, anclando uno de los destinos más impresionantes de Chile: el Parque Nacional Conguillío. Esta área alberga bosques de araucarias milenarias, lagunas de origen glaciar, senderos de trekking, avistamiento de aves y presencia cultural indígena.",
+      "Las actividades disponibles incluyen esquí en centros de invierno como Las Araucarias, recorridos por los senderos de Conguillío para contemplar el contraste entre flujos de lava y vegetación, visitas a comunidades que ofrecen turismo cultural, y la experiencia de ríos y aguas termales rodeados de montañas.",
+      "El destino atrae tanto a quienes buscan aventura como a quienes desean reconectarse con una naturaleza prístina e inalterada.",
+    ],
   },
   {
     name: "Costa Araucana",
     sub: "Donde la naturaleza y la cultura mapuche se encuentran con el mar",
     img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-COSTA.jpg",
-    url: "https://araucanayfrontera.cl/costa-araucania-donde-la-naturaleza-y-la-cultura-mapuche-se-encuentran-con-el-mar/",
+    body: [
+      "La Costa Araucanía es un destino inexplorado y sorprendente. Se extiende desde el borde costero del sur de Chile hasta zonas interiores donde las raíces del pueblo Mapuche Lafkenche permanecen fuertes, viviendo en profunda conexión con el mar (lafken significa mar en mapudungun).",
+      "Este destino ofrece una experiencia única que combina playas prístinas, humedales, bosques costeros y comunidades que mantienen vivas sus tradiciones. Lugares como Puerto Saavedra, Toltén, Carahue y la zona del Lago Budi son ideales para quienes buscan un turismo con sentido: más cercano, auténtico y respetuoso con el entorno.",
+      "Entre las actividades principales destacan: pasear por playas tranquilas y poco intervenidas, degustar la gastronomía local basada en mariscos, algas y productos nativos, vivir el turismo rural y etnoturismo junto a familias Mapuche-Lafkenche, y explorar rutas y espacios patrimoniales como el Museo del Budi.",
+    ],
   },
   {
     name: "Araucanía Lacustre",
     sub: "Entre lagos, volcanes y tradición mapuche",
     img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-ARAUCANIA.jpg",
-    url: "https://araucanayfrontera.cl/araucania-lacustre-entre-lagos-volcanes-y-tradicion-mapuche/",
+    body: [
+      "La Araucanía Lacustre es uno de los destinos más encantadores del sur de Chile, ubicado al pie de la cordillera de los Andes. La región cuenta con imponentes volcanes, bosques nativos, aguas termales naturales y lagos de origen glaciar.",
+      "Ciudades como Pucón, Villarrica, Lican Ray y Curarrehue combinan naturaleza prístina con infraestructura turística de primer nivel para el descanso, la aventura y el turismo familiar.",
+      "El área representa territorio ancestral mapuche donde la cultura indígena permanece viva. Los visitantes pueden realizar tours culturales, visitar comunidades, conocer rucas tradicionales, aprender sobre la cosmovisión mapuche y degustar la cocina regional.",
+      "El destino atrae durante todo el año: el invierno invita a las termas y centros de esquí como el Volcán Villarrica; el verano ofrece lagos, playas y senderos de montaña para quienes buscan aire fresco y desconexión.",
+    ],
   },
   {
     name: "Temuco",
     sub: "Corazón urbano de la Araucanía",
     img: "https://araucanayfrontera.cl/wp-content/uploads/2021/09/Noticias-Araucana-TEMUCO.jpg",
-    url: "https://araucanayfrontera.cl/temuco-corazon-urbano-de-la-araucania/",
+    body: [
+      "Temuco es una ciudad moderna y vibrante, considerada el corazón urbano de la Región de La Araucanía. Fundada en 1881 como fuerte militar, se ha transformado en un importante centro cultural, comercial y universitario del sur de Chile.",
+      "La ciudad representa un punto de encuentro entre la cultura mapuche y la tradición europea de sus colonos, diversidad que se expresa en su arquitectura, gastronomía y su gente.",
+      "Entre sus atractivos destacan el Mercado Municipal, el Museo Regional, el parque Cerro Ñielol y una creciente escena de cafés, ferias y eventos culturales que la convierten en una ciudad dinámica y acogedora.",
+      "Temuco funciona como una excelente base para explorar los alrededores: desde Pucón y Villarrica, hasta la Araucanía Andina o la Costa Mapuche, todos a un par de horas de distancia.",
+    ],
   },
 ];
 
+function ArticleModal({ region, onClose }) {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(10,15,12,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 8, maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 32px 80px rgba(0,0,0,0.5)" }}>
+        {/* Hero image */}
+        <div style={{ position: "relative", height: 280, flexShrink: 0 }}>
+          <img src={region.img} alt={region.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
+          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+            <X size={18} />
+          </button>
+          <div style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}>
+            <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 4vw, 36px)", color: "#fff", lineHeight: 1.1, margin: 0 })}>{region.name}</h2>
+            <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.85)", margin: "6px 0 0" })}>{region.sub}</p>
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{ overflowY: "auto", padding: "32px 28px" }}>
+          {region.body.map((p, i) => (
+            <p key={i} style={K({ fontWeight: 400, fontSize: 16, color: "#374151", lineHeight: 1.75, marginBottom: 20 })}>{p}</p>
+          ))}
+          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 3, height: 20, background: "#29623a", borderRadius: 2 }} />
+            <p style={K({ fontWeight: 500, fontSize: 13, color: "#6b7280", margin: 0 })}>Radio Araucana 95.9 FM — La voz histórica de Temuco y la Araucanía</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RegionalStories() {
+  const [active, setActive] = useState(null);
+
   return (
     <section style={{ background: "#191919", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -520,25 +579,21 @@ function RegionalStories() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {REGIONS.map((r, i) => (
-            <a key={i} href={r.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-              <div className="region-card" style={{ borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                {/* Foto real */}
-                <img src={r.img} alt={r.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                {/* Overlay degradado */}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,20,14,0.92) 0%, rgba(10,20,14,0.3) 55%, transparent 100%)" }} />
-                {/* Franja superior */}
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #52b870 0px, #52b870 8px, transparent 8px, transparent 16px)" }} />
-                {/* Texto */}
-                <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
-                  <h3 style={K({ fontWeight: 800, fontSize: "clamp(18px, 2.4vw, 30px)", color: "#fff", lineHeight: 1.1, marginBottom: 6 })}>{r.name}</h3>
-                  <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 10 })}>{r.sub}</p>
-                  <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870" })}>Leer artículo →</span>
-                </div>
+            <div key={i} className="region-card" onClick={() => setActive(r)} style={{ borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer" }}>
+              <img src={r.img} alt={r.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,20,14,0.92) 0%, rgba(10,20,14,0.3) 55%, transparent 100%)" }} />
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #52b870 0px, #52b870 8px, transparent 8px, transparent 16px)" }} />
+              <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
+                <h3 style={K({ fontWeight: 800, fontSize: "clamp(18px, 2.4vw, 30px)", color: "#fff", lineHeight: 1.1, marginBottom: 6 })}>{r.name}</h3>
+                <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 10 })}>{r.sub}</p>
+                <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870" })}>Leer artículo →</span>
               </div>
-            </a>
+            </div>
           ))}
         </div>
       </div>
+
+      {active && <ArticleModal region={active} onClose={() => setActive(null)} />}
     </section>
   );
 }

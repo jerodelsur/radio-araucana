@@ -908,9 +908,8 @@ function Footer() {
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
 const WA_NUMBER = "56992872087";
 const WA_OPTIONS = [
-  { label: "Consulta general",        icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
-  { label: "Cotizar publicidad",      icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
-  { label: "Contactar los estudios",  icon: "🎙️", msg: "Hola, me gustaría comunicarme con los estudios de Radio Araucana 95.9 FM.", wa: "56452213166" },
+  { label: "Consulta general",   icon: "💬", msg: "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
+  { label: "Cotizar publicidad", icon: "📢", msg: "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" },
 ];
 
 const SvgWhatsApp = ({ size = 28 }) => (

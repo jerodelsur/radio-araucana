@@ -197,7 +197,7 @@ function Hero() {
     <section style={{
       background: "#191919",
       backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 22px)",
-      minHeight: "100vh", display: "flex", alignItems: "center", padding: "80px 24px",
+      minHeight: "calc(100vh - 64px)", display: "flex", alignItems: "center", padding: "clamp(32px, 6vh, 64px) 24px",
     }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%" }}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">

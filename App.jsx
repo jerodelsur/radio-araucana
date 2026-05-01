@@ -54,10 +54,10 @@ const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
 /* ─── Global Styles ───────────────────────────────────────────────────────── */
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Kanit', sans-serif; background: #191919; }
+    body { font-family: 'Open Sans', sans-serif; background: #191919; }
 
     @keyframes livePulse {
       0%, 100% { transform: scale(1);   opacity: 1;   }
@@ -127,7 +127,7 @@ const GlobalStyles = () => (
 );
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
-const K = (style) => ({ fontFamily: "'Kanit', sans-serif", ...style });
+const K = (style) => ({ fontFamily: "'Open Sans', sans-serif", ...style });
 
 const Waveform = ({ color = "#29623a", height = 24 }) => (
   <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height }}>

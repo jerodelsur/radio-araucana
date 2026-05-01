@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH\")",
+      "Bash(brew --version)",
+      "Read(//Users/jerodelsur/**)",
+      "Read(//opt/**)",
+      "Bash(curl --version)",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh)",
+      "Bash(bash)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(chmod +x \"/Users/jerodelsur/Claude Sandbox/Proyectos Web/Proyectos-Radio Araucana/dev.sh\")",
+      "Bash(pkill -f \"vite\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:emilkowal.ski)",
+      "WebFetch(domain:araucanayfrontera.cl)",
+      "Bash(python3 -c ' *)",
+      "Bash(pip3 install *)",
+      "Bash(curl -sL https://github.com/cli/cli/releases/download/v2.72.0/gh_2.72.0_macOS_arm64.tar.gz)",
+      "Bash(tar -xz -C /tmp)",
+      "Bash(sudo mv *)",
+      "Bash(curl -fsSL -o /tmp/gh.tar.gz \"https://github.com/cli/cli/releases/download/v2.72.0/gh_2.72.0_macOS_arm64.tar.gz\")",
+      "Read(//tmp/**)",
+      "Bash(tar -xzf /tmp/gh.tar.gz -C /tmp)",
+      "Bash(curl -s \"https://api.github.com/repos/cli/cli/releases/latest\")",
+      "Bash(python3 -c \"import sys,json; r=json.load\\(sys.stdin\\); print\\(r['tag_name']\\); [print\\(a['name'], a['browser_download_url']\\) for a in r['assets'] if 'macOS' in a['name'] and 'arm64' in a['name']]\")",
+      "Bash(curl -fsSL -o /tmp/gh.zip \"https://github.com/cli/cli/releases/download/v2.92.0/gh_2.92.0_macOS_arm64.zip\")",
+      "Bash(unzip -q /tmp/gh.zip -d /tmp/gh_install)",
+      "Bash(cp /tmp/gh_install/gh_2.92.0_macOS_arm64/bin/gh /usr/local/bin/gh)",
+      "Bash(gh --version)",
+      "Read(//private/tmp/gh_install/**)",
+      "Bash(mkdir -p /tmp/gh_out)",
+      "Bash(unzip -qo /tmp/gh.zip -d /tmp/gh_out)",
+      "Bash(mkdir -p ~/.local/bin)",
+      "Bash(cp /tmp/gh_out/gh_2.92.0_macOS_arm64/bin/gh ~/.local/bin/gh)",
+      "Bash(chmod +x ~/.local/bin/gh)",
+      "Bash(~/.local/bin/gh --version)"
+    ]
+  }
+}

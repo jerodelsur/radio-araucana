@@ -1,0 +1,687 @@
+import { useState } from "react";
+import { Menu, X, Play, Pause, Volume2, Share2 } from "lucide-react";
+
+/* ─── Social SVGs ─────────────────────────────────────────────────────────── */
+const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
+const SvgTwitter  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>;
+const SvgYoutube  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>;
+const SvgFacebook = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
+const SOC = [SvgInstagram, SvgTwitter, SvgYoutube, SvgFacebook];
+
+/* ─── Official brand logo SVG (from araucanayfrontera.cl) ─────────────────── */
+const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
+  <svg
+    height={height}
+    viewBox="0 0 600 274.21"
+    fill={color}
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: "block" }}
+  >
+    <g>
+      <g>
+        <g>
+          <path d="M5.43,45.99h37.15c8.43,0,14.79,2.29,19.07,6.88c4.29,4.59,6.43,10.76,6.43,18.52c0,4.73-1.18,8.93-3.55,12.59c-2.37,3.66-5.58,6.49-9.65,8.48c0.81,0.67,1.51,1.44,2.11,2.33c0.59,0.89,1.26,2.18,2,3.88l8.21,18.74H45.46l-7.54-17.19c-0.59-1.33-1.31-2.27-2.16-2.83c-0.85-0.55-2.05-0.83-3.6-0.83h-5.88v20.85H5.43V45.99z M37.25,80.59c3.03,0,5.38-0.79,7.04-2.38c1.66-1.59,2.49-3.86,2.49-6.82c0-6.28-2.96-9.43-8.87-9.43H26.27v18.63H37.25z"/>
+          <path d="M99.01,45.99h22.07l27.39,71.42h-21.74l-5.99-15.19H99.23l-5.88,15.19H71.62L99.01,45.99z M117.97,87.25l-7.98-20.96L102,87.25H117.97z"/>
+          <path d="M153.49,45.99h31.94c11.38,0,20.02,2.87,25.89,8.59c5.88,5.73,8.82,14.92,8.82,27.56c0,12.05-2.94,20.94-8.82,26.67c-5.88,5.73-14.51,8.59-25.89,8.59h-31.94V45.99z M182.77,101.44c3.7,0,6.69-0.54,8.98-1.61c2.29-1.07,4.05-2.99,5.27-5.77c1.22-2.77,1.83-6.75,1.83-11.92c0-5.25-0.55-9.33-1.66-12.25c-1.11-2.92-2.83-4.97-5.16-6.15c-2.33-1.18-5.42-1.77-9.26-1.77h-8.43v39.48H182.77z"/>
+          <path d="M226.7,45.99h20.85v71.42H226.7V45.99z"/>
+          <path d="M263.57,109.7c-6.14-5.88-9.2-15.14-9.2-27.78c0-13.01,3.05-22.44,9.15-28.28c6.1-5.84,15.21-8.76,27.34-8.76c12.12,0,21.24,2.94,27.34,8.82c6.1,5.88,9.15,15.29,9.15,28.22c0,12.57-3.07,21.81-9.2,27.72c-6.14,5.92-15.23,8.87-27.28,8.87C278.79,118.52,269.7,115.58,263.57,109.7z M302.43,96.29c2.4-2.99,3.6-7.78,3.6-14.36c0-6.95-1.18-11.9-3.55-14.86c-2.37-2.96-6.25-4.44-11.64-4.44c-5.4,0-9.28,1.48-11.64,4.44c-2.37,2.96-3.55,7.91-3.55,14.86c0,6.58,1.2,11.37,3.6,14.36c2.4,2.99,6.27,4.49,11.59,4.49C296.17,100.78,300.03,99.28,302.43,96.29z"/>
+          <path d="M30.6,122.04h22.07l27.39,71.42H58.32l-5.99-15.19H30.82l-5.88,15.19H3.21L30.6,122.04z M49.56,163.29l-7.98-20.96l-7.98,20.96H49.56z"/>
+          <path d="M85.08,122.04h37.15c8.43,0,14.79,2.29,19.07,6.88c4.29,4.59,6.43,10.76,6.43,18.52c0,4.73-1.18,8.93-3.55,12.59c-2.37,3.66-5.58,6.49-9.65,8.48c0.81,0.67,1.51,1.44,2.11,2.33c0.59,0.89,1.26,2.18,2,3.88l8.21,18.74h-21.74l-7.54-17.19c-0.59-1.33-1.31-2.27-2.16-2.83c-0.85-0.55-2.05-0.83-3.6-0.83h-5.88v20.85H85.08V122.04z M116.91,156.64c3.03,0,5.38-0.79,7.04-2.38c1.66-1.59,2.49-3.86,2.49-6.82c0-6.28-2.96-9.43-8.87-9.43h-11.64v18.63H116.91z"/>
+          <path d="M178.67,122.04h22.07l27.39,71.42h-21.74l-5.99-15.19h-21.51l-5.88,15.19h-21.74L178.67,122.04z M197.63,163.29l-7.98-20.96l-7.98,20.96H197.63z"/>
+          <path d="M238.13,187.08c-6.17-4.99-9.26-12.03-9.26-21.13v-43.91h20.85v41.7c0,8.72,4.33,13.09,12.98,13.09c8.58,0,12.86-4.36,12.86-13.09v-41.7h20.85v43.91c0,6.06-1.41,11.24-4.21,15.53c-2.81,4.29-6.76,7.54-11.87,9.76c-5.1,2.22-10.98,3.33-17.63,3.33C252.49,194.56,244.3,192.07,238.13,187.08z"/>
+          <path d="M312.16,185.08c-6.8-6.32-10.2-15.32-10.2-27c0-12.05,3.34-21.25,10.04-27.61c6.69-6.36,16.58-9.54,29.66-9.54c4.21,0,8.04,0.32,11.48,0.94c3.44,0.63,6.89,1.57,10.37,2.83v18.19c-6.36-2.81-13.16-4.21-20.4-4.21c-6.8,0-11.81,1.55-15.03,4.66c-3.22,3.11-4.82,8.02-4.82,14.75c0,6.51,1.68,11.26,5.05,14.25c3.36,2.99,8.37,4.49,15.03,4.49c7.32,0,14.12-1.37,20.4-4.1v18.3c-6.88,2.37-14.19,3.55-21.96,3.55C328.83,194.56,318.96,191.4,312.16,185.08z"/>
+          <path d="M394.9,122.04h22.07l27.39,71.42h-21.74l-5.99-15.19h-21.51l-5.88,15.19h-21.74L394.9,122.04z M413.86,163.29l-7.98-20.96l-7.98,20.96H413.86z"/>
+          <path d="M449.38,122.04h17.74l26.95,37.82v-37.82h20.85v71.42h-17.85l-26.84-37.7v37.7h-20.85V122.04z"/>
+          <path d="M547.33,122.04h22.07l27.39,71.42h-21.74l-5.99-15.19h-21.51l-5.88,15.19h-21.74L547.33,122.04z M566.3,163.29l-7.98-20.96l-7.98,20.96H566.3z"/>
+          <path d="M5.43,198.08H59.1v15.53H26.27v12.31h28.61v15.75H26.27v27.83H5.43V198.08z"/>
+          <path d="M63.4,198.08H83.7l17.74,36.26l17.63-36.26h20.18v71.42h-20.85v-35.71l-11.42,23.51h-11.2l-11.53-23.51v35.71H63.4V198.08z"/>
+          <path d="M161.05,269.99c-2.88-0.41-5.69-1.13-8.43-2.16v-16.19c2.51,1.11,5.12,1.89,7.82,2.33c2.7,0.44,5.75,0.67,9.15,0.67c5.25,0,9.26-1,12.03-2.99c2.77-2,4.16-4.51,4.16-7.54v-2.11c-1.85,1.18-4.18,2.15-6.99,2.88c-2.81,0.74-5.47,1.11-7.98,1.11c-8.65,0-15.03-2.01-19.13-6.04c-4.1-4.03-6.15-9.96-6.15-17.8c0-7.76,2.4-13.9,7.21-18.41c4.8-4.51,12.31-6.76,22.51-6.76c10.28,0,17.85,2.4,22.73,7.21c4.88,4.81,7.32,12.05,7.32,21.74v13.75c0,5.99-1.35,11.31-4.05,15.97c-2.7,4.66-6.6,8.32-11.7,10.98c-5.1,2.66-11.09,3.99-17.96,3.99C167.45,270.6,163.94,270.4,161.05,269.99z M185.78,227.69v-5.1c0-3.77-0.87-6.52-2.61-8.26c-1.74-1.74-4.45-2.61-8.15-2.61c-3.55,0-6.25,0.83-8.1,2.49c-1.85,1.66-2.77,4.05-2.77,7.15c0,3.25,0.81,5.69,2.44,7.32c1.63,1.63,4.36,2.44,8.21,2.44C178.28,231.13,181.94,229.98,185.78,227.69z"/>
+          <path d="M300.35,269.99c-2.88-0.41-5.69-1.13-8.43-2.16v-16.19c2.51,1.11,5.12,1.89,7.82,2.33c2.7,0.44,5.75,0.67,9.15,0.67c5.25,0,9.26-1,12.03-2.99c2.77-2,4.16-4.51,4.16-7.54v-2.11c-1.85,1.18-4.18,2.15-6.99,2.88c-2.81,0.74-5.47,1.11-7.98,1.11c-8.65,0-15.03-2.01-19.13-6.04c-4.1-4.03-6.15-9.96-6.15-17.8c0-7.76,2.4-13.9,7.21-18.41c4.8-4.51,12.31-6.76,22.51-6.76c10.28,0,17.85,2.4,22.73,7.21c4.88,4.81,7.32,12.05,7.32,21.74v13.75c0,5.99-1.35,11.31-4.05,15.97c-2.7,4.66-6.6,8.32-11.7,10.98c-5.1,2.66-11.09,3.99-17.96,3.99C306.74,270.6,303.23,270.4,300.35,269.99z M325.08,227.69v-5.1c0-3.77-0.87-6.52-2.61-8.26c-1.74-1.74-4.45-2.61-8.15-2.61c-3.55,0-6.25,0.83-8.1,2.49c-1.85,1.66-2.77,4.05-2.77,7.15c0,3.25,0.81,5.69,2.44,7.32c1.63,1.63,4.36,2.44,8.21,2.44C317.57,231.13,321.23,229.98,325.08,227.69z"/>
+          <path d="M221.85,269.66c-4.32-0.63-7.86-1.57-10.59-2.83v-16.75c2.44,1.18,5.56,2.13,9.37,2.83c3.81,0.7,7.08,1.05,9.81,1.05c4.06,0,7.04-0.63,8.93-1.89c1.89-1.26,2.83-3.25,2.83-5.99c0-2.59-0.7-4.45-2.11-5.6c-1.41-1.14-3.88-1.72-7.43-1.72h-21.74v-9.54l1.89-31.16h46.24l-1.44,15.97h-26.95l-0.67,10.2h8.1c16.93,0,25.39,7.54,25.39,22.62c0,7.32-2.53,13.1-7.6,17.36c-5.06,4.25-12.44,6.38-22.12,6.38C230.14,270.6,226.17,270.29,221.85,269.66z"/>
+          <path d="M268.41,254.52h16.41v14.97h-16.41V254.52z"/>
+        </g>
+      </g>
+      {/* Signal wave arcs */}
+      <g>
+        <path d="M549.22,15.66c-0.22,3.39-1.68,6.56-4.12,8.75c-12.17,10.93-25.76,20.18-40.11,26.96l-0.73,0.25c-17.3,8.3-35.71,13.37-54.88,14.95V42.5c10.17-0.79,19.87-2.69,29.12-5.7c19.2-6.31,37.2-16.54,52.98-30.86c4.4-3.64,10.46-3.64,14.1,0.47C548.01,9.07,549.22,12.24,549.22,15.66z"/>
+        <path d="M563.57,58.91c-1.93,1.71-3.64,3.42-5.58,4.88c-31.68,27.12-69.07,42.84-108.61,45.56V85.52c28.9-2.41,57.29-12.58,82.09-30c6.34-4.37,12.42-9.25,18.25-14.58c2.19-2.22,5.35-3.17,8.02-2.69c2.44,0.25,4.63,1.46,6.34,3.42h0.22l0.98,1.2C568.45,48.23,567.72,55.26,563.57,58.91z"/>
+        <path d="M579.38,99.02c-7.76,6.81-15.81,13.02-24.11,18.6h-50.03c21.74-8.49,42.2-21.1,60.77-37.55c2.66-2.19,5.83-2.91,9-2.19c2.92,0.73,5.58,3.14,7.03,6.08l0.51,0.48v0.95C584.23,90.28,583.02,95.63,579.38,99.02z"/>
+      </g>
+    </g>
+  </svg>
+);
+
+/* ─── Global Styles ───────────────────────────────────────────────────────── */
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Kanit', sans-serif; background: #191919; }
+
+    @keyframes livePulse {
+      0%, 100% { transform: scale(1);   opacity: 1;   }
+      50%       { transform: scale(1.4); opacity: 0.6; }
+    }
+    @keyframes waveform {
+      from { transform: scaleY(0.25); }
+      to   { transform: scaleY(1);    }
+    }
+    @keyframes marquee {
+      from { transform: translateX(0);    }
+      to   { transform: translateX(-50%); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    .live-dot      { animation: livePulse 1.5s ease-in-out infinite; }
+    .wave-bar      { animation: waveform 0.8s ease-in-out alternate infinite; transform-origin: bottom; }
+    .marquee-track { animation: marquee 28s linear infinite; white-space: nowrap; display: inline-block; }
+
+    .fiu-0 { animation: fadeInUp 0.6s ease forwards 0s;    opacity: 0; }
+    .fiu-1 { animation: fadeInUp 0.6s ease forwards 0.15s; opacity: 0; }
+    .fiu-2 { animation: fadeInUp 0.6s ease forwards 0.3s;  opacity: 0; }
+    .fiu-3 { animation: fadeInUp 0.6s ease forwards 0.45s; opacity: 0; }
+    .fiu-4 { animation: fadeInUp 0.6s ease forwards 0.6s;  opacity: 0; }
+
+    .news-card { transition: transform 200ms ease, box-shadow 200ms ease; cursor: pointer; }
+    .news-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
+
+    .video-card { transition: transform 200ms ease; cursor: pointer; }
+    .video-card:hover { transform: scale(1.03); }
+
+    .region-card { transition: transform 300ms ease, filter 300ms ease; cursor: pointer; }
+    .region-card:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+    .prog-card { transition: transform 200ms ease; cursor: pointer; }
+    .prog-card:hover { transform: scale(1.02); }
+
+    .social-tile { position: relative; aspect-ratio: 1/1; cursor: pointer; overflow: hidden; border-radius: 3px; }
+    .social-tile::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; transition: opacity 200ms ease; }
+    .social-tile:hover::after { opacity: 1; }
+
+    .sponsor-block { opacity: 0.55; transition: opacity 200ms ease; }
+    .sponsor-block:hover { opacity: 1; }
+
+    .footer-link { transition: color 150ms ease; }
+    .footer-link:hover { color: #29623a !important; }
+
+    .nav-link { transition: color 150ms ease; }
+    .nav-link:hover { color: #29623a !important; }
+
+    .social-icon-btn { transition: background 200ms ease; }
+    .social-icon-btn:hover { background: #29623a !important; }
+
+    .play-btn { transition: background 200ms ease; }
+    .play-btn:hover { background: #29623a !important; }
+
+    .cta-btn { transition: background 150ms ease, transform 120ms ease; }
+    .cta-btn:hover { background: #aa0000 !important; transform: translateY(-1px); }
+
+    ::-webkit-scrollbar { height: 4px; }
+    ::-webkit-scrollbar-track { background: #191919; }
+    ::-webkit-scrollbar-thumb { background: #29623a; border-radius: 2px; }
+  `}</style>
+);
+
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
+const K = (style) => ({ fontFamily: "'Kanit', sans-serif", ...style });
+
+const Waveform = ({ color = "#29623a", height = 24 }) => (
+  <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height }}>
+    {[0, 0.1, 0.2, 0.3, 0.4].map((d, i) => (
+      <div key={i} className="wave-bar"
+        style={{ width: 4, height, background: color, borderRadius: 2, animationDelay: `${d}s` }} />
+    ))}
+  </div>
+);
+
+const CAT_COLORS = {
+  REGIÓN: "#29623a", POLÍTICA: "#191919", CULTURA: "#4a7c59",
+  DEPORTE: "#8B0000", MAPUCHE: "#5c4033", ECONOMÍA: "#1a3a5c",
+};
+const Tag = ({ label }) => (
+  <span style={K({ background: CAT_COLORS[label] ?? "#29623a", color: "#fff", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 2, display: "inline-block" })}>{label}</span>
+);
+
+/* ─── Navbar ──────────────────────────────────────────────────────────────── */
+function Navbar() {
+  const [open, setOpen] = useState(false);
+  const links = ["Inicio", "Noticias", "Programación", "Destinos", "En Vivo", "Contacto"];
+
+  return (
+    <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
+
+        {/* Official logo */}
+        <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <LogoSVG height={34} color="#ffffff" />
+        </a>
+
+        {/* Center nav */}
+        <div className="hidden md:flex" style={{ gap: 28 }}>
+          {links.map((l) => (
+            <a key={l} href="#" className="nav-link" style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none" })}>{l}</a>
+          ))}
+        </div>
+
+        {/* Right */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="live-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "#29623a" }} />
+            <span style={K({ fontWeight: 700, fontSize: 13, color: "#29623a", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
+          </div>
+          <button onClick={() => setOpen(!open)} className="md:hidden"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}>
+            {open ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="md:hidden" style={{ background: "#191919", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
+          {links.map((l) => (
+            <a key={l} href="#" style={K({ display: "block", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>{l}</a>
+          ))}
+        </div>
+      )}
+    </nav>
+  );
+}
+
+/* ─── Hero ────────────────────────────────────────────────────────────────── */
+function Hero() {
+  return (
+    <section style={{
+      background: "#191919",
+      backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 22px)",
+      minHeight: "100vh", display: "flex", alignItems: "center", padding: "80px 24px",
+    }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div className="fiu-0" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#29623a" }} />
+              <span style={K({ fontWeight: 600, fontSize: 12, color: "#29623a", textTransform: "uppercase", letterSpacing: "0.14em" })}>
+                TRANSMITIENDO EN VIVO · 95.9 FM
+              </span>
+            </div>
+
+            <h1 className="fiu-1" style={K({ fontWeight: 900, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04 })}>
+              La voz de<br />
+              <span style={{ color: "#29623a" }}>Temuco y la Araucanía,</span><br />
+              en directo.
+            </h1>
+
+            <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
+              Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 80 años siendo la voz de nuestra gente.
+            </p>
+
+            <div className="fiu-2" style={{ background: "#2d2d2d", borderLeft: "3px solid #29623a", padding: "16px 20px", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <p style={K({ fontWeight: 700, fontSize: 16, color: "#fff" })}>Sube que Te Llevo</p>
+                <p style={K({ fontWeight: 300, fontSize: 13, color: "#9ca3af", marginTop: 3 })}>Música y compañía · 06:00 – 10:00</p>
+              </div>
+              <Waveform />
+            </div>
+
+            <div className="fiu-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <button className="cta-btn" style={K({ background: "#cc0000", color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 28px", borderRadius: 3, border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase" })}>
+                Escúchanos en el 95.9 FM
+              </button>
+              <a href="https://araucanayfrontera.cl" target="_blank" rel="noreferrer"
+                style={K({ display: "flex", alignItems: "center", fontWeight: 600, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", padding: "12px 0" })}>
+                Sitio oficial →
+              </a>
+            </div>
+          </div>
+
+          <div className="fiu-4" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 60px rgba(41,98,58,0.4)" }}>
+              <iframe style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+                src="https://www.youtube.com/embed/live_stream?channel=UCxxxxxxx"
+                title="Radio Araucana FM 95.9 — En Vivo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+              <span style={K({ fontWeight: 400, fontSize: 13, color: "#9ca3af" })}>En vivo ahora</span>
+              <Share2 size={14} color="#9ca3af" style={{ marginLeft: "auto", cursor: "pointer" }} />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── News Ticker ─────────────────────────────────────────────────────────── */
+function NewsTicker() {
+  const text = "ÚLTIMA HORA: Volcán Llaima mantiene alerta amarilla en La Araucanía · Deportes Temuco avanza en la Copa Chile · Festival Kimün llega a Padre Las Casas en junio · Temuco lidera ranking de calidad del aire en Chile · Comunidades mapuche de Ercilla inician diálogo con gobierno regional · Feria de artesanía mapuche bate récord de visitantes · Nueva ruta ciclista conectará Temuco con Padre Las Casas · ";
+  return (
+    <div style={{ background: "#29623a", padding: "10px 0", overflow: "hidden" }}>
+      <div className="marquee-track">
+        <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.06em" })}>
+          {text}{text}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── News Grid ───────────────────────────────────────────────────────────── */
+const FEATURED = {
+  cat: "MAPUCHE", headline: "Comunidades mapuche de Ercilla inician diálogo con gobierno regional",
+  excerpt: "Representantes de 14 comunidades se reunieron con el Delegado Presidencial para abordar demandas históricas de tierras y reconocimiento cultural en la Araucanía.",
+  author: "Redacción Araucana", time: "hace 23 min", bg: "linear-gradient(135deg, #1d4a2b, #29623a)",
+};
+const SECONDARY = [
+  { cat: "REGIÓN",   headline: "Temuco lidera ranking de calidad del aire en Chile 2026",            time: "hace 1 h",  bg: "linear-gradient(135deg, #0f2d1a, #1d4a2b)" },
+  { cat: "CULTURA",  headline: "El renacer del canelo: especie sagrada vuelve a los bosques del sur", time: "hace 2 h",  bg: "linear-gradient(135deg, #2d4a1a, #4a7c59)" },
+  { cat: "DEPORTE",  headline: "Deportes Temuco avanza a cuartos de final de la Copa Chile",          time: "hace 3 h",  bg: "linear-gradient(135deg, #3a0f0f, #8B0000)" },
+];
+const CARDS = [
+  { cat: "CULTURA",  headline: "Feria de artesanía mapuche recibe récord de visitantes en Semana Santa",    author: "Redacción Araucana", time: "hace 4 h", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
+  { cat: "REGIÓN",   headline: "Alumnos de La Araucanía ganan concurso nacional de robótica en Santiago",   author: "Redacción Araucana", time: "hace 5 h", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
+  { cat: "POLÍTICA", headline: "Gobierno anuncia inversión de $12 mil millones en salud rural para la región", author: "Redacción Araucana", time: "hace 6 h", bg: "linear-gradient(135deg, #191919, #2d2d2d)" },
+  { cat: "MAPUCHE",  headline: "Lonko de Lumaco recibe reconocimiento internacional por conservación cultural", author: "Redacción Araucana", time: "hace 7 h", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
+  { cat: "ECONOMÍA", headline: "Exportaciones forestales de la región crecen un 18% en el primer trimestre",   author: "Redacción Araucana", time: "hace 8 h", bg: "linear-gradient(135deg, #0f1a3a, #1a3a5c)" },
+  { cat: "REGIÓN",   headline: "Nueva ruta ciclista conectará Temuco con Padre Las Casas antes de fin de año", author: "Redacción Araucana", time: "hace 9 h", bg: "linear-gradient(135deg, #0f2d1a, #29623a)" },
+];
+
+function NewsGrid() {
+  return (
+    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 32 }}>
+          <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
+          <article className="news-card lg:col-span-3" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ background: FEATURED.bg, height: 240, padding: 16, display: "flex", alignItems: "flex-start" }}>
+              <Tag label={FEATURED.cat} />
+            </div>
+            <div style={{ padding: 20 }}>
+              <h3 style={K({ fontWeight: 700, fontSize: 24, color: "#191919", lineHeight: 1.2, marginBottom: 10 })}>{FEATURED.headline}</h3>
+              <p style={K({ fontWeight: 300, fontSize: 15, color: "#6b7280", lineHeight: 1.5, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{FEATURED.excerpt}</p>
+              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {FEATURED.author} · {FEATURED.time}</span>
+            </div>
+          </article>
+
+          <div className="lg:col-span-2" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+            {SECONDARY.map((a, i) => (
+              <article key={i} className="news-card" style={{ padding: 16, borderBottom: i < 2 ? "1px solid #e5e7eb" : "none", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ background: a.bg, width: 64, height: 64, borderRadius: 4, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Tag label={a.cat} />
+                  <h4 style={K({ fontWeight: 600, fontSize: 14, color: "#191919", lineHeight: 1.3, margin: "6px 0 4px" })}>{a.headline}</h4>
+                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{a.time}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {CARDS.map((a, i) => (
+            <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ background: a.bg, height: 180, padding: 12, display: "flex", alignItems: "flex-start" }}>
+                <Tag label={a.cat} />
+              </div>
+              <div style={{ padding: 16 }}>
+                <h4 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{a.headline}</h4>
+                <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Por {a.author} · {a.time}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Video Section ───────────────────────────────────────────────────────── */
+const VIDEOS = [
+  { title: "Reportaje: El agua que escasea en La Araucanía",       dur: "12:34",   views: "8.2K vistas",  bg: "linear-gradient(135deg, #0f2d1a, #1a3a5c)" },
+  { title: "Machi Francisca Linconao habla en Radio Araucana",     dur: "24:11",   views: "15.7K vistas", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
+  { title: "80 años de la radio más antigua del sur de Chile",     dur: "45:02",   views: "32.1K vistas", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
+  { title: "En vivo: Marcha por derechos mapuche, Temuco",         dur: "1:23:45", views: "6.8K vistas",  bg: "linear-gradient(135deg, #1a1a1a, #2d2d2d)" },
+];
+
+function VideoSection() {
+  return (
+    <section style={{ background: "#191919", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", marginBottom: 40, letterSpacing: "-0.01em" })}>
+          EN DIRECTO Y EN VIDEO
+        </h2>
+
+        <div style={{ maxWidth: 800, margin: "0 auto 48px" }}>
+          <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 80px rgba(41,98,58,0.5)" }}>
+            <iframe style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+              src="https://www.youtube.com/embed/live_stream?channel=UCxxxxxxx"
+              title="Radio Araucana — En Directo" allowFullScreen />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+            <span style={K({ fontWeight: 500, fontSize: 14, color: "#29623a" })}>En vivo ahora · 95.9 FM</span>
+            <Share2 size={16} color="#fff" style={{ marginLeft: 12, cursor: "pointer" }} />
+          </div>
+        </div>
+
+        <p style={K({ fontWeight: 600, fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16 })}>Últimos videos</p>
+        <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
+          {VIDEOS.map((v, i) => (
+            <div key={i} className="video-card" style={{ minWidth: 260, flexShrink: 0 }}>
+              <div style={{ position: "relative", paddingBottom: "56.25%", background: v.bg, borderRadius: 4, overflow: "hidden" }}>
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Play size={20} color="#29623a" fill="#29623a" />
+                  </div>
+                </div>
+                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(25,25,25,0.82)", borderRadius: 2, padding: "2px 7px" }}>
+                  <span style={K({ fontWeight: 600, fontSize: 11, color: "#fff" })}>{v.dur}</span>
+                </div>
+              </div>
+              <p style={K({ fontWeight: 600, fontSize: 14, color: "#fff", lineHeight: 1.3, marginTop: 8, marginBottom: 4 })}>{v.title}</p>
+              <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>{v.views}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Program Schedule ────────────────────────────────────────────────────── */
+const PROGRAMS = [
+  { time: "00:00", name: "Madrugada Musical",                  host: "Programación automática", color: "#6b7280", active: false },
+  { time: "06:00", name: "Sube que Te Llevo",                  host: "Lun – Sáb",               color: "#29623a", active: true  },
+  { time: "10:00", name: "La Gran Manada",                     host: "Lun – Sáb",               color: "#4a7c59", active: false },
+  { time: "13:00", name: "La Región al Día",                   host: "Noticias · Lun – Sáb",    color: "#8B0000", active: false },
+  { time: "14:00", name: "Bloque Musical",                     host: "Lun – Vie",               color: "#29623a", active: false },
+  { time: "16:00", name: "Tarde a Tarde",                      host: "Clásicos · Lun – Vie",    color: "#1a3a5c", active: false },
+  { time: "18:00", name: "Al Fondo a la Derecha",              host: "Lun – Vie",               color: "#4a7c59", active: false },
+  { time: "21:00", name: "Conversando las Noches de Nuestro Sur", host: "Lun – Sáb",            color: "#5c4033", active: false },
+  { time: "Dom 09:00", name: "Controversia",                   host: "Análisis político",       color: "#8B0000", active: false },
+];
+
+function ProgramSchedule() {
+  return (
+    <section style={{ background: "#fff", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32, letterSpacing: "0.01em" })}>
+          PROGRAMACIÓN DE HOY
+        </h2>
+
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16 }}>
+          {PROGRAMS.map((p, i) => (
+            <div key={i} className="prog-card" style={{
+              minWidth: 172, padding: 14, borderRadius: 4,
+              border: p.active ? "2px solid #29623a" : "1px solid #e5e7eb",
+              background: p.active ? "#29623a" : "#fff",
+              flexShrink: 0, position: "relative", paddingBottom: 18,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                {p.active && <div className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", flexShrink: 0 }} />}
+                <span style={K({ fontWeight: 700, fontSize: 13, color: p.active ? "#fff" : "#29623a" })}>{p.time}</span>
+              </div>
+              <p style={K({ fontWeight: 600, fontSize: 14, color: p.active ? "#fff" : "#191919", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
+              <p style={K({ fontWeight: 300, fontSize: 11, color: p.active ? "rgba(255,255,255,0.8)" : "#9ca3af" })}>{p.host}</p>
+              {!p.active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: p.color, borderRadius: "0 0 4px 4px" }} />}
+            </div>
+          ))}
+        </div>
+
+        <a href="https://araucanayfrontera.cl/programacion" target="_blank" rel="noreferrer"
+          style={K({ display: "inline-block", fontWeight: 600, fontSize: 15, color: "#29623a", textDecoration: "none", marginTop: 24 })}>
+          Ver programación completa →
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Regional Stories ────────────────────────────────────────────────────── */
+const REGIONS = [
+  { name: "Araucanía Andina",  sub: "Volcanes, bosques y comunidades", n: 14, bg: "linear-gradient(160deg, #0f2d1a, #29623a, #1d4a2b)" },
+  { name: "Costa Araucana",    sub: "Mar, pesca y tradición",          n:  9, bg: "linear-gradient(160deg, #0f1d2d, #1a3a5c, #0f2d40)" },
+  { name: "Araucanía Lacustre",sub: "Lagos, ríos y naturaleza",        n: 11, bg: "linear-gradient(160deg, #0f2535, #1a4a5c, #0f3545)" },
+  { name: "Temuco",            sub: "Ciudad, cultura y progreso",      n:  7, bg: "linear-gradient(160deg, #1a1a1a, #2d2d2d, #191919)" },
+];
+
+function RegionalStories() {
+  return (
+    <section style={{ background: "#191919", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: 40 })}>
+          <span style={{ color: "#29623a" }}>NUESTRA</span> REGIÓN, NUESTRA CASA
+        </h2>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {REGIONS.map((r, i) => (
+            <div key={i} className="region-card" style={{ background: r.bg, borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #29623a 0px, #29623a 8px, transparent 8px, transparent 16px)" }} />
+              <div style={{ padding: 24 }}>
+                <h3 style={K({ fontWeight: 800, fontSize: "clamp(22px, 2.8vw, 36px)", color: "#fff", lineHeight: 1.1, marginBottom: 4 })}>{r.name}</h3>
+                <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8 })}>{r.sub}</p>
+                <span style={K({ fontWeight: 500, fontSize: 12, color: "#29623a" })}>{r.n} historias esta semana</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Social Feeds ────────────────────────────────────────────────────────── */
+const TWEETS = [
+  { txt: "El volcán Llaima mantiene alerta amarilla. Las autoridades monitorean la actividad sísmica en la zona. Sintoniza Radio Araucana 95.9 FM para toda la información.", time: "hace 2 h", likes: 48, rts: 12 },
+  { txt: "Festival Kimün: la gran celebración de la cultura mapuche llega a Padre Las Casas este junio. ¡La información la escuchas primero en el 95.9!", time: "hace 4 h", likes: 134, rts: 67 },
+  { txt: "Nueva ruta ciclista Temuco–Padre Las Casas: ¿La usarías? Cuéntanos en comentarios o al +56 45 2213166.", time: "hace 6 h", likes: 89, rts: 23 },
+];
+const IG_GRADS = [
+  "linear-gradient(135deg,#0f2d1a,#29623a)", "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
+  "linear-gradient(135deg,#2d1a0f,#5c4033)", "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
+  "linear-gradient(135deg,#2d4a1a,#4a7c59)", "linear-gradient(135deg,#3a0f0f,#8B0000)",
+];
+
+function SocialFeeds() {
+  return (
+    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 40 })}>SÍGUENOS</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+          <div>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Instagram</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, marginBottom: 16 }}>
+              {IG_GRADS.map((g, i) => <div key={i} className="social-tile" style={{ background: g }} />)}
+            </div>
+            <a href="https://instagram.com/araucanafm" target="_blank" rel="noreferrer"
+              style={K({ fontWeight: 600, fontSize: 13, color: "#29623a", textDecoration: "none" })}>Ver en Instagram →</a>
+          </div>
+
+          <div>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>@araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>X / Twitter</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {TWEETS.map((t, i) => (
+                <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 16 }}>
+                  <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>{t.txt}</p>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>{t.time}</span>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>♥ {t.likes}</span>
+                    <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>↺ {t.rts}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>araucanafm</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Facebook</p>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 20, marginBottom: 16 }}>
+              <div style={{ background: "linear-gradient(135deg, #1d4a2b, #29623a)", height: 140, borderRadius: 3, marginBottom: 12 }} />
+              <p style={K({ fontWeight: 400, fontSize: 14, color: "#191919", lineHeight: 1.45, marginBottom: 8 })}>
+                Esta mañana en Sube que Te Llevo: entrevista con el Delegado Presidencial sobre el plan de desarrollo regional. ¡Sintoniza el 95.9!
+              </p>
+              <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>hace 1 h · 234 Me gusta · 45 comentarios</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <p style={K({ fontWeight: 700, fontSize: 36, color: "#29623a", lineHeight: 1 })}>+50.000</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginTop: 4 })}>auditores diarios</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Sponsor Strip ───────────────────────────────────────────────────────── */
+function SponsorStrip() {
+  return (
+    <div style={{ background: "#191919", padding: "28px 24px" }}>
+      <p style={K({ fontWeight: 500, fontSize: 12, color: "rgba(255,255,255,0.5)", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20 })}>
+        EMPRESAS QUE CONFÍAN EN NOSOTROS
+      </p>
+      <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+        {["MALLPLAZA", "COPEC", "BCI", "SALCOBRAND", "SODIMAC"].map((s) => (
+          <div key={s} className="sponsor-block" style={{ border: "1px solid rgba(41,98,58,0.4)", width: 120, height: 48, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={K({ fontWeight: 500, fontSize: 11, color: "#9ca3af", letterSpacing: "0.05em" })}>{s}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
+const FOOTER_LINKS = [
+  { title: "Radio",        links: ["Quiénes somos", "Historia", "Equipo", "Señal en vivo"] },
+  { title: "Contenido",   links: ["Noticias", "Videos", "Destinos Araucanía", "Galería"] },
+  { title: "Programación", links: ["Horarios", "Programas", "Conductores", "Archivo"] },
+  { title: "Publicidad",  links: ["Cotiza tu campaña", "Tarifas", "Formatos", "Contacto"] },
+];
+
+function Footer() {
+  return (
+    <footer style={{ background: "#191919", padding: "64px 24px 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <LogoSVG height={30} color="#ffffff" />
+            </div>
+            <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
+              Las radios que han acompañado a Temuco<br />y la Araucanía por generaciones.
+            </p>
+            <p style={K({ fontWeight: 600, fontSize: 13, color: "#29623a", marginBottom: 24 })}>Desde 1944 · Más de 80 años en el aire</p>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+              {SOC.map((Icon, i) => (
+                <button key={i} className="social-icon-btn"
+                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(41,98,58,0.5)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+                  <Icon />
+                </button>
+              ))}
+            </div>
+
+            {[
+              "Caupolicán 110, Of. 2003, Temuco, IX Región",
+              "+56 45 2213166",
+              "contacto@araucanayfrontera.cl",
+            ].map((t) => <p key={t} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 6 })}>{t}</p>)}
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            {FOOTER_LINKS.map((g) => (
+              <div key={g.title}>
+                <h4 style={K({ fontWeight: 500, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 })}>{g.title}</h4>
+                {g.links.map((l) => (
+                  <a key={l} href="#" className="footer-link"
+                    style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", marginBottom: 8 })}>{l}</a>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ borderTop: "1px solid #2d2d2d", padding: "20px 0", textAlign: "center" }}>
+          <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.4)" })}>
+            © 2026 Radios Araucana y La Frontera · Caupolicán 110, Temuco · Todos los derechos reservados
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ─── Floating Player ─────────────────────────────────────────────────────── */
+function FloatingPlayer() {
+  const [playing, setPlaying] = useState(false);
+  return (
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flexShrink: 0 }}>
+          <LogoSVG height={22} color="#ffffff" />
+        </div>
+        <div style={{ marginLeft: 4 }}>
+          <p style={K({ fontWeight: 400, fontSize: 12, color: "#fff", lineHeight: 1.2 })}>
+            En vivo · <span style={{ color: "#9ca3af" }}>Sube que Te Llevo</span>
+          </p>
+          <p style={K({ fontWeight: 300, fontSize: 11, color: "#29623a" })}>95.9 FM</p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <Waveform color={playing ? "#29623a" : "#374151"} height={20} />
+        <button className="play-btn" onClick={() => setPlaying(!playing)}
+          style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #29623a", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          {playing ? <Pause size={17} color="#fff" /> : <Play size={17} color="#fff" fill="#fff" />}
+        </button>
+        <Waveform color={playing ? "#29623a" : "#374151"} height={20} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Volume2 size={18} color="#fff" />
+        <Share2 size={18} color="#fff" style={{ cursor: "pointer" }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── App ─────────────────────────────────────────────────────────────────── */
+export default function App() {
+  return (
+    <>
+      <GlobalStyles />
+      <Navbar />
+      <main style={{ paddingBottom: 64 }}>
+        <Hero />
+        <NewsTicker />
+        <NewsGrid />
+        <VideoSection />
+        <ProgramSchedule />
+        <RegionalStories />
+        <SocialFeeds />
+        <SponsorStrip />
+        <Footer />
+      </main>
+      <FloatingPlayer />
+    </>
+  );
+}

@@ -144,34 +144,41 @@ const Waveform = ({ color = "#29623a", height = 24 }) => (
 
 /* ─── Live Placeholder ────────────────────────────────────────────────────── */
 const LivePlaceholder = () => (
-  <div style={{
-    position: "absolute", inset: 0,
-    background: "#191919",
-    backgroundImage: "radial-gradient(ellipse at center, rgba(41,98,58,0.18) 0%, transparent 68%), url(/mapuche.svg)",
-    backgroundSize: "auto, 60px 60px",
-    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    gap: 24,
-  }}>
-    {/* Animated signal rings */}
-    <div style={{ position: "relative", width: 88, height: 88, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {[0, 0.5, 1.0].map((delay, i) => (
-        <div key={i} style={{
-          position: "absolute", inset: 0, borderRadius: "50%",
-          border: "1px solid rgba(41,98,58,0.7)",
-          animation: `signalRing 2.4s ease-out ${delay}s infinite`,
-        }} />
-      ))}
-      <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#29623a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Play size={22} color="#fff" fill="#fff" />
+  <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+    {/* Looping background video */}
+    <video
+      autoPlay loop muted playsInline
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+    >
+      <source src="/bg-placeholder.mp4" type="video/mp4" />
+    </video>
+
+    {/* Dark overlay so text is legible */}
+    <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.58)" }} />
+
+    {/* Content */}
+    <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
+      {/* Animated signal rings */}
+      <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {[0, 0.5, 1.0].map((delay, i) => (
+          <div key={i} style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            border: "1px solid rgba(82,184,112,0.6)",
+            animation: `signalRing 2.4s ease-out ${delay}s infinite`,
+          }} />
+        ))}
+        <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(41,98,58,0.85)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backdropFilter: "blur(4px)" }}>
+          <Play size={20} color="#fff" fill="#fff" />
+        </div>
       </div>
-    </div>
 
-    <LogoSVG height={40} color="#ffffff" />
+      <LogoSVG height={38} color="#ffffff" />
 
-    <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
-      <p style={K({ fontWeight: 700, fontSize: 20, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
-      <p style={K({ fontWeight: 400, fontSize: 14, color: "rgba(255,255,255,0.55)" })}>Sin transmisión en directo en este momento</p>
-      <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 })}>Sintoniza el 95.9 FM en Temuco y la Araucanía</p>
+      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
+        <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>Sin transmisión en directo en este momento</p>
+        <p style={K({ fontWeight: 300, fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 })}>Sintoniza el 95.9 FM en Temuco y la Araucanía</p>
+      </div>
     </div>
   </div>
 );

@@ -200,7 +200,7 @@ const NAV_LINKS = [
   { label: "Noticias",           href: "#noticias" },
   { label: "En Vivo",            href: "#en-vivo" },
   { label: "Programación",       href: "#programacion" },
-  { label: "Radio La Frontera",  href: "#frontera" },
+  { label: "Radio La Frontera",  href: "#frontera", logo: "/frontera-logo.svg" },
   { label: "Contacto",           href: "#contacto" },
 ];
 
@@ -217,13 +217,16 @@ function Navbar() {
         </a>
 
         {/* Center nav */}
-        <div className="hidden md:flex" style={{ gap: 28 }}>
+        <div className="hidden md:flex" style={{ gap: 28, alignItems: "center" }}>
           {NAV_LINKS.map((l) => (
             <a key={l.label} href={l.href}
               {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
               className="nav-link"
-              style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none" })}>
-              {l.label}
+              aria-label={l.label}
+              style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none", display: "flex", alignItems: "center" })}>
+              {l.logo
+                ? <img src={l.logo} alt={l.label} style={{ height: 26, width: "auto", display: "block" }} />
+                : l.label}
             </a>
           ))}
         </div>
@@ -247,8 +250,11 @@ function Navbar() {
             <a key={l.label} href={l.href}
               {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
               onClick={() => setOpen(false)}
-              style={K({ display: "block", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>
-              {l.label}
+              aria-label={l.label}
+              style={K({ display: "flex", alignItems: "center", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>
+              {l.logo
+                ? <img src={l.logo} alt={l.label} style={{ height: 30, width: "auto", display: "block" }} />
+                : l.label}
             </a>
           ))}
         </div>

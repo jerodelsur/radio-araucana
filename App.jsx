@@ -259,6 +259,13 @@ function Navbar() {
 
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
 function Hero({ playing, toggle }) {
+  const [progIdx, setProgIdx] = React.useState(getCurrentProgram);
+  React.useEffect(() => {
+    const id = setInterval(() => setProgIdx(getCurrentProgram()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const currentProg = progIdx >= 0 ? PROGRAMS[progIdx] : null;
+
   return (
     <section id="inicio" style={{
       background: "#191919",
@@ -287,13 +294,15 @@ function Hero({ playing, toggle }) {
               Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 65 años siendo la voz de nuestra gente.
             </p>
 
-            <div className="fiu-2" style={{ background: "#2d2d2d", borderLeft: "3px solid #29623a", padding: "16px 20px", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <p style={K({ fontWeight: 700, fontSize: 16, color: "#fff" })}>Sube que Te Llevo</p>
-                <p style={K({ fontWeight: 300, fontSize: 13, color: "#9ca3af", marginTop: 3 })}>Música y compañía · 06:00 – 10:00</p>
+            {currentProg && (
+              <div className="fiu-2" style={{ background: "#2d2d2d", borderLeft: "3px solid #29623a", padding: "16px 20px", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <p style={K({ fontWeight: 700, fontSize: 16, color: "#fff" })}>{currentProg.name}</p>
+                  <p style={K({ fontWeight: 300, fontSize: 13, color: "#9ca3af", marginTop: 3 })}>{currentProg.host} · {currentProg.start} – {currentProg.end}</p>
+                </div>
+                <Waveform />
               </div>
-              <Waveform />
-            </div>
+            )}
 
             <div className="fiu-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button className="cta-btn" onClick={toggle} style={K({ background: "#cc0000", color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 28px", borderRadius: 3, border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 })}>

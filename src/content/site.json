@@ -36,10 +36,10 @@
     }
   ],
   "videos": [
-    { "title": "Arturo Sanhueza, DT de Deportes Temuco, en La Voz Albiverde",                  "dur": "24:18",   "views": "12.4K vistas", "bg": "linear-gradient(135deg, #0f2d1a, #1a3a5c)" },
-    { "title": "El Alcalde de Temuco habla con Radio Araucana sobre los proyectos del año",     "dur": "38:45",   "views": "9.7K vistas",  "bg": "linear-gradient(135deg, #2d1a0f, #5c4033)" },
-    { "title": "Araucana y Frontera: la historia de las radios más antiguas del sur de Chile",  "dur": "52:10",   "views": "31.2K vistas", "bg": "linear-gradient(135deg, #1d4a2b, #29623a)" },
-    { "title": "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",    "dur": "1:04:33", "views": "7.1K vistas",  "bg": "linear-gradient(135deg, #1a1a1a, #2d2d2d)" }
+    { "title": "Arturo Sanhueza, DT de Deportes Temuco, en La Voz Albiverde",                  "youtube": "", "dur": "24:18",   "views": "12.4K vistas", "bg": "linear-gradient(135deg, #0f2d1a, #29623a)" },
+    { "title": "El Alcalde de Temuco habla con Radio Araucana sobre los proyectos del año",     "youtube": "", "dur": "38:45",   "views": "9.7K vistas",  "bg": "linear-gradient(135deg, #1a3a1e, #4a7c59)" },
+    { "title": "Araucana y Frontera: la historia de las radios más antiguas del sur de Chile",  "youtube": "", "dur": "52:10",   "views": "31.2K vistas", "bg": "linear-gradient(135deg, #1d4a2b, #52b870)" },
+    { "title": "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",    "youtube": "", "dur": "1:04:33", "views": "7.1K vistas",  "bg": "linear-gradient(135deg, #2d4a1a, #d4a017)" }
   ],
   "programs": [
     { "start": "06:00", "end": "10:00", "name": "Sube que Te Llevo",         "host": "Alejandro Contreras",              "color": "#29623a" },

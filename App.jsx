@@ -467,6 +467,13 @@ function NewsGrid() {
 /* ─── Video Section ───────────────────────────────────────────────────────── */
 // VIDEOS is consumed via useSiteContent() inside VideoSection
 
+// Extract YouTube videoId from common URL formats
+function getYouTubeId(url) {
+  if (!url || typeof url !== "string") return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m ? m[1] : null;
+}
+
 function VideoSection() {
   const { videos: VIDEOS } = useSiteContent();
   return (
@@ -489,22 +496,32 @@ function VideoSection() {
 
         <p style={K({ fontWeight: 600, fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16 })}>Últimos videos</p>
         <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
-          {VIDEOS.map((v, i) => (
-            <div key={i} className="video-card" style={{ minWidth: 260, flexShrink: 0 }}>
-              <div style={{ position: "relative", paddingBottom: "56.25%", background: v.bg, borderRadius: 4, overflow: "hidden" }}>
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Play size={20} color="#29623a" fill="#29623a" />
+          {VIDEOS.map((v, i) => {
+            const ytId = getYouTubeId(v.youtube);
+            const thumbStyle = ytId
+              ? { backgroundColor: "#0a0a0a", backgroundImage: `url(https://img.youtube.com/vi/${ytId}/hqdefault.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }
+              : { background: v.bg };
+            const Wrapper = ytId ? "a" : "div";
+            const wrapperProps = ytId
+              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { minWidth: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
+              : { style: { minWidth: 260, flexShrink: 0 } };
+            return (
+              <Wrapper key={i} className="video-card" {...wrapperProps}>
+                <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", ...thumbStyle }}>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Play size={20} color="#29623a" fill="#29623a" />
+                    </div>
+                  </div>
+                  <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(25,25,25,0.82)", borderRadius: 2, padding: "2px 7px" }}>
+                    <span style={K({ fontWeight: 600, fontSize: 11, color: "#fff" })}>{v.dur}</span>
                   </div>
                 </div>
-                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(25,25,25,0.82)", borderRadius: 2, padding: "2px 7px" }}>
-                  <span style={K({ fontWeight: 600, fontSize: 11, color: "#fff" })}>{v.dur}</span>
-                </div>
-              </div>
-              <p style={K({ fontWeight: 600, fontSize: 14, color: "#fff", lineHeight: 1.3, marginTop: 8, marginBottom: 4 })}>{v.title}</p>
-              <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>{v.views}</span>
-            </div>
-          ))}
+                <p style={K({ fontWeight: 600, fontSize: 14, color: "#fff", lineHeight: 1.3, marginTop: 8, marginBottom: 4 })}>{v.title}</p>
+                <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>{v.views}</span>
+              </Wrapper>
+            );
+          })}
         </div>
       </div>
     </section>

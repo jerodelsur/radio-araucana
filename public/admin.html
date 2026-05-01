@@ -361,10 +361,11 @@
     );
   }
 
-  function textField(label, value, onChange, type = "text") {
+  function textField(label, value, onChange, type = "text", hint = "") {
     return el("div", { class: "field" },
       el("label", { class: "field-label" }, label),
       el("input", { type, value: value ?? "", oninput: (e) => onChange(e.target.value) }),
+      hint ? el("p", { class: "field-hint" }, hint) : null,
     );
   }
   function textAreaField(label, value, onChange) {
@@ -472,14 +473,17 @@
     return el("div", { class: "item-card" },
       cardHeader(`Video ${idx + 1}`, idx, list),
       textField("Título", item.title, (v) => { item.title = v; markDirty(); }),
+      textField("URL de YouTube", item.youtube, (v) => { item.youtube = v; markDirty(); }, "url",
+        "Pegá el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente y al clickear el card, abre el video en YouTube."),
       el("div", { class: "field-row" },
         textField("Duración (ej. 24:18)", item.dur, (v) => { item.dur = v; markDirty(); }),
         textField("Vistas (ej. 12.4K vistas)", item.views, (v) => { item.views = v; markDirty(); }),
       ),
-      textField("Fondo (CSS gradient o color)", item.bg, (v) => { item.bg = v; markDirty(); }),
+      textField("Fondo (solo si NO hay URL de YouTube)", item.bg, (v) => { item.bg = v; markDirty(); }, "text",
+        "Gradiente CSS o color sólido. Solo se usa cuando el video no tiene URL de YouTube."),
     );
   }
-  videoCard.empty = () => ({ title: "", dur: "0:00", views: "0 vistas", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
+  videoCard.empty = () => ({ title: "", youtube: "", dur: "0:00", views: "0 vistas", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
 
   function waCard(item, idx, list) {
     return el("div", { class: "item-card" },

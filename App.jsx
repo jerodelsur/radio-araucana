@@ -201,7 +201,7 @@ const NAV_LINKS = [
   { label: "En Vivo",            href: "#en-vivo" },
   { label: "Programación",       href: "#programacion" },
   { label: "Contacto",           href: "#contacto" },
-  { label: "Radio La Frontera",  href: "#frontera", logo: "/frontera-logo.svg" },
+  { label: "Radio La Frontera",  href: "#frontera", logo: "/frontera-logo-white.svg" },
 ];
 
 function Navbar() {

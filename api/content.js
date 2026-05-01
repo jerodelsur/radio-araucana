@@ -12,7 +12,10 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=60");
+  // No caching: edits in /admin must show up on the next page load.
+  // The traffic is low enough that hitting this function on every page
+  // load fits comfortably in the Hobby plan's invocation quota.
+  res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
 
   try {
     const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });

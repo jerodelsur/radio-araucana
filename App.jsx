@@ -187,7 +187,7 @@ const LivePlaceholder = () => (
 
 const CAT_COLORS = {
   REGIÓN: "#29623a", POLÍTICA: "#191919", CULTURA: "#4a7c59",
-  DEPORTE: "#8B0000", MAPUCHE: "#5c4033", ECONOMÍA: "#1a3a5c",
+  DEPORTE: "#8B0000", ECONOMÍA: "#1a3a5c", SALUD: "#1a3a5c",
 };
 const Tag = ({ label }) => (
   <span style={K({ background: CAT_COLORS[label] ?? "#29623a", color: "#fff", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 2, display: "inline-block" })}>{label}</span>
@@ -323,7 +323,7 @@ const CAT_PHOTOS = {
   CULTURA:  "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180240_485f5e65-1974-410b-9854-b7ef94957fa2.png",
   REGIÓN:   "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180247_518083b9-fa50-4ae4-b50d-dc3a605f8c92.png",
   POLÍTICA: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_180252_2f83fe1c-74ec-4e71-97dd-09b04075d485.png",
-  MAPUCHE:  "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175453_d9b20381-522d-4cff-a435-8bda61b84978.png",
+
   ECONOMÍA: "https://d8j0ntlcm91z4.cloudfront.net/user_377BAP7O90tMrU9FnLhPLu2k6mH/hf_20260501_175448_69da918e-e045-48d0-88f2-88871ae9600d.png",
 };
 

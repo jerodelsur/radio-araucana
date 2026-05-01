@@ -730,75 +730,87 @@ const SvgFacebookColor = () => (
 );
 
 function SocialFeeds() {
+  const IG_GRADS = [
+    "linear-gradient(135deg,#0f2d1a,#29623a)",
+    "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
+    "linear-gradient(135deg,#2d4a1a,#4a7c59)",
+    "linear-gradient(135deg,#2d1a0f,#5c4033)",
+    "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
+    "linear-gradient(135deg,#3a0f0f,#8B0000)",
+    "linear-gradient(135deg,#1d4a2b,#52b870)",
+    "linear-gradient(135deg,#0f2535,#1a4a5c)",
+    "linear-gradient(135deg,#2d2d1a,#5c5c1a)",
+  ];
+
   return (
     <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
-          <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", margin: 0 })}>SÍGUENOS</h2>
-          <div style={{ display: "flex", gap: 10 }}>
-            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 13, color: "#191919", textDecoration: "none", background: "transparent", border: "1.5px solid #191919", padding: "8px 18px", borderRadius: 4 })}>
-              <SvgInstagramColor />
-              Seguir en Instagram
-            </a>
-            <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
-              style={K({ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 13, color: "#191919", textDecoration: "none", background: "transparent", border: "1.5px solid #191919", padding: "8px 18px", borderRadius: 4 })}>
-              <SvgFacebookColor />
-              Seguir en Facebook
-            </a>
-          </div>
-        </div>
+        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32 })}>SÍGUENOS</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* Instagram */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <SvgInstagramColor />
-              <div>
-                <p style={K({ fontWeight: 700, fontSize: 15, color: "#191919", margin: 0 })}>@araucanaradio</p>
-                <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Instagram</p>
+          <div style={{ background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <SvgInstagramColor />
+                <div>
+                  <p style={K({ fontWeight: 700, fontSize: 14, color: "#191919", margin: 0 })}>@araucanaradio</p>
+                  <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Instagram</p>
+                </div>
               </div>
+              <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
+                style={K({ fontWeight: 600, fontSize: 12, color: "#191919", textDecoration: "none", background: "#f4f4f4", border: "1px solid #e5e7eb", padding: "6px 14px", borderRadius: 20 })}>
+                Seguir
+              </a>
             </div>
             <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3, borderRadius: 6, overflow: "hidden", marginBottom: 14 }}>
-                {[
-                  "linear-gradient(135deg,#0f2d1a,#29623a)",
-                  "linear-gradient(135deg,#0f1d2d,#1a3a5c)",
-                  "linear-gradient(135deg,#2d4a1a,#4a7c59)",
-                  "linear-gradient(135deg,#2d1a0f,#5c4033)",
-                  "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
-                  "linear-gradient(135deg,#3a0f0f,#8B0000)",
-                  "linear-gradient(135deg,#1d4a2b,#52b870)",
-                  "linear-gradient(135deg,#0f2535,#1a4a5c)",
-                  "linear-gradient(135deg,#2d2d1a,#5c5c1a)",
-                ].map((g, i) => (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+                {IG_GRADS.map((g, i) => (
                   <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
                 ))}
               </div>
             </a>
-            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-              style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none" })}>Ver perfil completo →</a>
+            <div style={{ padding: "12px 20px" }}>
+              <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
+                style={K({ fontWeight: 600, fontSize: 13, color: "#6b7280", textDecoration: "none" })}>Ver todas las publicaciones →</a>
+            </div>
           </div>
 
-          {/* Facebook Page Plugin */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <SvgFacebookColor />
-              <div>
-                <p style={K({ fontWeight: 700, fontSize: 15, color: "#191919", margin: 0 })}>radioaraucana</p>
-                <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Facebook</p>
+          {/* Facebook */}
+          <div style={{ background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <SvgFacebookColor />
+                <div>
+                  <p style={K({ fontWeight: 700, fontSize: 14, color: "#191919", margin: 0 })}>Radio Araucana</p>
+                  <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Facebook</p>
+                </div>
               </div>
+              <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
+                style={K({ fontWeight: 600, fontSize: 12, color: "#fff", textDecoration: "none", background: "#1877F2", padding: "6px 14px", borderRadius: 20 })}>
+                Seguir
+              </a>
             </div>
-            <div style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #e5e7eb", background: "#fff" }}>
-              <iframe
-                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fradioaraucana&tabs=timeline&width=500&height=480&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
-                width="100%" height="480"
-                style={{ border: "none", display: "block" }}
-                scrolling="no"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+              {[
+                "linear-gradient(135deg,#1a3a5c,#1877F2)",
+                "linear-gradient(135deg,#0f2d1a,#29623a)",
+                "linear-gradient(135deg,#2d1a0f,#5c4033)",
+                "linear-gradient(135deg,#1877F2,#0f2d4a)",
+                "linear-gradient(135deg,#1d4a2b,#52b870)",
+                "linear-gradient(135deg,#3a0f0f,#8B0000)",
+                "linear-gradient(135deg,#1a1a1a,#2d2d2d)",
+                "linear-gradient(135deg,#0f1d2d,#1877F2)",
+                "linear-gradient(135deg,#2d4a1a,#4a7c59)",
+              ].map((g, i) => (
+                <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
+              ))}
+            </div>
+            <div style={{ padding: "12px 20px" }}>
+              <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
+                style={K({ fontWeight: 600, fontSize: 13, color: "#6b7280", textDecoration: "none" })}>Ver página en Facebook →</a>
             </div>
           </div>
 

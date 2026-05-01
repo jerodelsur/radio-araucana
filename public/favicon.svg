@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@700');</style>
-  </defs>
   <rect width="64" height="64" rx="12" fill="#191919"/>
-  <text x="32" y="48" text-anchor="middle" font-family="'Open Sans', sans-serif" font-weight="700" font-size="50" fill="#52b870">A</text>
+  <path d="M14 52 Q14 22 32 12" stroke="#52b870" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M22 52 Q22 28 32 20" stroke="#52b870" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M30 52 Q30 36 32 30" stroke="#52b870" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <circle cx="32" cy="54" r="4.5" fill="#52b870"/>
 </svg>

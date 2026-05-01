@@ -868,8 +868,15 @@ function Footer() {
             <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
               Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
             </p>
-            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 8 })}>Desde 1960 · Más de 65 años en el aire</p>
-            <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 24 })}>Parte del grupo <span style={{ color: "#7dbb5e" }}>Radio La Frontera 1110 AM</span> · Pionera en las comunicaciones del Sur de Chile desde 1939</p>
+            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 16 })}>Desde 1960 · Más de 65 años en el aire</p>
+
+            <div style={{ marginBottom: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <p style={K({ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em" })}>Parte del grupo</p>
+              <a href="#frontera" style={{ display: "inline-block", textDecoration: "none" }}>
+                <img src="/frontera-logo-white.svg" alt="Radio La Frontera 1110 AM" style={{ height: 44, width: "auto", display: "block", marginBottom: 8 }} />
+              </a>
+              <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 })}>Pionera en las comunicaciones del Sur de Chile desde 1939</p>
+            </div>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               {SOC.map((Icon, i) => (

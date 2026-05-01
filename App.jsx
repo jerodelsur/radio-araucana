@@ -301,15 +301,61 @@ function Hero({ playing, toggle }) {
   );
 }
 
-/* ─── News Ticker ─────────────────────────────────────────────────────────── */
+/* ─── Weather Ticker ──────────────────────────────────────────────────────── */
+const WEATHER_CITIES = [
+  { name: "Temuco",     lat: -38.7396, lon: -72.5984 },
+  { name: "Pucón",      lat: -39.2727, lon: -71.9587 },
+  { name: "Villarrica", lat: -39.2827, lon: -72.2293 },
+  { name: "Angol",      lat: -37.7983, lon: -72.7136 },
+  { name: "Victoria",   lat: -38.2326, lon: -72.3312 },
+  { name: "Lautaro",    lat: -38.5271, lon: -72.4382 },
+];
+
+const WMO = {
+  0: "Despejado ☀️", 1: "Mayormente despejado 🌤️", 2: "Parcialmente nublado ⛅",
+  3: "Nublado ☁️", 45: "Neblina 🌫️", 48: "Neblina 🌫️",
+  51: "Llovizna 🌦️", 53: "Llovizna 🌦️", 55: "Llovizna 🌦️",
+  61: "Lluvia leve 🌧️", 63: "Lluvia 🌧️", 65: "Lluvia intensa 🌧️",
+  71: "Nieve 🌨️", 73: "Nieve 🌨️", 75: "Nieve intensa 🌨️",
+  80: "Chubascos 🌦️", 81: "Chubascos 🌧️", 82: "Chubascos fuertes 🌧️",
+  95: "Tormenta ⛈️",
+};
+
 function NewsTicker() {
-  const text = "ÚLTIMA HORA: Volcán Llaima mantiene alerta amarilla en La Araucanía · Deportes Temuco avanza en la Copa Chile · Festival Kimün llega a Padre Las Casas en junio · Temuco lidera ranking de calidad del aire en Chile · Comunidades mapuche de Ercilla inician diálogo con gobierno regional · Feria de artesanía mapuche bate récord de visitantes · Nueva ruta ciclista conectará Temuco con Padre Las Casas · ";
+  const [weather, setWeather] = React.useState([]);
+
+  React.useEffect(() => {
+    Promise.all(
+      WEATHER_CITIES.map(c =>
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,weathercode&timezone=America/Santiago`)
+          .then(r => r.json())
+          .then(d => ({
+            name: c.name,
+            temp: Math.round(d.current.temperature_2m),
+            feels: Math.round(d.current.apparent_temperature),
+            label: WMO[d.current.weathercode] ?? "Variable",
+          }))
+          .catch(() => null)
+      )
+    ).then(results => setWeather(results.filter(Boolean)));
+  }, []);
+
+  const tickerText = weather.length > 0
+    ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("          ·          ") + "          ·          "
+    : "CARGANDO DATOS METEOROLÓGICOS DE LA ARAUCANÍA...";
+
   return (
-    <div style={{ background: "#29623a", padding: "10px 0", overflow: "hidden" }}>
-      <div className="marquee-track">
-        <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.06em" })}>
-          {text}{text}
-        </span>
+    <div style={{ background: "#29623a", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
+      <div style={{ background: "#1c4a28", padding: "10px 18px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
+        <span style={{ fontSize: 15 }}>🌡️</span>
+        <span style={K({ fontWeight: 700, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em", whiteSpace: "nowrap" })}>METEO ARAUCANÍA</span>
+      </div>
+      <div style={{ overflow: "hidden", flex: 1, padding: "10px 0" }}>
+        <div className="marquee-track">
+          <span style={K({ fontWeight: 500, fontSize: 13, color: "#fff", letterSpacing: "0.04em" })}>
+            {tickerText}{tickerText}
+          </span>
+        </div>
       </div>
     </div>
   );

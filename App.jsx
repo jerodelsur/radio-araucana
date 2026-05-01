@@ -201,7 +201,7 @@ const NAV_LINKS = [
   { label: "En Vivo",      href: "#en-vivo" },
   { label: "Programación", href: "#programacion" },
   { label: "Destinos",     href: "#destinos" },
-  { label: "Contacto",     href: "mailto:contacto@araucanayfrontera.cl", external: true },
+  { label: "Contacto",     href: "#contacto" },
 ];
 
 function Navbar() {
@@ -836,7 +836,7 @@ const FOOTER_LINKS = [
 
 function Footer() {
   return (
-    <footer style={{ background: "#191919", padding: "64px 24px 0" }}>
+    <footer id="contacto" style={{ background: "#191919", padding: "64px 24px 0" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
 

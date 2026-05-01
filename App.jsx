@@ -444,10 +444,10 @@ function NewsGrid() {
 
 /* ─── Video Section ───────────────────────────────────────────────────────── */
 const VIDEOS = [
-  { title: "Reportaje: El agua que escasea en La Araucanía",       dur: "12:34",   views: "8.2K vistas",  bg: "linear-gradient(135deg, #0f2d1a, #1a3a5c)" },
-  { title: "Machi Francisca Linconao habla en Radio Araucana",     dur: "24:11",   views: "15.7K vistas", bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
-  { title: "80 años de la radio más antigua del sur de Chile",     dur: "45:02",   views: "32.1K vistas", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
-  { title: "En vivo: Marcha por derechos mapuche, Temuco",         dur: "1:23:45", views: "6.8K vistas",  bg: "linear-gradient(135deg, #1a1a1a, #2d2d2d)" },
+  { title: "Arturo Sanhueza, DT de Deportes Temuco, en La Voz Albiverde",                   dur: "24:18",   views: "12.4K vistas", bg: "linear-gradient(135deg, #0f2d1a, #1a3a5c)" },
+  { title: "El Alcalde de Temuco habla con Radio Araucana sobre los proyectos del año",      dur: "38:45",   views: "9.7K vistas",  bg: "linear-gradient(135deg, #2d1a0f, #5c4033)" },
+  { title: "Araucana y Frontera: la historia de las radios más antiguas del sur de Chile",   dur: "52:10",   views: "31.2K vistas", bg: "linear-gradient(135deg, #1d4a2b, #29623a)" },
+  { title: "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",     dur: "1:04:33", views: "7.1K vistas",  bg: "linear-gradient(135deg, #1a1a1a, #2d2d2d)" },
 ];
 
 function VideoSection() {

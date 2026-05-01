@@ -328,27 +328,15 @@ const CAT_PHOTOS = {
 
 const NEWS = [
   {
-    cat: "SALUD",
-    headline: "La Araucanía ya tiene su primer gran centro especializado en salud infantil",
-    bajada: "Un hospital pensado para los niños del sur de Chile abre sus puertas en la región. Escuchamos a quienes estuvieron en la inauguración.",
-    time: "30 abr 2026",
-  },
-  {
     cat: "DEPORTE",
     headline: "Seis medallas se trae la Araucanía desde los Juegos Sudamericanos de la Juventud",
     bajada: "Los jóvenes deportistas regionales volvieron con el pecho lleno. Te contamos quiénes son y en qué disciplinas brillaron.",
     time: "30 abr 2026",
   },
   {
-    cat: "CULTURA",
-    headline: "El Teatro Municipal vibró con más de 600 bailarines en una noche para el recuerdo",
-    bajada: "La danza tomó el centro de Temuco en un encuentro que reunió a elencos de toda la región durante una jornada única.",
-    time: "30 abr 2026",
-  },
-  {
-    cat: "REGIÓN",
-    headline: "Cien jóvenes de la Araucanía reciben reconocimiento por transformar su entorno",
-    bajada: "Desde el medioambiente hasta la cultura mapuche, los premiados muestran que el futuro de la región ya está en marcha.",
+    cat: "POLÍTICA",
+    headline: "El Presidente habló fuerte sobre salud: qué prometió y qué inquieta al sector",
+    bajada: "Dirigentes de la salud se reunieron con Kast para plantear sus dudas. Radio Araucana estuvo ahí para contarlo.",
     time: "30 abr 2026",
   },
   {
@@ -358,9 +346,9 @@ const NEWS = [
     time: "30 abr 2026",
   },
   {
-    cat: "POLÍTICA",
-    headline: "El Presidente habló fuerte sobre salud: qué prometió y qué inquieta al sector",
-    bajada: "Dirigentes de la salud se reunieron con Kast para plantear sus dudas. Radio Araucana estuvo ahí para contarlo.",
+    cat: "CULTURA",
+    headline: "El Teatro Municipal vibró con más de 600 bailarines en una noche para el recuerdo",
+    bajada: "La danza tomó el centro de Temuco en un encuentro que reunió a elencos de toda la región durante una jornada única.",
     time: "30 abr 2026",
   },
 ];
@@ -373,7 +361,7 @@ function NewsGrid() {
           <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {NEWS.map((n, i) => {
             const photo = CAT_PHOTOS[n.cat];
             return (

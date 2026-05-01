@@ -562,7 +562,9 @@ function SocialFeeds() {
           </div>
 
           <div>
-            <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>araucanafm</p>
+            <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+              <p style={K({ fontWeight: 600, fontSize: 15, color: "#191919", marginBottom: 4 })}>radioaraucana</p>
+            </a>
             <p style={K({ fontWeight: 300, fontSize: 13, color: "#6b7280", marginBottom: 16 })}>Facebook</p>
             <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, padding: 20, marginBottom: 16 }}>
               <div style={{ background: "linear-gradient(135deg, #1d4a2b, #29623a)", height: 140, borderRadius: 3, marginBottom: 12 }} />

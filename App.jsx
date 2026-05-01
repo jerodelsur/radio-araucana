@@ -634,6 +634,9 @@ const STREAM_URL = "/stream";
 
 function FloatingPlayer() {
   const [playing, setPlaying] = useState(false);
+  const [volume, setVolume] = useState(80);
+  const [showVolume, setShowVolume] = useState(false);
+  const [copied, setCopied] = useState(false);
   const audioRef = React.useRef(null);
 
   const toggle = () => {
@@ -644,16 +647,24 @@ function FloatingPlayer() {
       audio.src = "";
     } else {
       audio.src = STREAM_URL;
+      audio.volume = volume / 100;
       audio.play().catch(() => {});
     }
     setPlaying(!playing);
   };
 
+  const changeVolume = (v) => {
+    setVolume(v);
+    if (audioRef.current) audioRef.current.volume = v / 100;
+  };
+
   const share = () => {
     if (navigator.share) {
-      navigator.share({ title: "Radio Araucana 95.9 FM", url: "https://araucanayfrontera.cl" });
+      navigator.share({ title: "Radio Araucana 95.9 FM", url: "https://radio-araucana.vercel.app" });
     } else {
-      navigator.clipboard?.writeText("https://araucanayfrontera.cl");
+      navigator.clipboard?.writeText("https://radio-araucana.vercel.app");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -689,9 +700,31 @@ function FloatingPlayer() {
       </div>
 
       {/* Volumen + compartir */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <Volume2 size={20} color="#fff" style={{ cursor: "default" }} />
-        <Share2 size={20} color="#fff" style={{ cursor: "pointer" }} onClick={share} />
+      <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative" }}>
+
+        {/* Slider de volumen */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          {showVolume && (
+            <div style={{ position: "absolute", bottom: 52, right: -8, background: "#2d2d2d", borderRadius: 8, padding: "10px 14px", border: "1px solid #374151", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <span style={K({ fontSize: 11, color: "#9ca3af" })}>{volume}%</span>
+              <input type="range" min={0} max={100} value={volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                style={{ writingMode: "vertical-lr", direction: "rtl", width: 6, height: 80, cursor: "pointer", accentColor: "#29623a" }} />
+            </div>
+          )}
+          <Volume2 size={20} color="#fff" style={{ cursor: "pointer" }}
+            onClick={() => setShowVolume(!showVolume)} />
+        </div>
+
+        {/* Compartir */}
+        <div style={{ position: "relative" }}>
+          {copied && (
+            <div style={{ position: "absolute", bottom: 36, right: 0, background: "#29623a", borderRadius: 4, padding: "3px 8px", whiteSpace: "nowrap" }}>
+              <span style={K({ fontSize: 11, color: "#fff" })}>¡Link copiado!</span>
+            </div>
+          )}
+          <Share2 size={20} color="#fff" style={{ cursor: "pointer" }} onClick={share} />
+        </div>
       </div>
     </div>
   );

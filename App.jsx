@@ -196,12 +196,12 @@ const Tag = ({ label }) => (
 
 /* ─── Navbar ──────────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { label: "Inicio",       href: "#inicio" },
-  { label: "Noticias",     href: "#noticias" },
-  { label: "En Vivo",      href: "#en-vivo" },
-  { label: "Programación", href: "#programacion" },
-  { label: "Destinos",     href: "#destinos" },
-  { label: "Contacto",     href: "#contacto" },
+  { label: "Inicio",             href: "#inicio" },
+  { label: "Noticias",           href: "#noticias" },
+  { label: "En Vivo",            href: "#en-vivo" },
+  { label: "Programación",       href: "#programacion" },
+  { label: "Radio La Frontera",  href: "#frontera" },
+  { label: "Contacto",           href: "#contacto" },
 ];
 
 function Navbar() {
@@ -859,7 +859,8 @@ function Footer() {
             <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
               Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
             </p>
-            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 24 })}>Desde 1960 · Más de 65 años en el aire</p>
+            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 8 })}>Desde 1960 · Más de 65 años en el aire</p>
+            <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 24 })}>Parte del grupo <span style={{ color: "#7dbb5e" }}>Radio La Frontera 1110 AM</span> · La Primera del Sur de Chile</p>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               {SOC.map((Icon, i) => (
@@ -1005,18 +1006,99 @@ function WhatsAppWidget() {
   );
 }
 
-/* ─── Floating Player ─────────────────────────────────────────────────────── */
-const STREAM_URL = "/stream";
+/* ─── Radio La Frontera Section ───────────────────────────────────────────── */
+function FronteraSection({ playing, toggle }) {
+  return (
+    <section id="frontera" style={{
+      background: "linear-gradient(160deg, #0d2410 0%, #1a3a1e 50%, #0a1f0d 100%)",
+      padding: "clamp(60px, 8vw, 100px) 24px",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Subtle background texture */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 28px)", pointerEvents: "none" }} />
 
-function FloatingPlayer({ playing, toggle }) {
+      <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+          {/* Left: info */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#7dbb5e" }} />
+              <span style={K({ fontWeight: 600, fontSize: 12, color: "#7dbb5e", textTransform: "uppercase", letterSpacing: "0.14em" })}>
+                TRANSMITIENDO EN VIVO · 1110 AM
+              </span>
+            </div>
+
+            <div>
+              <p style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 })}>Radio</p>
+              <h2 style={K({ fontWeight: 900, fontSize: "clamp(48px, 7vw, 88px)", color: "#fff", lineHeight: 0.95, margin: 0 })}>La Frontera</h2>
+              <p style={K({ fontWeight: 400, fontSize: 16, color: "#7dbb5e", marginTop: 12, letterSpacing: "0.05em" })}>La Primera del Sur de Chile</p>
+            </div>
+
+            <p style={K({ fontWeight: 300, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: 420 })}>
+              Información, entretenimiento y la voz de la Araucanía en amplitud modulada. Cobertura regional desde Temuco.
+            </p>
+
+            <button className="play-btn" onClick={toggle} style={K({
+              background: playing ? "#29623a" : "transparent",
+              color: "#fff", fontWeight: 700, fontSize: 15,
+              padding: "14px 32px", borderRadius: 3,
+              border: "2px solid #52b870",
+              cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase",
+              display: "flex", alignItems: "center", gap: 10, width: "fit-content",
+              transition: "background 200ms ease",
+            })}>
+              {playing ? <Pause size={16} /> : <Play size={16} fill="#fff" />}
+              {playing ? "Escuchando La Frontera — pausar" : "Escuchar La Frontera 1110 AM"}
+            </button>
+          </div>
+
+          {/* Right: animated signal */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ position: "relative", width: 240, height: 240, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {[0, 0.6, 1.2].map((delay, i) => (
+                <div key={i} style={{
+                  position: "absolute", inset: 0, borderRadius: "50%",
+                  border: "1px solid rgba(125,187,94,0.5)",
+                  animation: `signalRing 2.8s ease-out ${delay}s infinite`,
+                }} />
+              ))}
+              <div style={{
+                width: 120, height: 120, borderRadius: "50%",
+                background: "rgba(41,98,58,0.6)",
+                border: "2px solid rgba(82,184,112,0.6)",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                backdropFilter: "blur(8px)",
+              }}>
+                <span style={K({ fontWeight: 900, fontSize: 26, color: "#fff", lineHeight: 1 })}>1110</span>
+                <span style={K({ fontWeight: 400, fontSize: 13, color: "#7dbb5e", letterSpacing: "0.1em" })}>AM</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Streams ─────────────────────────────────────────────────────────────── */
+const STREAM_URL      = "/stream";
+const STREAM_FRONTERA = "/stream-frontera";
+
+function FloatingPlayer({ station, play }) {
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const playing = station !== null;
+  const isFrontera = station === "frontera";
 
   const toggleMute = () => {
     const audio = document.querySelector("audio");
     if (audio) audio.muted = !muted;
     setMuted(!muted);
   };
+
+  const toggle = () => play(isFrontera ? "frontera" : "araucana");
 
   const share = () => {
     if (navigator.share) {
@@ -1028,52 +1110,68 @@ function FloatingPlayer({ playing, toggle }) {
     }
   };
 
-  return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", borderTop: "2px solid #29623a", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+  const accentColor = isFrontera ? "#7dbb5e" : "#52b870";
+  const borderColor = isFrontera ? "#3a6e28" : "#29623a";
 
-      {/* Foto + info — oculto en móvil */}
+  return (
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", borderTop: `2px solid ${borderColor}`, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+
+      {/* Info — oculto en móvil */}
       <div className="hidden sm:flex" style={{ alignItems: "center", gap: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "1px solid #29623a" }}>
-          <img src="/player-photo.png" alt="Radio Araucana" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
-        </div>
+        {!isFrontera && (
+          <div style={{ width: 48, height: 48, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: `1px solid ${borderColor}` }}>
+            <img src="/player-photo.png" alt="Radio Araucana" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+          </div>
+        )}
+        {isFrontera && (
+          <div style={{ width: 48, height: 48, borderRadius: 6, background: "#1a3a1e", border: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={K({ fontWeight: 900, fontSize: 14, color: "#fff", lineHeight: 1 })}>1110</span>
+            <span style={K({ fontWeight: 400, fontSize: 9, color: accentColor, letterSpacing: "0.08em" })}>AM</span>
+          </div>
+        )}
         <div>
-          <p style={K({ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.2 })}>Radio Araucana 95.9 FM</p>
-          <p style={K({ fontWeight: 300, fontSize: 11, color: "#9ca3af", lineHeight: 1.4 })}>Sube que Te Llevo · Alejandro Contreras</p>
-          <p style={K({ fontWeight: 600, fontSize: 10, color: "#52b870", letterSpacing: "0.06em", textTransform: "uppercase" })}>En vivo</p>
+          <p style={K({ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.2 })}>
+            {isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}
+          </p>
+          <p style={K({ fontWeight: 300, fontSize: 11, color: "#9ca3af", lineHeight: 1.4 })}>
+            {isFrontera ? "La Primera del Sur de Chile" : "En vivo desde Temuco"}
+          </p>
+          <p style={K({ fontWeight: 600, fontSize: 10, color: accentColor, letterSpacing: "0.06em", textTransform: "uppercase" })}>
+            {playing ? "En vivo" : "Pausado"}
+          </p>
         </div>
       </div>
 
       {/* Nombre en móvil */}
       <div className="flex sm:hidden" style={{ alignItems: "center", gap: 8 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 5, overflow: "hidden", flexShrink: 0, border: "1px solid #29623a" }}>
-          <img src="/player-photo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+        <div style={{ width: 38, height: 38, borderRadius: 5, overflow: "hidden", flexShrink: 0, border: `1px solid ${borderColor}`, background: isFrontera ? "#1a3a1e" : "transparent", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          {isFrontera
+            ? <><span style={K({ fontWeight: 900, fontSize: 11, color: "#fff", lineHeight: 1 })}>1110</span><span style={K({ fontWeight: 400, fontSize: 8, color: accentColor })}>AM</span></>
+            : <img src="/player-photo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+          }
         </div>
         <div>
-          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>95.9 FM</span>
-          <p style={K({ fontWeight: 300, fontSize: 10, color: "#52b870" })}>En vivo</p>
+          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>{isFrontera ? "1110 AM" : "95.9 FM"}</span>
+          <p style={K({ fontWeight: 300, fontSize: 10, color: accentColor })}>{playing ? "En vivo" : "Pausado"}</p>
         </div>
       </div>
 
       {/* Play + waveform */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
+        <Waveform color={playing ? accentColor : "#374151"} height={20} />
         <button className="play-btn" onClick={toggle}
           style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #cc0000", background: playing ? "#cc0000" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           {playing ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" fill="#fff" />}
         </button>
-        <Waveform color={playing ? "#4ade80" : "#374151"} height={20} />
+        <Waveform color={playing ? accentColor : "#374151"} height={20} />
       </div>
 
       {/* Mute + compartir */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative" }}>
-
-        {/* Botón mute — funciona en todos los dispositivos incluido iOS */}
         <button onClick={toggleMute}
           style={{ background: "none", border: "none", cursor: "pointer", color: muted ? "#6b7280" : "#fff", display: "flex", alignItems: "center", padding: 6 }}>
           {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
-
-        {/* Compartir */}
         <div style={{ position: "relative" }}>
           {copied && (
             <div style={{ position: "absolute", bottom: 36, right: 0, background: "#29623a", borderRadius: 4, padding: "3px 8px", whiteSpace: "nowrap" }}>
@@ -1089,20 +1187,22 @@ function FloatingPlayer({ playing, toggle }) {
 
 /* ─── App ─────────────────────────────────────────────────────────────────── */
 export default function App() {
-  const [playing, setPlaying] = useState(false);
+  const [station, setStation] = useState(null); // null | "araucana" | "frontera"
   const audioRef = React.useRef(null);
 
-  const toggle = () => {
+  const play = (which) => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (playing) {
+    if (station === which) {
       audio.pause();
       audio.src = "";
+      setStation(null);
     } else {
-      audio.src = STREAM_URL;
+      audio.pause();
+      audio.src = which === "araucana" ? STREAM_URL : STREAM_FRONTERA;
       audio.play().catch(() => {});
+      setStation(which);
     }
-    setPlaying(!playing);
   };
 
   return (
@@ -1111,17 +1211,18 @@ export default function App() {
       <GlobalStyles />
       <Navbar />
       <main style={{ paddingBottom: 64 }}>
-        <Hero playing={playing} toggle={toggle} />
+        <Hero playing={station === "araucana"} toggle={() => play("araucana")} />
         <NewsTicker />
         <NewsGrid />
         <VideoSection />
         <ProgramSchedule />
         <RegionalStories />
+        <FronteraSection playing={station === "frontera"} toggle={() => play("frontera")} />
         <SocialFeeds />
         <SponsorStrip />
         <Footer />
       </main>
-      <FloatingPlayer playing={playing} setPlaying={setPlaying} toggle={toggle} />
+      <FloatingPlayer station={station} play={play} />
       <WhatsAppWidget />
     </>
   );

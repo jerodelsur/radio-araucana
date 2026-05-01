@@ -860,7 +860,7 @@ function Footer() {
               Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
             </p>
             <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 8 })}>Desde 1960 · Más de 65 años en el aire</p>
-            <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 24 })}>Parte del grupo <span style={{ color: "#7dbb5e" }}>Radio La Frontera 1110 AM</span> · La Primera del Sur de Chile</p>
+            <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 24 })}>Parte del grupo <span style={{ color: "#7dbb5e" }}>Radio La Frontera 1110 AM</span> · Pionera en las comunicaciones del Sur de Chile desde 1939</p>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               {SOC.map((Icon, i) => (
@@ -1032,11 +1032,11 @@ function FronteraSection({ playing, toggle }) {
             <div>
               <p style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 })}>Radio</p>
               <h2 style={K({ fontWeight: 900, fontSize: "clamp(48px, 7vw, 88px)", color: "#fff", lineHeight: 0.95, margin: 0 })}>La Frontera</h2>
-              <p style={K({ fontWeight: 400, fontSize: 16, color: "#7dbb5e", marginTop: 12, letterSpacing: "0.05em" })}>La Primera del Sur de Chile</p>
+              <p style={K({ fontWeight: 400, fontSize: 16, color: "#7dbb5e", marginTop: 12, letterSpacing: "0.02em" })}>Pionera en las comunicaciones del Sur de Chile</p>
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: 420 })}>
-              Información, entretenimiento y la voz de la Araucanía en amplitud modulada. Cobertura regional desde Temuco.
+              Fundada en octubre de 1939, Radio La Frontera A.M. es una de las radios más antiguas del sur de Chile. Décadas de historia acompañando a la Araucanía en el 1110 AM.
             </p>
 
             <button className="play-btn" onClick={toggle} style={K({

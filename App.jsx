@@ -170,8 +170,8 @@ function Navbar() {
         {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div className="live-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "#29623a" }} />
-            <span style={K({ fontWeight: 700, fontSize: 13, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
+            <div className="live-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "#cc0000" }} />
+            <span style={K({ fontWeight: 700, fontSize: 13, color: "#cc0000", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
           </div>
           <button onClick={() => setOpen(!open)} className="md:hidden"
             style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}>

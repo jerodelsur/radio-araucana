@@ -859,7 +859,8 @@ function Footer() {
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>Caupolicán 110, Of. 2003, Temuco, IX Región</p>
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 20 })}>Estudios: +56 45 2213166</p>
+            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>Estudios: +56 45 2213166</p>
+            <a href="mailto:contacto@araucanayfrontera.cl" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 20, textDecoration: "none" })}>✉ contacto@araucanayfrontera.cl</a>
 
             <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
               <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>¿Quiere cotizar una campaña con nosotros?</p>

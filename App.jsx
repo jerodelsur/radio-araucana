@@ -449,8 +449,13 @@ const PROGRAMS = [
 const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
 function getCurrentProgram() {
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
+  const parts = new Intl.DateTimeFormat("es-CL", {
+    timeZone: "America/Santiago",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date());
+  const h = Number(parts.find(p => p.type === "hour").value);
+  const m = Number(parts.find(p => p.type === "minute").value);
+  const cur = h * 60 + m;
   return PROGRAMS.findIndex(p => cur >= toMinutes(p.start) && cur < toMinutes(p.end));
 }
 

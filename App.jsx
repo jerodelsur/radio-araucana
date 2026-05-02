@@ -325,7 +325,7 @@ function Hero({ playing, toggle }) {
             </h1>
 
             <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
-              Hace más de 80 años nacimos en Temuco. Crecimos con la ciudad y hoy seguimos siendo la voz principal de su gente.
+              En 1960 nacimos en Temuco. Crecimos con la ciudad y hoy seguimos siendo la voz principal de su gente.
             </p>
 
             {currentProg && (
@@ -1117,13 +1117,10 @@ function FloatingPlayer({ station, play }) {
   const toggle = () => play(isFrontera ? "frontera" : "araucana");
 
   const share = () => {
-    if (navigator.share) {
-      navigator.share({ title: "Radio Araucana 95.9 FM", url: "https://radio-araucana.vercel.app" });
-    } else {
-      navigator.clipboard?.writeText("https://radio-araucana.vercel.app");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    const name = isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM";
+    const url = "https://radioaraucana.cl/";
+    const text = `Escucha ${name} en vivo: ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noreferrer");
   };
 
   const accentColor = isFrontera ? "#7dbb5e" : "#52b870";

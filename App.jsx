@@ -69,6 +69,7 @@ const GlobalStyles = () => (
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Open Sans', sans-serif; background: #191919; }
     html { scroll-behavior: smooth; }
+    section[id], footer[id] { scroll-margin-top: 80px; }
 
     @keyframes livePulse {
       0%, 100% { transform: scale(1);   opacity: 1;   }

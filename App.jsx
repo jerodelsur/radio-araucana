@@ -468,7 +468,7 @@ function NewsGrid() {
                 <div style={{ padding: "16px 18px 20px" }}>
                   <h3 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{n.headline}</h3>
                   <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55, marginBottom: 12 })}>{n.bajada}</p>
-                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Redacción Araucana · {n.time}</span>
+                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Redacción Araucana</span>
                 </div>
               </article>
             );
@@ -518,8 +518,8 @@ function VideoSection() {
               : { background: v.bg };
             const Wrapper = ytId ? "a" : "div";
             const wrapperProps = ytId
-              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { minWidth: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
-              : { style: { minWidth: 260, flexShrink: 0 } };
+              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { width: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
+              : { style: { width: 260, flexShrink: 0 } };
             return (
               <Wrapper key={i} className="video-card" {...wrapperProps}>
                 <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", ...thumbStyle }}>
@@ -816,11 +816,32 @@ function SponsorStrip() {
 }
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
+const FOOTER_COTIZA_MSG = "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?";
+
 const FOOTER_LINKS = [
-  { title: "Radio",        links: ["Quiénes somos", "Historia", "Equipo", "Señal en vivo"] },
-  { title: "Contenido",   links: ["Noticias", "Videos", "Destinos Araucanía", "Galería"] },
-  { title: "Programación", links: ["Horarios", "Programas", "Conductores", "Archivo"] },
-  { title: "Publicidad",  links: ["Cotiza tu campaña", "Tarifas", "Formatos", "Contacto"] },
+  { title: "Radio", links: [
+    { label: "Quiénes somos", inactive: true },
+    { label: "Historia",      inactive: true },
+    { label: "Equipo",        inactive: true },
+    { label: "Señal en vivo", href: "#en-vivo" },
+  ]},
+  { title: "Contenido", links: [
+    { label: "Noticias",            href: "#noticias" },
+    { label: "Destinos Araucanía", href: "#destinos" },
+    { label: "Galería",             inactive: true },
+  ]},
+  { title: "Programación", links: [
+    { label: "Horarios",     inactive: true },
+    { label: "Programas",    href: "#programacion" },
+    { label: "Conductores",  inactive: true },
+    { label: "Archivo",      inactive: true },
+  ]},
+  { title: "Publicidad", links: [
+    { label: "Cotiza tu publicidad", whatsapp: FOOTER_COTIZA_MSG },
+    { label: "Tarifas",  inactive: true },
+    { label: "Formatos", inactive: true },
+    { label: "Contacto", inactive: true },
+  ]},
 ];
 
 function Footer() {
@@ -832,7 +853,7 @@ function Footer() {
 
           <div>
             <div style={{ marginBottom: 20 }}>
-              <LogoSVG height={30} color="#ffffff" />
+              <LogoSVG height={44} color="#ffffff" />
             </div>
             <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
               Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
@@ -857,7 +878,8 @@ function Footer() {
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>{SETTINGS.address}</p>
-            <a href={`mailto:${SETTINGS.contactEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 20, textDecoration: "none" })}>✉ {SETTINGS.contactEmail}</a>
+            <a href={`mailto:${SETTINGS.contactEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ {SETTINGS.contactEmail}</a>
+            <a href="mailto:prensa@araucanayfrontera.cl" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 20, textDecoration: "none" })}>✉ prensa@araucanayfrontera.cl</a>
 
             <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
               <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>¿Quiere cotizar una campaña con nosotros?</p>
@@ -871,10 +893,22 @@ function Footer() {
             {FOOTER_LINKS.map((g) => (
               <div key={g.title}>
                 <h4 style={K({ fontWeight: 500, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 })}>{g.title}</h4>
-                {g.links.map((l) => (
-                  <a key={l} href="#" className="footer-link"
-                    style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", marginBottom: 8 })}>{l}</a>
-                ))}
+                {g.links.map((l) => {
+                  if (l.inactive) {
+                    return (
+                      <span key={l.label}
+                        style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.3)", marginBottom: 8, cursor: "default" })}>{l.label}</span>
+                    );
+                  }
+                  const href = l.whatsapp
+                    ? `https://wa.me/${SETTINGS.whatsappNumber}?text=${encodeURIComponent(l.whatsapp)}`
+                    : l.href;
+                  const extra = l.whatsapp ? { target: "_blank", rel: "noreferrer" } : {};
+                  return (
+                    <a key={l.label} href={href} className="footer-link" {...extra}
+                      style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", marginBottom: 8 })}>{l.label}</a>
+                  );
+                })}
               </div>
             ))}
           </div>

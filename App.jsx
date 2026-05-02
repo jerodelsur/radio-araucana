@@ -67,8 +67,8 @@ const GlobalStyles = () => (
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Open Sans', sans-serif; background: #191919; }
-    html { scroll-behavior: smooth; }
+    body { font-family: 'Open Sans', sans-serif; background: #191919; overscroll-behavior-y: none; }
+    html { scroll-behavior: smooth; background: #191919; overscroll-behavior-y: none; }
     section[id], footer[id] { scroll-margin-top: 80px; }
 
     @keyframes livePulse {
@@ -1210,14 +1210,16 @@ function AppInner() {
     if (!audio) return;
     if (station === which) {
       audio.pause();
-      audio.src = "";
       setStation(null);
-    } else {
-      audio.pause();
-      audio.src = which === "araucana" ? STREAM_URL : STREAM_FRONTERA;
-      audio.play().catch(() => {});
-      setStation(which);
+      return;
     }
+    const url = which === "araucana" ? STREAM_URL : STREAM_FRONTERA;
+    audio.pause();
+    audio.src = url;
+    audio.load();
+    const p = audio.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+    setStation(which);
   };
 
   return (

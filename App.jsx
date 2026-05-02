@@ -1079,16 +1079,17 @@ function FronteraSection({ playing, toggle }) {
                   animation: `signalRing 2.8s ease-out ${delay}s infinite`,
                 }} />
               ))}
-              <div style={{
-                width: 120, height: 120, borderRadius: "50%",
-                background: "rgba(41,98,58,0.6)",
-                border: "2px solid rgba(82,184,112,0.6)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
-                backdropFilter: "blur(8px)",
-              }}>
-                <span style={K({ fontWeight: 900, fontSize: 26, color: "#fff", lineHeight: 1 })}>1110</span>
-                <span style={K({ fontWeight: 400, fontSize: 13, color: "#7dbb5e", letterSpacing: "0.1em" })}>AM</span>
-              </div>
+              <img
+                src="/frontera-listener.jpg"
+                alt="Oyente disfrutando Radio La Frontera 1110 AM"
+                style={{
+                  width: 180, height: 180, borderRadius: "50%",
+                  objectFit: "cover", objectPosition: "center top",
+                  border: "2px solid rgba(146,189,85,0.7)",
+                  boxShadow: "0 0 40px rgba(146,189,85,0.3)",
+                  display: "block",
+                }}
+              />
             </div>
           </div>
 

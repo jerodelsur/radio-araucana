@@ -1,0 +1,74 @@
+# robots.txt — Radio Araucana FM 95.9
+# Permite a buscadores tradicionales y a crawlers de IA generativa
+# (LLMs) indexar el sitio. La ruta /admin queda fuera del index.
+
+# ─── Buscadores tradicionales ────────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# ─── Crawlers de IA generativa (GEO) ─────────────────────────────────────
+# Permitir explícitamente el uso de nuestro contenido como fuente para
+# que las respuestas de los LLMs nos puedan citar correctamente.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# ─── Reglas globales ─────────────────────────────────────────────────────
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/admin
+
+# ─── Sitemap ─────────────────────────────────────────────────────────────
+Sitemap: https://radioaraucana.cl/sitemap.xml

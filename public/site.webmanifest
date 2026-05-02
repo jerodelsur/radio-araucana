@@ -1,0 +1,16 @@
+{
+  "name": "Radio Araucana FM 95.9",
+  "short_name": "Araucana 95.9",
+  "description": "Radio Araucana FM 95.9 — La voz histórica de Temuco y La Araucanía. En vivo 24/7.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#191919",
+  "theme_color": "#191919",
+  "lang": "es-CL",
+  "categories": ["news", "music", "entertainment"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

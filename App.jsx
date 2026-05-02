@@ -18,6 +18,13 @@ const SvgYoutube  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="
 const SvgFacebook = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
 const SOC = [SvgInstagram, SvgYoutube, SvgFacebook];
 
+// URLs oficiales de redes sociales (consumidas por el footer y por sameAs en JSON-LD).
+const SOC_LINKS = [
+  { label: "Instagram", href: "https://www.instagram.com/araucanaradio", Icon: SvgInstagram },
+  { label: "YouTube",   href: "https://www.youtube.com/@araucanafm",      Icon: SvgYoutube  },
+  { label: "Facebook",  href: "https://www.facebook.com/share/1aK6itN6zP/?mibextid=wwXIfr", Icon: SvgFacebook },
+];
+
 /* ─── Official brand logo SVG (from araucanayfrontera.cl) ─────────────────── */
 const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
   <svg
@@ -456,6 +463,10 @@ function NewsGrid() {
                     <img
                       src={photo}
                       alt={n.cat}
+                      loading="lazy"
+                      decoding="async"
+                      width="400"
+                      height="200"
                       className="news-img"
                       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
                     />
@@ -630,7 +641,7 @@ function ArticleModal({ region, onClose }) {
       <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 8, maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 32px 80px rgba(0,0,0,0.5)" }}>
         {/* Hero image */}
         <div style={{ position: "relative", height: 280, flexShrink: 0 }}>
-          <img src={region.img} alt={region.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={region.img} alt={region.name} loading="lazy" decoding="async" width="720" height="280" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
           <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
             <X size={18} />
@@ -669,7 +680,7 @@ function RegionalStories() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {REGIONS.map((r, i) => (
             <div key={i} className="region-card" onClick={() => setActive(r)} style={{ borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer" }}>
-              <img src={r.img} alt={r.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={r.img} alt={r.name} loading="lazy" decoding="async" width="600" height="380" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,20,14,0.92) 0%, rgba(10,20,14,0.3) 55%, transparent 100%)" }} />
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #52b870 0px, #52b870 8px, transparent 8px, transparent 16px)" }} />
               <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
@@ -827,27 +838,23 @@ const FOOTER_COTIZA_MSG = "Hola, me gustaría cotizar una pauta publicitaria en 
 
 const FOOTER_LINKS = [
   { title: "Radio", links: [
-    { label: "Quiénes somos", inactive: true },
-    { label: "Historia",      inactive: true },
-    { label: "Equipo",        inactive: true },
+    { label: "Quiénes somos", href: "/sobre-nosotros" },
+    { label: "Historia",      href: "/sobre-nosotros#nuestra-historia" },
+    { label: "Preguntas frecuentes", href: "/faq" },
     { label: "Señal en vivo", href: "#en-vivo" },
   ]},
   { title: "Contenido", links: [
     { label: "Noticias",            href: "#noticias" },
     { label: "Destinos Araucanía", href: "#destinos" },
-    { label: "Galería",             inactive: true },
+    { label: "Radio La Frontera",   href: "#frontera" },
   ]},
   { title: "Programación", links: [
-    { label: "Horarios",     inactive: true },
     { label: "Programas",    href: "#programacion" },
-    { label: "Conductores",  inactive: true },
-    { label: "Archivo",      inactive: true },
+    { label: "En vivo ahora", href: "#inicio" },
   ]},
   { title: "Publicidad", links: [
     { label: "Cotiza tu publicidad", whatsapp: FOOTER_COTIZA_MSG },
-    { label: "Tarifas",  inactive: true },
-    { label: "Formatos", inactive: true },
-    { label: "Contacto", inactive: true },
+    { label: "Contacto", href: "#contacto" },
   ]},
 ];
 
@@ -870,17 +877,19 @@ function Footer() {
             <div style={{ marginBottom: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
               <p style={K({ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em" })}>Parte del grupo</p>
               <a href="#frontera" style={{ display: "inline-block", textDecoration: "none" }}>
-                <img src="/frontera-logo-white.svg" alt="Radio La Frontera 1110 AM" style={{ height: 44, width: "auto", display: "block", marginBottom: 8 }} />
+                <img src="/frontera-logo-white.svg" alt="Radio La Frontera 1110 AM" loading="lazy" decoding="async" width="180" height="44" style={{ height: 44, width: "auto", display: "block", marginBottom: 8 }} />
               </a>
               <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 })}>Pionera en las comunicaciones del Sur de Chile desde 1939</p>
             </div>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-              {SOC.map((Icon, i) => (
-                <button key={i} className="social-icon-btn"
-                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(41,98,58,0.5)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+              {SOC_LINKS.map(({ label, href, Icon }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer me"
+                  aria-label={`Radio Araucana en ${label}`}
+                  className="social-icon-btn"
+                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(41,98,58,0.5)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", textDecoration: "none" }}>
                   <Icon />
-                </button>
+                </a>
               ))}
             </div>
 
@@ -1054,7 +1063,7 @@ function FronteraSection({ playing, toggle }) {
             </div>
 
             <div>
-              <img src="/frontera-logo.svg" alt="Radio La Frontera — La Primera del Sur de Chile" style={{ width: "100%", maxWidth: 480, height: "auto", display: "block" }} />
+              <img src="/frontera-logo.svg" alt="Radio La Frontera — La Primera del Sur de Chile" loading="lazy" decoding="async" width="480" height="120" style={{ width: "100%", maxWidth: 480, height: "auto", display: "block" }} />
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: 420 })}>
@@ -1088,6 +1097,10 @@ function FronteraSection({ playing, toggle }) {
               <img
                 src="/frontera-listener.jpg"
                 alt="Oyente disfrutando Radio La Frontera 1110 AM"
+                loading="lazy"
+                decoding="async"
+                width="180"
+                height="180"
                 style={{
                   width: 180, height: 180, borderRadius: "50%",
                   objectFit: "cover", objectPosition: "center top",

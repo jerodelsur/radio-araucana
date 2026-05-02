@@ -1134,17 +1134,12 @@ function FloatingPlayer({ station, play }) {
 
       {/* Info — oculto en móvil */}
       <div className="hidden sm:flex" style={{ alignItems: "center", gap: 12 }}>
-        {!isFrontera && (
-          <div style={{ width: 48, height: 48, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: `1px solid ${borderColor}` }}>
-            <img src="/player-photo.png" alt="Radio Araucana" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
-          </div>
-        )}
-        {isFrontera && (
-          <div style={{ width: 48, height: 48, borderRadius: 6, background: "#1a3a1e", border: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={K({ fontWeight: 900, fontSize: 14, color: "#fff", lineHeight: 1 })}>1110</span>
-            <span style={K({ fontWeight: 400, fontSize: 9, color: accentColor, letterSpacing: "0.08em" })}>AM</span>
-          </div>
-        )}
+        <div style={{ width: 72, height: 48, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>
+          {isFrontera
+            ? <img src="/frontera-logo-white.svg" alt="Radio La Frontera" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+            : <LogoSVG height={32} color="#ffffff" />
+          }
+        </div>
         <div>
           <p style={K({ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.2 })}>
             {isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}
@@ -1160,10 +1155,10 @@ function FloatingPlayer({ station, play }) {
 
       {/* Nombre en móvil */}
       <div className="flex sm:hidden" style={{ alignItems: "center", gap: 8 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 5, overflow: "hidden", flexShrink: 0, border: `1px solid ${borderColor}`, background: isFrontera ? "#1a3a1e" : "transparent", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 56, height: 38, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
           {isFrontera
-            ? <><span style={K({ fontWeight: 900, fontSize: 11, color: "#fff", lineHeight: 1 })}>1110</span><span style={K({ fontWeight: 400, fontSize: 8, color: accentColor })}>AM</span></>
-            : <img src="/player-photo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+            ? <img src="/frontera-logo-white.svg" alt="Radio La Frontera" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+            : <LogoSVG height={26} color="#ffffff" />
           }
         </div>
         <div>

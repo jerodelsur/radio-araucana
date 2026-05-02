@@ -468,8 +468,7 @@ function NewsGrid() {
                 {/* Texto */}
                 <div style={{ padding: "16px 18px 20px" }}>
                   <h3 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{n.headline}</h3>
-                  <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55, marginBottom: 12 })}>{n.bajada}</p>
-                  <span style={K({ fontWeight: 300, fontSize: 12, color: "#9ca3af" })}>Redacción Araucana</span>
+                  <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55 })}>{n.bajada}</p>
                 </div>
               </article>
             );

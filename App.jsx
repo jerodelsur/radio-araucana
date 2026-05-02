@@ -325,7 +325,7 @@ function Hero({ playing, toggle }) {
             </h1>
 
             <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
-              Las radios que han acompañado a Temuco y la Araucanía por generaciones. Más de 65 años siendo la voz de nuestra gente.
+              Hace más de 80 años nacimos en Temuco. Crecimos con la ciudad y hoy seguimos siendo la voz principal de su gente.
             </p>
 
             {currentProg && (

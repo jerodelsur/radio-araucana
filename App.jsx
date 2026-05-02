@@ -552,12 +552,19 @@ const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 6
 function getCurrentProgram(programs) {
   const parts = new Intl.DateTimeFormat("es-CL", {
     timeZone: "America/Santiago",
-    hour: "2-digit", minute: "2-digit", hour12: false,
+    weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
   }).formatToParts(new Date());
   const h = Number(parts.find(p => p.type === "hour").value);
   const m = Number(parts.find(p => p.type === "minute").value);
   const cur = h * 60 + m;
-  return (programs || []).findIndex(p => cur >= toMinutes(p.start) && cur < toMinutes(p.end));
+  // Use UTC day shifted by Santiago offset would be brittle; derive day directly.
+  const dayMap = { dom: 0, lun: 1, mar: 2, mié: 3, mie: 3, jue: 4, vie: 5, sáb: 6, sab: 6 };
+  const wkRaw = (parts.find(p => p.type === "weekday")?.value || "").toLowerCase().replace(/\.$/, "");
+  const today = dayMap[wkRaw] ?? new Date().getDay();
+  return (programs || []).findIndex(p => {
+    const days = p.days || [1, 2, 3, 4, 5];
+    return days.includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
+  });
 }
 
 function ProgramSchedule() {

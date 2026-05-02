@@ -518,8 +518,8 @@ function VideoSection() {
               : { background: v.bg };
             const Wrapper = ytId ? "a" : "div";
             const wrapperProps = ytId
-              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { minWidth: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
-              : { style: { minWidth: 260, flexShrink: 0 } };
+              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { width: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
+              : { style: { width: 260, flexShrink: 0 } };
             return (
               <Wrapper key={i} className="video-card" {...wrapperProps}>
                 <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", ...thumbStyle }}>

@@ -1056,15 +1056,15 @@ function FronteraSection({ playing, toggle }) {
             </p>
 
             <button className="play-btn w-full sm:w-fit" onClick={toggle} style={K({
-              background: playing ? "#29623a" : "transparent",
-              color: "#fff", fontWeight: 700, fontSize: 15,
+              background: playing ? "#92BD55" : "transparent",
+              color: playing ? "#191919" : "#92BD55", fontWeight: 700, fontSize: 15,
               padding: "20px 32px", borderRadius: 3,
-              border: "2px solid #52b870",
+              border: "2px solid #92BD55",
               cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              transition: "background 200ms ease",
+              transition: "background 200ms ease, color 200ms ease",
             })}>
-              {playing ? <Pause size={16} /> : <Play size={16} fill="#fff" />}
+              {playing ? <Pause size={16} /> : <Play size={16} fill="#92BD55" />}
               {playing ? "Escuchando La Frontera — pausar" : "Escuchar La Frontera 1110 AM"}
             </button>
           </div>

@@ -98,7 +98,6 @@ function Header({ adminMode }) {
 function Footer() {
   const settings = useSettings();
   const adminEmail = settings.radio_email_administration || "administracion@araucanayfrontera.cl";
-  const landline = settings.radio_phone_landline || "+56 45 2213166";
   const mobile = settings.radio_phone_mobile || "+56 9 4239 0216";
   const legalName = settings.radio_legal_name || "";
   const legalRut = settings.radio_legal_rut || "";
@@ -139,7 +138,6 @@ function Footer() {
           <div style={{ opacity: 0.75 }}>
             <a href={`mailto:${adminEmail}`} style={{ color: T.cream }}>{adminEmail}</a>
             <br />
-            Fijo: {landline}<br />
             Móvil: {mobile}
           </div>
         </div>

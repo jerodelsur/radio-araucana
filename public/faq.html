@@ -150,8 +150,8 @@
 
       header.site { background: #191919; border-bottom: 1px solid #2d2d2d; padding: 18px 24px; position: sticky; top: 0; z-index: 10; }
       header.site .inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-      header.site .brand { color: #fff; font-weight: 800; font-size: 16px; letter-spacing: 0.02em; }
-      header.site .brand span { color: #52b870; }
+      header.site .brand { display: inline-flex; align-items: center; }
+      header.site .brand img { height: 40px; width: auto; display: block; }
       header.site nav a { color: #fff; font-size: 14px; font-weight: 500; margin-left: 20px; }
 
       main { max-width: 820px; margin: 0 auto; padding: 56px 24px 80px; }
@@ -183,7 +183,9 @@
   <body>
     <header class="site">
       <div class="inner">
-        <a href="/" class="brand">Radio Araucana <span>FM 95.9</span></a>
+        <a href="/" class="brand" aria-label="Radio Araucana FM 95.9 — Inicio">
+          <img src="/araucana-logo-white.svg" alt="Radio Araucana FM 95.9" width="88" height="40" />
+        </a>
         <nav>
           <a href="/">Inicio</a>
           <a href="/sobre-nosotros">Sobre nosotros</a>

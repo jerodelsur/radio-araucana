@@ -211,7 +211,7 @@ const LivePlaceholder = () => {
 
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
         <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
-        <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>Sin transmisión en directo en este momento</p>
+        <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>Sin transmisión de video en este momento</p>
         <p style={K({ fontWeight: 300, fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 })}>Sintoniza el 95.9 FM en Temuco y la Araucanía</p>
       </div>
     </div>

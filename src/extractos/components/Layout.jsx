@@ -123,13 +123,17 @@ function Footer() {
             Caupolicán 110, Of. 2003, Piso 20<br />
             Temuco, La Araucanía, Chile
           </div>
+          <div style={{ opacity: 0.5, fontSize: 11, marginTop: 8 }}>
+            Sociedad Comercial de Radiodifusión<br />y Publicidad del Sur Limitada · 79.966.670-7
+          </div>
         </div>
         <div>
           <div style={{ fontWeight: 600, marginBottom: 8, opacity: 0.9 }}>Contacto</div>
           <div style={{ opacity: 0.75 }}>
-            <a href="mailto:secretaria.araucana@gmail.com" style={{ color: T.cream }}>secretaria.araucana@gmail.com</a>
+            <a href="mailto:administracion@araucanayfrontera.cl" style={{ color: T.cream }}>administracion@araucanayfrontera.cl</a>
             <br />
-            Fono: 45-2213166
+            Fijo: +56 45 2213166<br />
+            Móvil: +56 9 4239 0216
           </div>
         </div>
         <div>

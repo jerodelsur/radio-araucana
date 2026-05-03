@@ -81,6 +81,12 @@ export default async function handler(req, res) {
       publication_month: input.publicationMonth,
       resolved_publication_date: toIsoDate(resolved.resolvedDate),
       status: "pending_payment",
+      requires_invoice: input.requiresInvoice,
+      billing_legal_name: input.requiresInvoice ? input.billingLegalName : null,
+      billing_rut: input.requiresInvoice ? input.billingRUT : null,
+      billing_address: input.requiresInvoice ? input.billingAddress : null,
+      billing_giro: input.requiresInvoice ? input.billingGiro : null,
+      billing_email: input.requiresInvoice ? (input.billingEmail || null) : null,
     })
     .select("order_number, amount_clp, resolved_publication_date")
     .single();

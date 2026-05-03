@@ -1097,8 +1097,6 @@ function FronteraSection({ playing, toggle }) {
               <img
                 src="/frontera-listener.jpg"
                 alt="Oyente disfrutando Radio La Frontera 1110 AM"
-                loading="lazy"
-                decoding="async"
                 width="180"
                 height="180"
                 style={{

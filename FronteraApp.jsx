@@ -333,8 +333,6 @@ function History() {
               <img
                 src={photo}
                 alt="Inauguración de Radio La Frontera, octubre de 1939, con Simón y Daniel De Mayo y el equipo fundador"
-                loading="lazy"
-                decoding="async"
                 style={{ display: "block", width: "100%", height: "auto", filter: "sepia(0.1) contrast(1.04)" }}
               />
             </div>

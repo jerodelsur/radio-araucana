@@ -9,6 +9,7 @@ import { T } from "./theme.js";
 // del cotizador público.
 const AdminLogin = lazy(() => import("./pages/admin/Login.jsx"));
 const AdminPlaceholder = lazy(() => import("./pages/admin/Placeholder.jsx"));
+const AdminConfiguracion = lazy(() => import("./pages/admin/Configuracion.jsx"));
 
 const BASENAME = "/frontera/extractos";
 
@@ -58,10 +59,7 @@ export default function ExtractosApp() {
             path="/admin/configuracion"
             element={
               <AdminRoute>
-                <AdminPlaceholder
-                  title="Configuración"
-                  description="Tarifario, datos institucionales de la radio, firmantes (firma + timbre), horarios típicos de difusión y emails de notificación interna. Pendiente de Supabase."
-                />
+                <AdminConfiguracion />
               </AdminRoute>
             }
           />

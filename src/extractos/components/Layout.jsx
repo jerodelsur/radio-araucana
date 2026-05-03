@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { T, FONTS, S } from "../theme.js";
 import { SpinnerStyles } from "./ui.jsx";
+import { useSettings } from "../lib/settings-store.js";
 
 /* ─── Estilos globales del módulo ─────────────────────────────────────────── */
 export function GlobalStyles() {
@@ -95,6 +96,13 @@ function Header({ adminMode }) {
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
 function Footer() {
+  const settings = useSettings();
+  const adminEmail = settings.radio_email_administration || "administracion@araucanayfrontera.cl";
+  const landline = settings.radio_phone_landline || "+56 45 2213166";
+  const mobile = settings.radio_phone_mobile || "+56 9 4239 0216";
+  const legalName = settings.radio_legal_name || "";
+  const legalRut = settings.radio_legal_rut || "";
+  const address = settings.radio_address || "Caupolicán 110, Of. 2003, Piso 20, Temuco";
   return (
     <footer
       style={{
@@ -119,21 +127,20 @@ function Footer() {
           <div className="display" style={{ fontSize: 18, marginBottom: 8 }}>
             Radios La Frontera AM<br />y Araucana FM
           </div>
-          <div style={{ opacity: 0.75 }}>
-            Caupolicán 110, Of. 2003, Piso 20<br />
-            Temuco, La Araucanía, Chile
-          </div>
-          <div style={{ opacity: 0.5, fontSize: 11, marginTop: 8 }}>
-            Sociedad Comercial de Radiodifusión<br />y Publicidad del Sur Limitada · 79.966.670-7
-          </div>
+          <div style={{ opacity: 0.75 }}>{address}</div>
+          {legalName && (
+            <div style={{ opacity: 0.5, fontSize: 11, marginTop: 8 }}>
+              {legalName}{legalRut && ` · ${legalRut}`}
+            </div>
+          )}
         </div>
         <div>
           <div style={{ fontWeight: 600, marginBottom: 8, opacity: 0.9 }}>Contacto</div>
           <div style={{ opacity: 0.75 }}>
-            <a href="mailto:administracion@araucanayfrontera.cl" style={{ color: T.cream }}>administracion@araucanayfrontera.cl</a>
+            <a href={`mailto:${adminEmail}`} style={{ color: T.cream }}>{adminEmail}</a>
             <br />
-            Fijo: +56 45 2213166<br />
-            Móvil: +56 9 4239 0216
+            Fijo: {landline}<br />
+            Móvil: {mobile}
           </div>
         </div>
         <div>

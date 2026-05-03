@@ -4,6 +4,7 @@ import { z } from "zod";
 import { T, FONTS, S } from "../theme.js";
 import { Card, Field, Input, Textarea, Select, Button, Badge } from "../components/ui.jsx";
 import { calculatePriceCLP, formatCLP } from "../lib/pricing.js";
+import { useSettings } from "../lib/settings-store.js";
 import { createLineMeter, LINE_COUNTER_FONT_STACK, LINE_COUNTER_WIDTH_CM } from "../lib/line-counter.js";
 import { listUpcomingSlots, formatLongDateCL, resolveBroadcastDate } from "../lib/broadcast-date.js";
 import { isValidRUT, formatRUT } from "../lib/chilean/rut.js";
@@ -122,6 +123,7 @@ export default function Cotizador() {
   }, []);
 
   const navigate = useNavigate();
+  const settings = useSettings();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submitState, setSubmitState] = useState({ status: "idle", message: null });
@@ -142,7 +144,7 @@ export default function Cotizador() {
     setLineCount(meterRef.current.measure(state.extractText));
   }, [state.extractText]);
 
-  const priceCLP = lineCount > 0 ? calculatePriceCLP(lineCount) : 0;
+  const priceCLP = lineCount > 0 ? calculatePriceCLP(lineCount, settings.tariff_table) : 0;
 
   // Validación zod (siempre, mostramos errores solo después de intento de submit).
   const formSnapshot = useMemo(() => {

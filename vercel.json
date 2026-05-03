@@ -16,6 +16,10 @@
     {
       "source": "/faq",
       "destination": "/faq.html"
+    },
+    {
+      "source": "/frontera",
+      "destination": "/frontera.html"
     }
   ]
 }

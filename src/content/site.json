@@ -98,5 +98,42 @@
   "whatsappOptions": [
     { "label": "Consulta general",   "icon": "💬", "msg": "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
     { "label": "Cotizar publicidad", "icon": "📢", "msg": "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" }
-  ]
+  ],
+  "frontera": {
+    "tagline": "La Primera del Sur de Chile",
+    "intro": "Pionera en las comunicaciones del sur de Chile desde octubre de 1939. Más de 85 años acompañando a la Araucanía en el 1110 AM.",
+    "foundingDate": "1939-10",
+    "foundingPhoto": "/frontera-inauguracion-1939.jpg",
+    "foundingPhotoCaption": "Inauguración de Radio La Frontera, octubre de 1939. En la foto: Simón y Daniel De Mayo junto al equipo fundador.",
+    "history": [
+      "Radio La Frontera A.M., pionera en las comunicaciones del Sur de Chile, fue fundada en octubre de 1939. En su inauguración, las primeras transmisiones las realizó con un móvil desde un avión, lo cual causó gran sensación en la Región.",
+      "Por sus micrófonos han pasado locutores de prestigio nacional e internacional, como Raúl Matta, Palito Candia, Esteban Lob y Julio Martínez.",
+      "Entre sus entrevistados se cuentan figuras como Gabriela Mistral y Pablo Neruda; Jorge Alessandri Rodríguez, Salvador Allende Gossens, Eduardo Frei Montalva, Radomiro Tomic, Ricardo Lagos Escobar, Sergio Onofre Jarpa y Patricio Aylwin Azócar, entre otros.",
+      "Ha sido también lugar de encuentro con cantantes como Juan D'Arienzo, Héctor Varela, Bill Haley y sus Cometas, Julio Iglesias, Manolo Otero, Horacio Saavedra y Tito Fernández “El Temucano”.",
+      "Su programa de debates “Controversia” fue el primero de su tipo en Chile tras la apertura democrática, constituyéndose en un puntal histórico de la audiencia en la Región de La Araucanía."
+    ],
+    "programs": [
+      {
+        "start": "07:00", "end": "09:00",
+        "name": "Despertar Campesino",
+        "host": "Lunes a Sábado",
+        "days": [1, 2, 3, 4, 5, 6],
+        "description": "Programa con música de nuestro folklore, iniciando un nuevo día con informaciones para los agricultores de la Región de la Araucanía."
+      },
+      {
+        "start": "09:00", "end": "13:00",
+        "name": "Buenos Días, Mucha Música",
+        "host": "Lunes a Sábado",
+        "days": [1, 2, 3, 4, 5, 6],
+        "description": "Programación musical en español con todos los ritmos, dedicada a toda la región, con despachos desde las comunas y mucha información para auditores tanto de la costa como de la cordillera."
+      },
+      {
+        "start": "13:00", "end": "14:00",
+        "name": "La Región al Día",
+        "host": "Lunes a Sábado",
+        "days": [1, 2, 3, 4, 5, 6],
+        "description": "Noticias regionales, nacionales e internacionales."
+      }
+    ]
+  }
 }

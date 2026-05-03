@@ -234,7 +234,7 @@ const NAV_LINKS = [
   { label: "En Vivo",            href: "#en-vivo" },
   { label: "Programación",       href: "#programacion" },
   { label: "Contacto",           href: "#contacto" },
-  { label: "Radio La Frontera",  href: "#frontera", logo: "/frontera-logo-white.svg" },
+  { label: "Radio La Frontera",  href: "/frontera", logo: "/frontera-logo-white.svg" },
 ];
 
 function Navbar() {
@@ -841,12 +841,12 @@ const FOOTER_LINKS = [
     { label: "Quiénes somos", href: "/sobre-nosotros" },
     { label: "Historia",      href: "/sobre-nosotros#nuestra-historia" },
     { label: "Preguntas frecuentes", href: "/faq" },
-    { label: "Señal en vivo", href: "#en-vivo" },
+    { label: "Radio La Frontera",   href: "/frontera" },
   ]},
   { title: "Contenido", links: [
     { label: "Noticias",            href: "#noticias" },
     { label: "Destinos Araucanía", href: "#destinos" },
-    { label: "Radio La Frontera",   href: "#frontera" },
+    { label: "Señal en vivo",      href: "#en-vivo" },
   ]},
   { title: "Programación", links: [
     { label: "Programas",    href: "#programacion" },
@@ -876,7 +876,7 @@ function Footer() {
 
             <div style={{ marginBottom: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
               <p style={K({ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em" })}>Parte del grupo</p>
-              <a href="#frontera" style={{ display: "inline-block", textDecoration: "none" }}>
+              <a href="/frontera" aria-label="Visita el sitio de Radio La Frontera 1110 AM" style={{ display: "inline-block", textDecoration: "none" }}>
                 <img src="/frontera-logo-white.svg" alt="Radio La Frontera 1110 AM" loading="lazy" decoding="async" width="180" height="44" style={{ height: 44, width: "auto", display: "block", marginBottom: 8 }} />
               </a>
               <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 })}>Pionera en las comunicaciones del Sur de Chile desde 1939</p>

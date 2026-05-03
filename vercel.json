@@ -18,6 +18,14 @@
       "destination": "/faq.html"
     },
     {
+      "source": "/frontera/extractos",
+      "destination": "/extractos.html"
+    },
+    {
+      "source": "/frontera/extractos/:path*",
+      "destination": "/extractos.html"
+    },
+    {
       "source": "/frontera",
       "destination": "/frontera.html"
     }

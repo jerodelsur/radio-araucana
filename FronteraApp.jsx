@@ -95,6 +95,7 @@ const NAV_LINKS = [
   { label: "Inicio",          href: "#inicio" },
   { label: "Programación",    href: "#programacion" },
   { label: "Historia",        href: "#historia" },
+  { label: "Extractos",       href: "/frontera/extractos" },
   { label: "Contacto",        href: "#contacto" },
   { label: "Radio Araucana",  href: "/" },
 ];
@@ -359,6 +360,157 @@ function History() {
   );
 }
 
+/* ─── CTA Extractos legales ───────────────────────────────────────────────── */
+function ExtractosCTA() {
+  return (
+    <section
+      id="extractos"
+      style={{
+        background: `linear-gradient(180deg, ${F.bgMid} 0%, ${F.bgSoft} 100%)`,
+        padding: "80px 24px",
+        borderTop: `1px solid ${F.bgSoft}`,
+      }}
+    >
+      <div
+        className="extractos-cta-grid"
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)",
+          gap: 48,
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <span
+            style={K({
+              display: "inline-block",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: F.lime,
+              marginBottom: 14,
+            })}
+          >
+            Servicio para trámites
+          </span>
+          <h2
+            style={K({
+              fontSize: "clamp(28px, 4vw, 42px)",
+              lineHeight: 1.15,
+              fontWeight: 800,
+              color: "#fff",
+              marginBottom: 18,
+            })}
+          >
+            Difunde tu extracto legal en Radio La Frontera
+          </h2>
+          <p
+            style={K({
+              fontSize: 16,
+              lineHeight: 1.65,
+              color: "rgba(255,255,255,0.78)",
+              marginBottom: 28,
+              maxWidth: 560,
+            })}
+          >
+            Cotiza online tu aviso radial para trámites de la DGA (derechos de
+            aprovechamiento de aguas), DIA al SEIA y otras publicaciones administrativas.
+            Pagas, agendamos la fecha y al día siguiente recibes el certificado
+            de difusión por email.
+          </p>
+          <a
+            href="/frontera/extractos"
+            style={K({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "14px 26px",
+              background: F.lime,
+              color: F.bgDeep,
+              fontWeight: 700,
+              fontSize: 15,
+              letterSpacing: "0.04em",
+              textDecoration: "none",
+              borderRadius: 8,
+              transition: "background 150ms ease",
+            })}
+            onMouseEnter={(e) => { e.currentTarget.style.background = F.yellow; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = F.lime; }}
+          >
+            Cotizar y agendar
+            <span aria-hidden="true">→</span>
+          </a>
+          <div
+            style={K({
+              marginTop: 18,
+              fontSize: 13,
+              color: "rgba(255,255,255,0.55)",
+              lineHeight: 1.6,
+            })}
+          >
+            Cumplimos con la Resolución DGA Nº 1.235 de 2015.
+            <br />
+            Difusión los días 1 o 15 de cada mes (o día hábil siguiente si cae domingo o festivo).
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid rgba(255,255,255,0.10)`,
+            borderRadius: 14,
+            padding: 28,
+          }}
+        >
+          <div style={K({ fontSize: 12, color: F.lime, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 })}>
+            Cómo funciona
+          </div>
+          <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 18 }}>
+            {[
+              { n: "1", t: "Pega el texto del extracto", d: "Te calculamos las líneas y el monto en vivo." },
+              { n: "2", t: "Elige fecha y paga online", d: "Días 1 o 15 del mes. Pago seguro vía Flow.cl." },
+              { n: "3", t: "Recibe el certificado", d: "Al día siguiente de la difusión, por email." },
+            ].map((step) => (
+              <li key={step.n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                <span
+                  style={K({
+                    flexShrink: 0,
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    background: F.green,
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  })}
+                >
+                  {step.n}
+                </span>
+                <div>
+                  <div style={K({ color: "#fff", fontWeight: 600, fontSize: 15, marginBottom: 2 })}>{step.t}</div>
+                  <div style={K({ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 1.5 })}>{step.d}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <style>{`
+        @media (max-width: 820px) {
+          .extractos-cta-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
 const FOOTER_COTIZA_MSG = "Hola, me gustaría cotizar una pauta publicitaria en Radio La Frontera 1110 AM. ¿Podrían enviarme información de tarifas y formatos disponibles?";
 
@@ -549,6 +701,7 @@ function AppInner() {
         <Hero playing={playing} toggle={toggle} />
         <ProgramSchedule />
         <History />
+        <ExtractosCTA />
         <Footer />
       </main>
       <FloatingPlayer playing={playing} toggle={toggle} />

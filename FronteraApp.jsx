@@ -565,7 +565,12 @@ export default function FronteraApp() {
     fetch("/api/content", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (alive && data && typeof data === "object" && data.settings) setContent(data);
+        if (alive && data && typeof data === "object" && data.settings) {
+          // Merge con defaults: el blob admin puede no tener claves nuevas
+          // como `frontera` (la /admin no las edita), así que conservamos
+          // las del bundle para que la UI no se quede en blanco.
+          setContent({ ...defaultContent, ...data });
+        }
       })
       .catch(() => {});
     return () => { alive = false; };

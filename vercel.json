@@ -19,11 +19,11 @@
     },
     {
       "source": "/frontera/extractos",
-      "destination": "/extractos.html"
+      "destination": "/extractos"
     },
     {
       "source": "/frontera/extractos/:path*",
-      "destination": "/extractos.html"
+      "destination": "/extractos"
     },
     {
       "source": "/frontera",

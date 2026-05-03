@@ -125,7 +125,7 @@ function Footer() {
       >
         <div>
           <div className="display" style={{ fontSize: 18, marginBottom: 8 }}>
-            Radios La Frontera AM<br />y Araucana FM
+            Radio La Frontera<br />AM 1110
           </div>
           <div style={{ opacity: 0.75 }}>{address}</div>
           {legalName && (
@@ -163,7 +163,7 @@ function Footer() {
           textAlign: "center",
         }}
       >
-        © {new Date().getFullYear()} Radios Araucana y La Frontera · Todos los derechos reservados
+        © {new Date().getFullYear()} Radio La Frontera AM 1110 · Todos los derechos reservados
       </div>
     </footer>
   );

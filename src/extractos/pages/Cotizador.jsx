@@ -592,7 +592,7 @@ function Hero() {
       }}
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <Badge tone="accent" style={{ marginBottom: 14 }}>Servicio · Radios La Frontera AM y Araucana FM</Badge>
+        <Badge tone="accent" style={{ marginBottom: 14 }}>Servicio · Radio La Frontera AM 1110</Badge>
         <h1
           className="display"
           style={{

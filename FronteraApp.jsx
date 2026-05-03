@@ -95,7 +95,8 @@ const NAV_LINKS = [
   { label: "Inicio",          href: "#inicio" },
   { label: "Programación",    href: "#programacion" },
   { label: "Historia",        href: "#historia" },
-  { label: "Extractos",       href: "/frontera/extractos" },
+  // Cotizador de extractos: oculto hasta terminar pago, panel admin y certificado.
+  // { label: "Extractos",       href: "/frontera/extractos" },
   { label: "Contacto",        href: "#contacto" },
   { label: "Radio Araucana",  href: "/" },
 ];
@@ -701,7 +702,8 @@ function AppInner() {
         <Hero playing={playing} toggle={toggle} />
         <ProgramSchedule />
         <History />
-        <ExtractosCTA />
+        {/* CTA del cotizador de extractos: oculta hasta terminar pago, admin y certificado. */}
+        {/* <ExtractosCTA /> */}
         <Footer />
       </main>
       <FloatingPlayer playing={playing} toggle={toggle} />

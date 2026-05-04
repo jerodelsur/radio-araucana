@@ -15,7 +15,7 @@ const STORAGE_KEY = "extractos:settings:v1";
  * @type {Record<string, any>}
  */
 export const DEFAULT_SETTINGS = Object.freeze({
-  tariff_table: { ...DEFAULT_TARIFF, _pending_confirmation: true },
+  tariff_table: { ...DEFAULT_TARIFF },
   radio_legal_name: "Sociedad Comercial de Radiodifusión y Publicidad del Sur Limitada",
   radio_legal_rut: "79.966.670-7",
   radio_giro: "Radiodifusión y Publicidad",
@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   radio_bank_account_type: "Cuenta Corriente",
   radio_bank_account_number: "0-000-9874438-0",
   radio_coverage_default: "Provincia de Cautín, IX Región de La Araucanía",
-  default_broadcast_times: ["10:05", "11:05", "11:35"],
+  default_broadcast_times: ["10:00", "10:05", "10:10"],
   notification_emails: [
     "administracion@araucanayfrontera.cl",
     "secretaria.araucana@gmail.com",

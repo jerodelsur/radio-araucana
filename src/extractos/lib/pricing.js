@@ -1,21 +1,17 @@
-// Tarifa de extractos radiales — Radio La Frontera AM / Radio Araucana FM.
-// PRD §6.1. Todos los montos en CLP, IVA incluido.
+// Tarifa de extractos radiales — Radio La Frontera AM 1110.
+// Confirmada con la operadora (Bertha Cabral) el 2026-05-04.
+// Todos los montos en CLP, IVA incluido.
 //
 // Tabla:
-//   1–4 líneas → $17.850 (mínimo)
-//   N (≥5)    → $20.000 + N * $1.000
-//
-// La función debe poder leer el tarifario desde la tabla `settings` de Supabase
-// para que la operadora lo edite sin redeploy. Acá exponemos:
-//   - DEFAULT_TARIFF: fallback hardcoded usado si BD no tiene settings.
-//   - calculatePriceCLP(lines, tariff?): cálculo puro.
-//   - formatCLP(amount): formato chileno "$17.850".
+//   1–5 líneas → $35.000 (mínimo)
+//   N (>5)    → $25.000 + N * $2.000
+//   Equivale a $35.000 + ($2.000 por cada línea sobre 5).
 
 export const DEFAULT_TARIFF = Object.freeze({
-  minLinesFlat: 4,
-  minPrice: 17850,
-  baseAboveMin: 20000,
-  perLineAboveMin: 1000,
+  minLinesFlat: 5,
+  minPrice: 35000,
+  baseAboveMin: 25000,
+  perLineAboveMin: 2000,
 });
 
 /**

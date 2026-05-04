@@ -211,9 +211,9 @@ insert into public.settings (key, value) values
   ('radio_bank_account_type', '"Cuenta Corriente"'::jsonb),
   ('radio_bank_account_number', '"0-000-9874438-0"'::jsonb),
   ('radio_coverage_default', '"Provincia de Cautín, IX Región de La Araucanía"'::jsonb),
-  ('default_broadcast_times', '["10:05", "11:05", "11:35"]'::jsonb),
+  ('default_broadcast_times', '["10:00", "10:05", "10:10"]'::jsonb),
   ('notification_emails', '["administracion@araucanayfrontera.cl", "secretaria.araucana@gmail.com"]'::jsonb),
-  ('tariff_table', '{"minLinesFlat": 4, "minPrice": 17850, "baseAboveMin": 20000, "perLineAboveMin": 1000, "_pending_confirmation": true}'::jsonb)
+  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 35000, "baseAboveMin": 25000, "perLineAboveMin": 2000}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
 -- ============================================================================

@@ -25,48 +25,31 @@ const GENDER_OPTIONS = [
 ];
 
 /* ─── Esquema zod (snapshot del estado al pagar) ──────────────────────────── */
-const orderSchema = z
-  .object({
-    extractText: z.string().trim().min(10, "El texto del extracto es muy corto").max(50000, "Máximo 50.000 caracteres"),
-    procedureType: z.enum(["dga_subterraneas", "dga_superficiales", "dia_seia", "otro"]),
-    comuna: z.string().trim().min(2, "Indica la comuna"),
-    provincia: z.string().trim().min(2, "Indica la provincia"),
-    region: z.string().trim().min(2, "Indica la región"),
-    publicationDay: z.union([z.literal(1), z.literal(15)]),
-    publicationMonth: z.string().regex(/^\d{4}-\d{2}$/, "Mes inválido"),
-    clientName: z.string().trim().min(2, "Tu nombre completo"),
-    clientRUT: z.string().refine(isValidRUT, "RUT inválido"),
-    clientEmail: z.string().email("Email inválido"),
-    clientPhone: z
-      .string()
-      .trim()
-      .refine((v) => v.replace(/\D/g, "").length >= 8, "Teléfono incompleto"),
-    clientOrganization: z.string().trim().max(120, "Máximo 120 caracteres").optional().or(z.literal("")),
-    gender: z.enum(["ambos", "sr", "sra"]),
-    requiresInvoice: z.boolean(),
-    billingLegalName: z.string().trim().max(200).optional().or(z.literal("")),
-    billingRUT: z.string().optional().or(z.literal("")),
-    billingAddress: z.string().trim().max(300).optional().or(z.literal("")),
-    billingGiro: z.string().trim().max(120).optional().or(z.literal("")),
-    billingEmail: z.string().email("Email de facturación inválido").optional().or(z.literal("")),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.requiresInvoice) return;
-    const required = [
-      ["billingLegalName", "Razón social obligatoria"],
-      ["billingRUT", "RUT de la empresa"],
-      ["billingAddress", "Domicilio comercial"],
-      ["billingGiro", "Giro de la empresa"],
-    ];
-    for (const [key, msg] of required) {
-      if (!data[key] || String(data[key]).trim().length < 2) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: msg });
-      }
-    }
-    if (data.billingRUT && !isValidRUT(data.billingRUT)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["billingRUT"], message: "RUT de empresa inválido" });
-    }
-  });
+// La radio emite siempre factura — boleta a persona no es una opción.
+// Por eso billing_* es siempre obligatorio.
+const orderSchema = z.object({
+  extractText: z.string().trim().min(10, "El texto del extracto es muy corto").max(50000, "Máximo 50.000 caracteres"),
+  procedureType: z.enum(["dga_subterraneas", "dga_superficiales", "dia_seia", "otro"]),
+  comuna: z.string().trim().min(2, "Indica la comuna"),
+  provincia: z.string().trim().min(2, "Indica la provincia"),
+  region: z.string().trim().min(2, "Indica la región"),
+  publicationDay: z.union([z.literal(1), z.literal(15)]),
+  publicationMonth: z.string().regex(/^\d{4}-\d{2}$/, "Mes inválido"),
+  clientName: z.string().trim().min(2, "Tu nombre completo"),
+  clientRUT: z.string().refine(isValidRUT, "RUT inválido"),
+  clientEmail: z.string().email("Email inválido"),
+  clientPhone: z
+    .string()
+    .trim()
+    .refine((v) => v.replace(/\D/g, "").length >= 8, "Teléfono incompleto"),
+  clientOrganization: z.string().trim().max(120, "Máximo 120 caracteres").optional().or(z.literal("")),
+  gender: z.enum(["ambos", "sr", "sra"]),
+  billingLegalName: z.string().trim().min(2, "Razón social obligatoria").max(200, "Máximo 200 caracteres"),
+  billingRUT: z.string().refine(isValidRUT, "RUT de empresa inválido"),
+  billingAddress: z.string().trim().min(2, "Domicilio comercial obligatorio").max(300, "Máximo 300 caracteres"),
+  billingGiro: z.string().trim().min(2, "Giro obligatorio").max(120, "Máximo 120 caracteres"),
+  billingEmail: z.string().email("Email de facturación inválido"),
+});
 
 /* ─── Estado del formulario ───────────────────────────────────────────────── */
 const initialState = {
@@ -83,7 +66,6 @@ const initialState = {
   clientPhone: "",
   clientOrganization: "",
   gender: "ambos",
-  requiresInvoice: false,
   billingLegalName: "",
   billingRUT: "",
   billingAddress: "",
@@ -163,7 +145,6 @@ export default function Cotizador() {
       clientPhone: state.clientPhone,
       clientOrganization: state.clientOrganization,
       gender: state.gender,
-      requiresInvoice: state.requiresInvoice,
       billingLegalName: state.billingLegalName,
       billingRUT: state.billingRUT,
       billingAddress: state.billingAddress,
@@ -456,114 +437,68 @@ export default function Cotizador() {
           </StepBlock>
 
           <StepBlock number={4} title="Facturación">
-            <label
-              htmlFor="requiresInvoice"
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 12,
-                padding: "12px 14px",
-                border: `1px solid ${T.border}`,
-                borderRadius: 8,
-                cursor: "pointer",
-                background: state.requiresInvoice ? "rgba(78,165,82,0.06)" : "#fff",
-                transition: "background .15s ease, border-color .15s ease",
-                borderColor: state.requiresInvoice ? T.green : T.border,
-              }}
-            >
-              <input
-                id="requiresInvoice"
-                data-field="requiresInvoice"
-                type="checkbox"
-                checked={state.requiresInvoice}
-                onChange={(ev) => dispatch({ type: "set", field: "requiresInvoice", value: ev.target.checked })}
-                style={{ marginTop: 3, accentColor: T.green, width: 16, height: 16 }}
+            <p style={{ fontSize: 13, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 }}>
+              Toda difusión radial se factura. Indica los datos de la empresa o persona a nombre de quien va la factura.
+            </p>
+            <Field label="Razón social" required htmlFor="billingLegalName" error={e("billingLegalName")}>
+              <Input
+                id="billingLegalName"
+                data-field="billingLegalName"
+                placeholder="Ej. Inmobiliaria e Inversiones La Medalla SpA"
+                value={state.billingLegalName}
+                invalid={!!e("billingLegalName")}
+                onChange={(ev) => dispatch({ type: "set", field: "billingLegalName", value: ev.target.value })}
               />
-              <span style={{ fontSize: 14, lineHeight: 1.5, color: T.ink }}>
-                <strong style={{ display: "block", fontWeight: 600 }}>Necesito factura a empresa</strong>
-                <span style={{ fontSize: 12.5, color: T.inkSoft }}>
-                  Marca esta opción si el pago lo hace una empresa distinta y necesita la factura a su razón social. Si no, emitimos boleta a tu nombre personal.
-                </span>
-              </span>
-            </label>
-
-            {state.requiresInvoice && (
-              <div
-                style={{
-                  marginTop: 14,
-                  padding: "16px 16px 4px",
-                  border: `1px solid ${T.border}`,
-                  borderRadius: 8,
-                  background: T.cream,
-                  animation: "extractos-fadeUp 0.25s ease-out",
-                }}
-              >
-                <Field label="Razón social" required htmlFor="billingLegalName" error={e("billingLegalName")}>
-                  <Input
-                    id="billingLegalName"
-                    data-field="billingLegalName"
-                    placeholder="Ej. Inmobiliaria e Inversiones La Medalla SpA"
-                    value={state.billingLegalName}
-                    invalid={!!e("billingLegalName")}
-                    onChange={(ev) => dispatch({ type: "set", field: "billingLegalName", value: ev.target.value })}
-                  />
-                </Field>
-                <div className="cotizador-grid-2">
-                  <Field label="RUT empresa" required htmlFor="billingRUT" error={e("billingRUT")}>
-                    <Input
-                      id="billingRUT"
-                      data-field="billingRUT"
-                      placeholder="76.274.028-1"
-                      value={state.billingRUT}
-                      invalid={!!e("billingRUT")}
-                      onChange={(ev) => dispatch({ type: "set", field: "billingRUT", value: ev.target.value })}
-                      onBlur={(ev) => {
-                        if (isValidRUT(ev.target.value)) {
-                          dispatch({ type: "set", field: "billingRUT", value: formatRUT(ev.target.value) });
-                        }
-                      }}
-                    />
-                  </Field>
-                  <Field label="Giro" required htmlFor="billingGiro" error={e("billingGiro")}>
-                    <Input
-                      id="billingGiro"
-                      data-field="billingGiro"
-                      placeholder="Inmobiliaria, agrícola, etc."
-                      value={state.billingGiro}
-                      invalid={!!e("billingGiro")}
-                      onChange={(ev) => dispatch({ type: "set", field: "billingGiro", value: ev.target.value })}
-                    />
-                  </Field>
-                </div>
-                <Field label="Domicilio comercial" required htmlFor="billingAddress" error={e("billingAddress")}>
-                  <Input
-                    id="billingAddress"
-                    data-field="billingAddress"
-                    placeholder="Ej. A. López de Bello 114 of 303, Recoleta, Región Metropolitana"
-                    value={state.billingAddress}
-                    invalid={!!e("billingAddress")}
-                    onChange={(ev) => dispatch({ type: "set", field: "billingAddress", value: ev.target.value })}
-                  />
-                </Field>
-                <Field
-                  label="Email para envío de factura (opcional)"
-                  htmlFor="billingEmail"
-                  hint="Si lo dejas vacío, enviamos la factura al email principal."
-                  error={e("billingEmail")}
-                >
-                  <Input
-                    id="billingEmail"
-                    data-field="billingEmail"
-                    type="email"
-                    inputMode="email"
-                    placeholder="contabilidad@empresa.cl"
-                    value={state.billingEmail}
-                    invalid={!!e("billingEmail")}
-                    onChange={(ev) => dispatch({ type: "set", field: "billingEmail", value: ev.target.value })}
-                  />
-                </Field>
-              </div>
-            )}
+            </Field>
+            <div className="cotizador-grid-2">
+              <Field label="RUT" required htmlFor="billingRUT" error={e("billingRUT")}>
+                <Input
+                  id="billingRUT"
+                  data-field="billingRUT"
+                  placeholder="76.274.028-1"
+                  value={state.billingRUT}
+                  invalid={!!e("billingRUT")}
+                  onChange={(ev) => dispatch({ type: "set", field: "billingRUT", value: ev.target.value })}
+                  onBlur={(ev) => {
+                    if (isValidRUT(ev.target.value)) {
+                      dispatch({ type: "set", field: "billingRUT", value: formatRUT(ev.target.value) });
+                    }
+                  }}
+                />
+              </Field>
+              <Field label="Giro" required htmlFor="billingGiro" error={e("billingGiro")}>
+                <Input
+                  id="billingGiro"
+                  data-field="billingGiro"
+                  placeholder="Inmobiliaria, agrícola, etc."
+                  value={state.billingGiro}
+                  invalid={!!e("billingGiro")}
+                  onChange={(ev) => dispatch({ type: "set", field: "billingGiro", value: ev.target.value })}
+                />
+              </Field>
+            </div>
+            <Field label="Domicilio comercial" required htmlFor="billingAddress" error={e("billingAddress")}>
+              <Input
+                id="billingAddress"
+                data-field="billingAddress"
+                placeholder="Ej. A. López de Bello 114 of 303, Recoleta, Región Metropolitana"
+                value={state.billingAddress}
+                invalid={!!e("billingAddress")}
+                onChange={(ev) => dispatch({ type: "set", field: "billingAddress", value: ev.target.value })}
+              />
+            </Field>
+            <Field label="Email para envío de factura" required htmlFor="billingEmail" error={e("billingEmail")}>
+              <Input
+                id="billingEmail"
+                data-field="billingEmail"
+                type="email"
+                inputMode="email"
+                placeholder="contabilidad@empresa.cl"
+                value={state.billingEmail}
+                invalid={!!e("billingEmail")}
+                onChange={(ev) => dispatch({ type: "set", field: "billingEmail", value: ev.target.value })}
+              />
+            </Field>
           </StepBlock>
         </div>
 
@@ -655,6 +590,8 @@ function ExtractEditor({ value, onChange, lineCount, error }) {
           invalid={!!error}
           placeholder="Ej. Denisse Francisca Contreras Leiva, Rut: 18.036.339-4. Solicita un derecho de aprovechamiento de aguas subterráneas…"
           onChange={(ev) => onChange(ev.target.value)}
+          spellCheck
+          lang="es-CL"
         />
       </Field>
 

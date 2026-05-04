@@ -21,19 +21,20 @@ insert into public.settings (key, value) values
   ('radio_bank_account_number', '"0-000-9874438-0"'::jsonb),
   -- Cobertura por defecto (PRD §11.2).
   ('radio_coverage_default', '"Provincia de Cautín, IX Región de La Araucanía"'::jsonb),
-  -- Horarios habituales de difusión (3 emisiones diarias).
-  ('default_broadcast_times', '["10:05", "11:05", "11:35"]'::jsonb),
+  -- Horarios habituales de difusión (3 emisiones separadas por 5 minutos).
+  ('default_broadcast_times', '["10:00", "10:05", "10:10"]'::jsonb),
   -- Lista de destinatarios para alertas internas (nuevas órdenes, recordatorios).
   ('notification_emails', '["administracion@araucanayfrontera.cl", "secretaria.araucana@gmail.com"]'::jsonb),
-  -- Tarifario: PENDIENTE confirmar con la radio. El PRD §6.1 trae una fórmula
-  -- (mínimo $17.850 hasta 4 líneas, +$1.000/línea desde la 5ª) pero las
-  -- cotizaciones reales observadas no calzan ($34.000 y $52.000 para
-  -- extractos de ~10 y ~8 líneas respectivamente). Mantener este valor por
-  -- ahora; la operadora puede editarlo desde /admin/configuracion una vez
-  -- confirmada la tarifa real.
-  ('tariff_table', '{"minLinesFlat": 4, "minPrice": 17850, "baseAboveMin": 20000, "perLineAboveMin": 1000, "_pending_confirmation": true}'::jsonb)
+  -- Tarifario confirmado por la operadora (Bertha Cabral) el 2026-05-04:
+  -- mínimo 5 líneas $35.000, +$2.000 por línea adicional.
+  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 35000, "baseAboveMin": 25000, "perLineAboveMin": 2000}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
--- Firmante por defecto: NO se inserta automáticamente. La operadora lo carga
--- desde /admin/configuracion en F2 (PRD §11.2 — el placeholder dice
--- explícitamente "no usar Jerónimo Díaz Tomic" sin reemplazo aún).
+-- Firmante por defecto: Bertha Raquel Cabral Corrales, RUT 25.829.757-1.
+-- Las imágenes de firma y timbre se cargan después desde /admin/configuracion
+-- (signature_image_path y stamp_image_path apuntan a Storage cuando estén).
+insert into public.signers (full_name, rut, title, is_default, is_active)
+select 'Bertha Raquel Cabral Corrales', '25.829.757-1', 'Operadora Radio La Frontera', true, true
+where not exists (
+  select 1 from public.signers where rut = '25.829.757-1'
+);

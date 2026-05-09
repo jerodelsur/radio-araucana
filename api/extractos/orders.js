@@ -1,14 +1,20 @@
 // POST /api/extractos/orders
+//
 // Crea una orden en estado `pending_payment` a partir de la cotización
 // del cliente. Recalcula precio y fecha de difusión server-side (autoritativo).
-// Si Supabase aún no está configurado, devuelve 503 con instrucción clara
-// para el cliente: la página la captura y muestra fallback "escríbenos".
 //
-// El siguiente paso (cuando llegue Flow sandbox) es: tras crear la orden,
-// pedir un token de pago a Flow y devolver la URL de redirect.
+// Beta: la confirmación de pago es manual (transferencia + factura). Tras crear
+// la orden enviamos:
+//   1) Email al cliente con datos de transferencia y N° de orden.
+//   2) Email a Bertha con todos los datos para que pueda procesar.
+//
+// Si Supabase no está configurado, devolvemos 503 con instrucción "escríbenos".
+// Si Gmail SMTP no está configurado, la orden se crea igual y solo logueamos.
 
 import { createOrderInputSchema } from "./_lib/order-schema.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./_lib/supabase.js";
+import { sendEmail, isMailerConfigured, adminRecipients } from "./_lib/mailer.js";
+import { clientOrderEmail, adminOrderNotificationEmail } from "./_lib/email-templates.js";
 import { calculatePriceCLP, DEFAULT_TARIFF } from "../../src/extractos/lib/pricing.js";
 import { resolveBroadcastDate } from "../../src/extractos/lib/broadcast-date.js";
 
@@ -22,8 +28,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  // Body parse defensivo (Vercel parsea JSON automáticamente cuando el header
-  // viene correcto, pero en local dev puede no ser así).
   let body = req.body;
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch { return res.status(400).json({ error: "invalid_json" }); }
@@ -38,8 +42,19 @@ export default async function handler(req, res) {
   }
   const input = parsed.data;
 
-  // Recalcular pricing y fecha (no confiamos en lo que mande el cliente).
-  const tariff = await fetchTariff();
+  if (!isSupabaseConfigured()) {
+    return res.status(503).json({
+      error: "system_not_configured",
+      message:
+        "Estamos terminando de configurar el sistema. Por ahora envía tu extracto a " +
+        `${SUPPORT_EMAIL} y te respondemos con la cotización en el día.`,
+    });
+  }
+
+  // Recalcular pricing y fecha (server-side autoritativo).
+  const supabase = getSupabaseAdmin();
+  const settings = await fetchSettings(supabase);
+  const tariff = settingsTariff(settings);
   const lineCount = countLinesEstimate(input.extractText);
   const amountCLP = calculatePriceCLP(lineCount, tariff);
   const resolved = resolveBroadcastDate(input.publicationDay, input.publicationMonth);
@@ -51,17 +66,7 @@ export default async function handler(req, res) {
     });
   }
 
-  if (!isSupabaseConfigured()) {
-    return res.status(503).json({
-      error: "system_not_configured",
-      message:
-        "Estamos terminando de configurar el sistema. Por ahora envía tu extracto a " +
-        `${SUPPORT_EMAIL} y te respondemos con la cotización en el día.`,
-    });
-  }
-
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  const { data: order, error } = await supabase
     .from("orders")
     .insert({
       client_name: input.clientName,
@@ -88,46 +93,94 @@ export default async function handler(req, res) {
       billing_giro: input.billingGiro,
       billing_email: input.billingEmail,
     })
-    .select("order_number, amount_clp, resolved_publication_date")
+    .select("*")
     .single();
 
   if (error) {
     console.error("[/api/extractos/orders] insert error:", error);
-    return res.status(500).json({ error: "db_error", message: "No pudimos guardar tu orden. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL });
+    return res.status(500).json({
+      error: "db_error",
+      message: "No pudimos guardar tu orden. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL,
+    });
   }
 
-  // TODO Fase 1 (Flow sandbox): crear el pago Flow acá y devolver redirect URL.
+  // Disparar emails en paralelo. Errores se loguean pero no rompen la respuesta:
+  // la orden ya está creada y la operadora puede recuperarla desde el dashboard.
+  const baseUrl = req.headers["x-forwarded-host"]
+    ? `https://${req.headers["x-forwarded-host"]}`
+    : req.headers.host
+      ? `https://${req.headers.host}`
+      : "https://radioaraucana.cl";
+  const dashboardUrl = `${baseUrl}/frontera/extractos/admin/orden/${encodeURIComponent(order.order_number)}`;
+
+  if (isMailerConfigured()) {
+    const clientMsg = clientOrderEmail({ order, settings });
+    const adminMsg = adminOrderNotificationEmail({ order, settings, dashboardUrl });
+
+    const [clientResult, adminResult] = await Promise.allSettled([
+      sendEmail({
+        to: order.client_email,
+        subject: clientMsg.subject,
+        html: clientMsg.html,
+        text: clientMsg.text,
+        replyTo: process.env.GMAIL_USER || SUPPORT_EMAIL,
+      }),
+      sendEmail({
+        to: adminRecipients(),
+        subject: adminMsg.subject,
+        html: adminMsg.html,
+        text: adminMsg.text,
+        replyTo: order.client_email,
+      }),
+    ]);
+
+    if (clientResult.status === "rejected" || (clientResult.value && !clientResult.value.ok)) {
+      console.warn("[/api/extractos/orders] email cliente falló:", clientResult);
+    }
+    if (adminResult.status === "rejected" || (adminResult.value && !adminResult.value.ok)) {
+      console.warn("[/api/extractos/orders] email admin falló:", adminResult);
+    }
+  } else {
+    console.warn("[/api/extractos/orders] mailer no configurado — orden creada sin enviar emails:", order.order_number);
+  }
+
   return res.status(200).json({
-    orderNumber: data.order_number,
-    amountCLP: data.amount_clp,
-    resolvedPublicationDate: data.resolved_publication_date,
+    orderNumber: order.order_number,
+    amountCLP: order.amount_clp,
+    resolvedPublicationDate: order.resolved_publication_date,
     paymentRedirectUrl: null,
   });
 }
 
-async function fetchTariff() {
-  if (!isSupabaseConfigured()) return DEFAULT_TARIFF;
+async function fetchSettings(supabase) {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data } = await supabase.from("settings").select("value").eq("key", "tariff_table").maybeSingle();
-    if (data?.value && typeof data.value === "object") {
-      return {
-        minLinesFlat: Number(data.value.minLinesFlat) || DEFAULT_TARIFF.minLinesFlat,
-        minPrice: Number(data.value.minPrice) || DEFAULT_TARIFF.minPrice,
-        baseAboveMin: Number(data.value.baseAboveMin) || DEFAULT_TARIFF.baseAboveMin,
-        perLineAboveMin: Number(data.value.perLineAboveMin) || DEFAULT_TARIFF.perLineAboveMin,
-      };
+    const { data } = await supabase.from("settings").select("key, value");
+    if (!data) return {};
+    const out = {};
+    for (const row of data) {
+      out[row.key] = row.value;
     }
+    return out;
   } catch (err) {
-    console.warn("[/api/extractos/orders] fallback a tarifario hardcoded:", err?.message ?? err);
+    console.warn("[/api/extractos/orders] no pudimos leer settings:", err?.message ?? err);
+    return {};
+  }
+}
+
+function settingsTariff(settings) {
+  const t = settings?.tariff_table;
+  if (t && typeof t === "object") {
+    return {
+      minLinesFlat: Number(t.minLinesFlat) || DEFAULT_TARIFF.minLinesFlat,
+      minPrice: Number(t.minPrice) || DEFAULT_TARIFF.minPrice,
+      baseAboveMin: Number(t.baseAboveMin) || DEFAULT_TARIFF.baseAboveMin,
+      perLineAboveMin: Number(t.perLineAboveMin) || DEFAULT_TARIFF.perLineAboveMin,
+    };
   }
   return DEFAULT_TARIFF;
 }
 
-// El meter visual del cliente usa DOM. Server-side estimamos líneas con un
-// heurístico tipográfico simple basado en ancho de carácter promedio en BOS 12.
-// La operadora puede ajustar el conteo desde el dashboard si difiere.
-const AVG_CHARS_PER_LINE = 78; // calibrado para BOS 12 @ 16cm
+const AVG_CHARS_PER_LINE = 78;
 function countLinesEstimate(text) {
   if (!text) return 0;
   const lines = text.split(/\r?\n/);

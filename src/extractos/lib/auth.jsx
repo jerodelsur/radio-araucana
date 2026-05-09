@@ -131,7 +131,7 @@ export function AuthProvider({ children }) {
       try {
         const signInPromise = supabase.auth.signInWithPassword({ email, password });
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout: la solicitud tardó más de 15 segundos.")), 15000)
+          setTimeout(() => reject(new Error("timeout")), 15000)
         );
         const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
         if (error) {
@@ -140,7 +140,10 @@ export function AuthProvider({ children }) {
         }
         return { ok: true, user: data.user };
       } catch (err) {
-        const msg = err?.message || "Error al iniciar sesión.";
+        const isTimeout = err?.message === "timeout";
+        const msg = isTimeout
+          ? "El login tardó más de 15 segundos. Esto suele pasar con extensiones del navegador interfiriendo. Prueba en una ventana incógnita (Cmd+Shift+N) o desactiva temporalmente las extensiones."
+          : err?.message || "Error al iniciar sesión.";
         setAuthError(msg);
         return { ok: false, error: msg };
       }

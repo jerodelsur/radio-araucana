@@ -527,7 +527,10 @@ function Hero() {
       }}
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <Badge tone="accent" style={{ marginBottom: 14 }}>Servicio · Radio La Frontera AM 1110</Badge>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          <Badge tone="accent">Servicio · Radio La Frontera AM 1110</Badge>
+          <Badge tone="warn">Beta · pago por transferencia</Badge>
+        </div>
         <h1
           className="display"
           style={{
@@ -542,8 +545,27 @@ function Hero() {
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, color: T.inkSoft, maxWidth: 700 }}>
           Cotiza online tu aviso radial para trámites de la DGA, DIA al SEIA y
-          publicaciones administrativas. Pagas, agendamos la fecha y al día siguiente
-          recibes tu certificado por email — sello, firma y todo.
+          publicaciones administrativas. Cuando envíes la solicitud te llegan por
+          email los datos de transferencia y el N° de orden. Pagada la transferencia,
+          la radio difunde en la fecha agendada y al día siguiente recibes tu
+          certificado.
+        </p>
+        <p
+          style={{
+            marginTop: 14,
+            padding: "10px 14px",
+            background: "rgba(201,146,60,0.08)",
+            border: "1px solid rgba(201,146,60,0.30)",
+            borderRadius: 8,
+            fontSize: 13,
+            color: T.inkSoft,
+            maxWidth: 760,
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: T.warn }}>En beta:</strong> el pago en línea con
+          tarjeta llega pronto. Por ahora pagas por transferencia y la radio
+          confirma manualmente en menos de 24 horas hábiles.
         </p>
       </div>
     </section>
@@ -709,10 +731,11 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState }
             disabled={lineCount === 0}
             loading={submitState?.status === "submitting"}
           >
-            {submitState?.status === "submitting" ? "Procesando…" : "Pagar y agendar"}
+            {submitState?.status === "submitting" ? "Enviando…" : "Enviar solicitud"}
           </Button>
           <p style={{ fontSize: 11.5, color: T.inkMute, lineHeight: 1.5, textAlign: "center" }}>
-            Pago seguro vía Flow.cl. Recibirás email con confirmación apenas se acredite el pago, y el certificado de difusión al día siguiente de la emisión.
+            Recibirás un email con el N° de orden y los datos para transferir.
+            Cuando se acredite el pago, se confirma la difusión.
           </p>
           {!formValid && lineCount > 0 && submitState?.status !== "submitting" && !submitState?.message && (
             <p style={{ fontSize: 11.5, color: T.warn, textAlign: "center" }}>

@@ -86,6 +86,11 @@ const devApiStub = () => ({
       if (req.method !== 'POST') return next()
       await runHandler('/api/extractos/orders.js', req, res)
     })
+
+    server.middlewares.use('/api/extractos/admin/notify-client', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/extractos/admin/notify-client.js', req, res)
+    })
   },
 })
 

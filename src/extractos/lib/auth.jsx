@@ -40,10 +40,12 @@ export function AuthProvider({ children }) {
     }
     const supabase = getSupabaseBrowser();
     let alive = true;
+    let bootstrapDone = false;
 
     // Timeout duro: si algo se cuelga >8s, desbloqueamos la UI mostrando login.
+    // Solo dispara si el bootstrap NO terminó — no es ruido si todo va bien.
     const safetyTimer = setTimeout(() => {
-      if (!alive) return;
+      if (!alive || bootstrapDone) return;
       console.warn("[auth] safety timeout — desbloqueando loading state");
       setLoading(false);
     }, 8000);
@@ -92,6 +94,7 @@ export function AuthProvider({ children }) {
         console.error("[auth] bootstrap error:", err);
         if (alive) setAuthError(err?.message || "Error al inicializar sesión.");
       } finally {
+        bootstrapDone = true;
         if (alive) setLoading(false);
       }
     })();

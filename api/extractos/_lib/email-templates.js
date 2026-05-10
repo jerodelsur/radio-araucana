@@ -250,7 +250,197 @@ export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
   return { subject, html, text };
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * 3) Email al CLIENTE — confirmación de pago recibido (Bertha marcó "Pagada")
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export function paymentConfirmedEmail({ order, settings }) {
+  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
+  const adminEmail = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
+
+  const broadcastDate = fmtDate(order.resolved_publication_date);
+  const amount = fmtCLP(order.amount_clp);
+  const subject = `Pago recibido — Tu aviso queda agendado para el ${broadcastDate} (${order.order_number})`;
+
+  const html = wrap(`
+    <tr><td style="padding:0 32px;">
+      <div style="background:rgba(78,165,82,0.12);color:${COLORS.greenDark};font-size:11px;letter-spacing:0.18em;text-transform:uppercase;padding:6px 12px;border-radius:4px;display:inline-block;font-weight:700;margin-bottom:18px;">
+        ✓ Pago confirmado
+      </div>
+      <h1 style="font-family:Georgia,serif;font-size:26px;color:${COLORS.greenDark};margin:0 0 8px;line-height:1.2;font-weight:500;">
+        Recibimos tu pago, ${escapeHtml(firstName(order.client_name))}
+      </h1>
+      <p style="color:${COLORS.inkSoft};font-size:15px;line-height:1.55;margin:0 0 22px;">
+        Acabamos de confirmar tu transferencia de <strong>${amount}</strong> por la orden
+        <strong style="font-family:'Courier New',monospace;">${escapeHtml(order.order_number)}</strong>.
+        Tu aviso queda <strong>agendado en firme</strong> para difusión el día indicado.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px dashed ${COLORS.border};border-radius:8px;margin-bottom:22px;">
+        <tr><td style="padding:18px 22px;text-align:center;">
+          <div style="font-size:11px;color:${COLORS.inkSoft};letter-spacing:0.4px;text-transform:uppercase;font-family:'Courier New',monospace;">Fecha de difusión</div>
+          <div style="font-family:Georgia,serif;font-size:22px;color:${COLORS.greenDark};font-weight:600;margin-top:4px;">${broadcastDate}</div>
+        </td></tr>
+      </table>
+
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">Qué viene después</h2>
+      <ol style="color:${COLORS.inkSoft};font-size:14px;line-height:1.7;margin:0 0 18px;padding-left:20px;">
+        <li>El día <strong>${broadcastDate}</strong> nuestra emisora transmite tu aviso 3 veces consecutivas en horario establecido.</li>
+        <li>Al día hábil siguiente recibirás por email <strong>el certificado de difusión</strong> (con firma y timbre) y la <strong>factura electrónica</strong> a los datos de facturación que indicaste.</li>
+        <li>Con eso, tu trámite queda completo desde el lado de la radio.</li>
+      </ol>
+
+      <div style="background:rgba(78,165,82,0.06);border:1px solid rgba(78,165,82,0.25);border-radius:8px;padding:14px 18px;margin-bottom:8px;">
+        <p style="color:${COLORS.inkSoft};font-size:13px;line-height:1.55;margin:0;">
+          ¿Dudas? Escribe a
+          <a href="mailto:${escapeHtml(supportEmail)}" style="color:${COLORS.greenDark};">${escapeHtml(supportEmail)}</a>
+          mencionando tu N° de orden ${escapeHtml(order.order_number)}.
+        </p>
+      </div>
+    </td></tr>
+  `, { settings, footerNote: "" });
+
+  const text = [
+    `Pago recibido — Orden ${order.order_number}`,
+    ``,
+    `Hola ${firstName(order.client_name)}, recibimos tu transferencia de ${amount}.`,
+    ``,
+    `Tu aviso queda agendado en firme para el ${broadcastDate}.`,
+    ``,
+    `QUÉ VIENE DESPUÉS:`,
+    `1. El ${broadcastDate} la emisora transmite tu aviso 3 veces.`,
+    `2. Al día hábil siguiente recibes por email el certificado de difusión y la factura electrónica.`,
+    `3. Con eso tu trámite queda completo.`,
+    ``,
+    `Dudas: ${supportEmail} (menciona el N° ${order.order_number}).`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * 4) Email al CLIENTE — aviso fue difundido (Bertha marcó "Difundida")
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export function broadcastCompleteEmail({ order, settings }) {
+  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
+  const broadcastDate = fmtDate(order.resolved_publication_date);
+  const subject = `Tu aviso fue difundido hoy — Orden ${order.order_number}`;
+
+  const times = [order.broadcast_time_1, order.broadcast_time_2, order.broadcast_time_3]
+    .filter(Boolean)
+    .map((t) => String(t).slice(0, 5));
+
+  const html = wrap(`
+    <tr><td style="padding:0 32px;">
+      <div style="background:rgba(78,165,82,0.12);color:${COLORS.greenDark};font-size:11px;letter-spacing:0.18em;text-transform:uppercase;padding:6px 12px;border-radius:4px;display:inline-block;font-weight:700;margin-bottom:18px;">
+        ✓ Difundido
+      </div>
+      <h1 style="font-family:Georgia,serif;font-size:26px;color:${COLORS.greenDark};margin:0 0 8px;line-height:1.2;font-weight:500;">
+        Tu aviso salió al aire hoy
+      </h1>
+      <p style="color:${COLORS.inkSoft};font-size:15px;line-height:1.55;margin:0 0 22px;">
+        Confirmamos que tu aviso correspondiente a la orden
+        <strong style="font-family:'Courier New',monospace;">${escapeHtml(order.order_number)}</strong>
+        fue transmitido hoy ${broadcastDate} por Radio La Frontera AM 1110.
+      </p>
+
+      ${times.length > 0 ? `
+        <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">Horarios de transmisión</h2>
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px solid ${COLORS.border};border-radius:8px;margin-bottom:18px;">
+          <tr><td style="padding:14px 22px;font-family:'Courier New',monospace;font-size:14px;color:${COLORS.ink};text-align:center;">
+            ${times.map((t) => `<span style="display:inline-block;margin:0 12px;font-weight:600;color:${COLORS.greenDark};">${escapeHtml(t)}</span>`).join("")}
+          </td></tr>
+        </table>
+      ` : ""}
+
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">Próximo paso</h2>
+      <p style="color:${COLORS.inkSoft};font-size:14px;line-height:1.6;margin:0 0 18px;">
+        En las próximas horas hábiles recibirás por email <strong>el certificado de difusión</strong>
+        (con firma y timbre) y la <strong>factura electrónica</strong> a los datos que indicaste.
+        Con eso podrás presentar el trámite ante la autoridad correspondiente (DGA, SEIA, etc.).
+      </p>
+
+      <div style="background:rgba(78,165,82,0.06);border:1px solid rgba(78,165,82,0.25);border-radius:8px;padding:14px 18px;">
+        <p style="color:${COLORS.inkSoft};font-size:13px;line-height:1.55;margin:0;">
+          ¿Necesitas el certificado urgente? Escríbenos a
+          <a href="mailto:${escapeHtml(supportEmail)}" style="color:${COLORS.greenDark};">${escapeHtml(supportEmail)}</a>
+          mencionando ${escapeHtml(order.order_number)} y lo coordinamos.
+        </p>
+      </div>
+    </td></tr>
+  `, { settings, footerNote: "" });
+
+  const text = [
+    `Tu aviso fue difundido — Orden ${order.order_number}`,
+    ``,
+    `Confirmamos que tu aviso fue transmitido hoy ${broadcastDate} por Radio La Frontera AM 1110.`,
+    times.length > 0 ? `Horarios: ${times.join(" · ")}` : "",
+    ``,
+    `PRÓXIMO PASO: en las próximas horas hábiles recibirás el certificado de difusión y la factura electrónica.`,
+    ``,
+    `Urgente: ${supportEmail} (menciona el N° ${order.order_number}).`,
+  ].filter(Boolean).join("\n");
+
+  return { subject, html, text };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * 5) Email al CLIENTE — orden cancelada
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export function orderCancelledEmail({ order, settings }) {
+  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
+  const adminEmail = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
+  const subject = `Orden ${order.order_number} cancelada`;
+
+  const html = wrap(`
+    <tr><td style="padding:0 32px;">
+      <div style="background:rgba(201,146,60,0.12);color:${COLORS.warn};font-size:11px;letter-spacing:0.18em;text-transform:uppercase;padding:6px 12px;border-radius:4px;display:inline-block;font-weight:700;margin-bottom:18px;">
+        Orden cancelada
+      </div>
+      <h1 style="font-family:Georgia,serif;font-size:26px;color:${COLORS.greenDark};margin:0 0 8px;line-height:1.2;font-weight:500;">
+        Tu solicitud fue cancelada
+      </h1>
+      <p style="color:${COLORS.inkSoft};font-size:15px;line-height:1.55;margin:0 0 18px;">
+        La orden <strong style="font-family:'Courier New',monospace;">${escapeHtml(order.order_number)}</strong> fue cancelada
+        ${order.cancelled_reason ? "con el siguiente motivo:" : "y queda sin efecto."}
+      </p>
+      ${order.cancelled_reason ? `
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px dashed ${COLORS.border};border-radius:8px;margin-bottom:18px;">
+          <tr><td style="padding:14px 22px;color:${COLORS.ink};font-size:14px;line-height:1.5;">
+            ${escapeHtml(order.cancelled_reason)}
+          </td></tr>
+        </table>
+      ` : ""}
+
+      <p style="color:${COLORS.inkSoft};font-size:14px;line-height:1.6;margin:0 0 18px;">
+        Si ya transferiste el monto, te coordinamos la devolución a la brevedad.
+        Si crees que esto fue un error o quieres reactivar el trámite, escríbenos a
+        <a href="mailto:${escapeHtml(adminEmail)}" style="color:${COLORS.greenDark};">${escapeHtml(adminEmail)}</a>
+        mencionando ${escapeHtml(order.order_number)}.
+      </p>
+    </td></tr>
+  `, { settings, footerNote: "" });
+
+  const text = [
+    `Orden ${order.order_number} cancelada`,
+    ``,
+    `Tu solicitud fue cancelada${order.cancelled_reason ? " con el siguiente motivo:" : "."}`,
+    order.cancelled_reason || "",
+    ``,
+    `Si ya transferiste, coordinamos devolución. Dudas: ${adminEmail} (mencionar ${order.order_number}).`,
+  ].filter(Boolean).join("\n");
+
+  return { subject, html, text };
+}
+
 /* ─── helpers ────────────────────────────────────────────────────────────── */
+
+function firstName(fullName) {
+  if (!fullName) return "";
+  return String(fullName).trim().split(/\s+/)[0] || "";
+}
 
 function row(label, value) {
   return `

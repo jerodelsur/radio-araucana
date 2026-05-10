@@ -55,7 +55,7 @@ export default function OrderDetail() {
 
   useEffect(() => { reload(); }, [reload]);
 
-  async function patch(updates, successMsg) {
+  async function patch(updates, successMsg, notifyEvent) {
     if (!order) return;
     setBusy(true);
     setActionMsg(null);
@@ -64,12 +64,49 @@ export default function OrderDetail() {
       .from("orders")
       .update(updates)
       .eq("id", order.id);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       setActionMsg({ type: "error", text: error.message });
       return;
     }
-    setActionMsg({ type: "ok", text: successMsg || "Guardado." });
+
+    // Notificar al cliente por email si la transición lo amerita.
+    let notifyResult = null;
+    if (notifyEvent) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          notifyResult = { ok: false, error: "Sin sesión activa para enviar email." };
+        } else {
+          const r = await fetch("/api/extractos/admin/notify-client", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ orderNumber: order.order_number, eventType: notifyEvent }),
+          });
+          notifyResult = await r.json().catch(() => ({ ok: false }));
+        }
+      } catch (e) {
+        notifyResult = { ok: false, error: e?.message || "Error al notificar." };
+      }
+    }
+
+    setBusy(false);
+    const baseMsg = successMsg || "Guardado.";
+    if (notifyEvent) {
+      if (notifyResult?.sent) {
+        setActionMsg({ type: "ok", text: `${baseMsg} Email enviado al cliente.` });
+      } else if (notifyResult?.reason === "mailer_not_configured") {
+        setActionMsg({ type: "ok", text: `${baseMsg} (Email no enviado: SMTP no configurado en este entorno.)` });
+      } else {
+        setActionMsg({ type: "ok", text: `${baseMsg} ⚠ Email al cliente falló: ${notifyResult?.error || notifyResult?.reason || "intenta de nuevo"}.` });
+      }
+    } else {
+      setActionMsg({ type: "ok", text: baseMsg });
+    }
     await reload();
   }
 
@@ -257,7 +294,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           disabled={!canMarkPaid || busy}
           loading={busy && canMarkPaid}
           onClick={() => {
-            if (!confirm(`¿Confirmas que el pago de ${formatCLPSimple(order.amount_clp)} está acreditado?`)) return;
+            if (!confirm(`¿Confirmas que el pago de ${formatCLPSimple(order.amount_clp)} está acreditado?\n\nEl cliente recibirá email automático confirmando que su orden quedó agendada.`)) return;
             patch(
               {
                 status: "paid",
@@ -266,6 +303,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
                 payment_provider: "manual",
               },
               "Marcada como pagada.",
+              "payment_confirmed",
             );
           }}
         >
@@ -277,7 +315,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           variant="secondary"
           disabled={!canMarkBroadcast || busy}
           onClick={() => {
-            if (!confirm(`¿Marcar la orden como difundida hoy (${broadcastTimes.slice(0,3).join(", ")})?`)) return;
+            if (!confirm(`¿Marcar la orden como difundida hoy (${broadcastTimes.slice(0,3).join(", ")})?\n\nEl cliente recibirá email automático con los horarios de difusión.`)) return;
             patch(
               {
                 status: "broadcast_complete",
@@ -288,6 +326,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
                 broadcast_time_3: broadcastTimes[2] || null,
               },
               "Marcada como difundida.",
+              "broadcast_complete",
             );
           }}
         >
@@ -313,8 +352,9 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           variant="ghost"
           disabled={!canCancel || busy}
           onClick={() => {
-            const reason = prompt("Motivo de cancelación (queda registrado):", "");
+            const reason = prompt("Motivo de cancelación (queda registrado y se incluye en el email al cliente):", "");
             if (reason === null) return;
+            if (!confirm(`¿Cancelar la orden?\n\nEl cliente recibirá email automático informando la cancelación${reason ? " con el motivo indicado" : ""}.`)) return;
             patch(
               {
                 status: "cancelled",
@@ -323,6 +363,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
                 cancelled_reason: reason || "Sin motivo indicado",
               },
               "Orden cancelada.",
+              "cancelled",
             );
           }}
           style={{ color: T.danger }}

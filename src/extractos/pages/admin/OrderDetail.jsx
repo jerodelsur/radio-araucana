@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { T, FONTS } from "../../theme.js";
-import { Card, Field, Input, Textarea, Button, Badge } from "../../components/ui.jsx";
+import { Card, Field, Input, Textarea, Button, Badge, ConfirmDialog } from "../../components/ui.jsx";
 import { useAuth } from "../../lib/auth.jsx";
 import { getSupabaseBrowser } from "../../lib/supabase-browser.js";
 import { useSettings } from "../../lib/settings-store.js";
@@ -281,6 +281,60 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
     ? settings.default_broadcast_times
     : ["10:00", "10:05", "10:10"];
 
+  // Estado del modal: null = cerrado; objeto = modal abierto con esa acción.
+  // kind ∈ "pay" | "broadcast" | "complete" | "cancel"
+  const [pending, setPending] = useState(null);
+  // Para cancelar: motivo escrito por la operadora.
+  const [cancelReason, setCancelReason] = useState("");
+
+  function close() {
+    setPending(null);
+    setCancelReason("");
+  }
+
+  function execute() {
+    if (!pending) return;
+    const onDone = () => close();
+    if (pending.kind === "pay") {
+      patch(
+        {
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          payment_method: "transferencia",
+          payment_provider: "manual",
+        },
+        "Marcada como pagada.",
+        "payment_confirmed",
+      ).finally(onDone);
+    } else if (pending.kind === "broadcast") {
+      patch(
+        {
+          status: "broadcast_complete",
+          broadcast_marked_at: new Date().toISOString(),
+          broadcast_marked_by: userId || null,
+          broadcast_time_1: broadcastTimes[0] || null,
+          broadcast_time_2: broadcastTimes[1] || null,
+          broadcast_time_3: broadcastTimes[2] || null,
+        },
+        "Marcada como difundida.",
+        "broadcast_complete",
+      ).finally(onDone);
+    } else if (pending.kind === "complete") {
+      patch({ status: "completed" }, "Marcada como completada.").finally(onDone);
+    } else if (pending.kind === "cancel") {
+      patch(
+        {
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: userId || null,
+          cancelled_reason: cancelReason.trim() || "Sin motivo indicado",
+        },
+        "Orden cancelada.",
+        "cancelled",
+      ).finally(onDone);
+    }
+  }
+
   return (
     <Card>
       <h3 className="display" style={{ fontSize: 15, color: T.greenDark, marginBottom: 10, fontWeight: 500 }}>
@@ -292,20 +346,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           type="button"
           variant="primary"
           disabled={!canMarkPaid || busy}
-          loading={busy && canMarkPaid}
-          onClick={() => {
-            if (!confirm(`¿Confirmas que el pago de ${formatCLPSimple(order.amount_clp)} está acreditado?\n\nEl cliente recibirá email automático confirmando que su orden quedó agendada.`)) return;
-            patch(
-              {
-                status: "paid",
-                paid_at: new Date().toISOString(),
-                payment_method: "transferencia",
-                payment_provider: "manual",
-              },
-              "Marcada como pagada.",
-              "payment_confirmed",
-            );
-          }}
+          onClick={() => setPending({ kind: "pay" })}
         >
           ✓ Marcar pagada
         </Button>
@@ -314,21 +355,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           type="button"
           variant="secondary"
           disabled={!canMarkBroadcast || busy}
-          onClick={() => {
-            if (!confirm(`¿Marcar la orden como difundida hoy (${broadcastTimes.slice(0,3).join(", ")})?\n\nEl cliente recibirá email automático con los horarios de difusión.`)) return;
-            patch(
-              {
-                status: "broadcast_complete",
-                broadcast_marked_at: new Date().toISOString(),
-                broadcast_marked_by: userId || null,
-                broadcast_time_1: broadcastTimes[0] || null,
-                broadcast_time_2: broadcastTimes[1] || null,
-                broadcast_time_3: broadcastTimes[2] || null,
-              },
-              "Marcada como difundida.",
-              "broadcast_complete",
-            );
-          }}
+          onClick={() => setPending({ kind: "broadcast" })}
         >
           📻 Marcar difundida
         </Button>
@@ -337,10 +364,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           type="button"
           variant="ghost"
           disabled={busy}
-          onClick={() => {
-            if (!confirm("¿Marcar como completada (proceso terminado)?")) return;
-            patch({ status: "completed" }, "Marcada como completada.");
-          }}
+          onClick={() => setPending({ kind: "complete" })}
         >
           Marcar completada
         </Button>
@@ -351,21 +375,7 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           type="button"
           variant="ghost"
           disabled={!canCancel || busy}
-          onClick={() => {
-            const reason = prompt("Motivo de cancelación (queda registrado y se incluye en el email al cliente):", "");
-            if (reason === null) return;
-            if (!confirm(`¿Cancelar la orden?\n\nEl cliente recibirá email automático informando la cancelación${reason ? " con el motivo indicado" : ""}.`)) return;
-            patch(
-              {
-                status: "cancelled",
-                cancelled_at: new Date().toISOString(),
-                cancelled_by: userId || null,
-                cancelled_reason: reason || "Sin motivo indicado",
-              },
-              "Orden cancelada.",
-              "cancelled",
-            );
-          }}
+          onClick={() => setPending({ kind: "cancel" })}
           style={{ color: T.danger }}
         >
           Cancelar orden
@@ -373,10 +383,139 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
       </div>
 
       <p style={{ marginTop: 12, fontSize: 11, color: T.inkMute, lineHeight: 1.5 }}>
-        Beta — todos los cambios manuales. El cliente recibe email automático
-        en pasos posteriores cuando esa pieza esté lista.
+        Las acciones que envían email al cliente (pagada, difundida, cancelada)
+        muestran un resumen antes de confirmar.
       </p>
+
+      {/* Diálogo de confirmación: pagada */}
+      <ConfirmDialog
+        open={pending?.kind === "pay"}
+        title="Marcar pagada"
+        confirmLabel="Sí, confirmar pago y enviar email"
+        cancelLabel="Cancelar"
+        tone="primary"
+        busy={busy}
+        onCancel={close}
+        onConfirm={execute}
+      >
+        <p style={{ marginBottom: 14 }}>
+          Estás por <strong>confirmar que el pago de {formatCLPSimple(order.amount_clp)} está acreditado</strong> en
+          la cuenta bancaria de la radio.
+        </p>
+        <EmailPreview
+          to={order.client_email}
+          subject={`Pago recibido — Tu aviso queda agendado para el ${formatLongDate(order.resolved_publication_date)} (${order.order_number})`}
+          summary={`Confirmación de pago recibido. El cliente queda con su difusión agendada para ${formatLongDate(order.resolved_publication_date)}.`}
+        />
+      </ConfirmDialog>
+
+      {/* Diálogo de confirmación: difundida */}
+      <ConfirmDialog
+        open={pending?.kind === "broadcast"}
+        title="Marcar como difundida"
+        confirmLabel="Sí, marcar difundida y enviar email"
+        cancelLabel="Cancelar"
+        tone="primary"
+        busy={busy}
+        onCancel={close}
+        onConfirm={execute}
+      >
+        <p style={{ marginBottom: 14 }}>
+          Estás confirmando que el aviso fue transmitido hoy en los horarios:{" "}
+          <strong>{broadcastTimes.slice(0, 3).join(" · ")}</strong>.
+        </p>
+        <EmailPreview
+          to={order.client_email}
+          subject={`Tu aviso fue difundido hoy — Orden ${order.order_number}`}
+          summary={`Confirmación de difusión hoy con horarios. Mensaje al cliente: "esperá en las próximas horas hábiles el certificado y la factura".`}
+        />
+      </ConfirmDialog>
+
+      {/* Diálogo de confirmación: completada (sin email) */}
+      <ConfirmDialog
+        open={pending?.kind === "complete"}
+        title="Marcar como completada"
+        confirmLabel="Sí, marcar completada"
+        cancelLabel="Volver"
+        tone="primary"
+        busy={busy}
+        onCancel={close}
+        onConfirm={execute}
+      >
+        <p style={{ marginBottom: 8 }}>
+          Cierra el flujo de la orden. Úsalo cuando ya enviaste certificado y factura al cliente.
+        </p>
+        <p style={{ fontSize: 12, color: T.inkSoft }}>
+          Esta acción <strong>no envía email al cliente</strong> — es solo un cierre administrativo interno.
+        </p>
+      </ConfirmDialog>
+
+      {/* Diálogo de confirmación: cancelar (con motivo) */}
+      <ConfirmDialog
+        open={pending?.kind === "cancel"}
+        title="Cancelar orden"
+        confirmLabel="Sí, cancelar y enviar email"
+        cancelLabel="Volver"
+        tone="danger"
+        busy={busy}
+        onCancel={close}
+        onConfirm={execute}
+      >
+        <p style={{ marginBottom: 14 }}>
+          Estás por <strong>cancelar la orden {order.order_number}</strong>. Esta acción queda registrada en el historial.
+        </p>
+        <Field
+          label="Motivo (opcional, se incluye en el email al cliente)"
+          htmlFor="cancel-reason"
+          hint="Si dejas vacío, el cliente recibe email sin motivo específico."
+        >
+          <Textarea
+            id="cancel-reason"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Ej. Cliente solicitó cancelar por cambio de fecha, pago no acreditado, etc."
+            style={{ minHeight: 70 }}
+          />
+        </Field>
+        <EmailPreview
+          to={order.client_email}
+          subject={`Orden ${order.order_number} cancelada`}
+          summary={cancelReason.trim()
+            ? `Aviso de cancelación con el motivo que escribiste arriba.`
+            : `Aviso de cancelación sin motivo específico.`}
+        />
+      </ConfirmDialog>
     </Card>
+  );
+}
+
+function EmailPreview({ to, subject, summary }) {
+  return (
+    <div
+      style={{
+        background: T.cream,
+        border: `1px solid ${T.border}`,
+        borderRadius: 8,
+        padding: "12px 14px",
+        fontSize: 13,
+        marginTop: 4,
+      }}
+    >
+      <div style={{ fontSize: 11, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6, fontFamily: FONTS.mono }}>
+        ✉ Email automático al cliente
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "60px 1fr", gap: 6, fontSize: 12.5, lineHeight: 1.4 }}>
+        <span style={{ color: T.inkSoft }}>Para:</span>
+        <span style={{ color: T.ink, wordBreak: "break-all" }}>{to}</span>
+        <span style={{ color: T.inkSoft }}>Asunto:</span>
+        <span style={{ color: T.ink }}>{subject}</span>
+      </div>
+      {summary && (
+        <p style={{ fontSize: 12, color: T.inkSoft, marginTop: 8, lineHeight: 1.5, paddingTop: 8, borderTop: `1px dashed ${T.border}` }}>
+          {summary}
+        </p>
+      )}
+    </div>
   );
 }
 

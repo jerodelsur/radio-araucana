@@ -247,6 +247,118 @@ export function Badge({ tone = "neutral", children, style }) {
   );
 }
 
+/* ─── Modal de confirmación ───────────────────────────────────────────────── */
+// Diálogo genérico que reemplaza window.confirm() con UX más clara para
+// acciones que tienen efecto secundario importante (ej. enviar email al cliente).
+//
+// Props:
+//   open: boolean
+//   title: string
+//   onCancel: () => void
+//   onConfirm: () => void
+//   confirmLabel: string  (default "Confirmar")
+//   cancelLabel: string  (default "Cancelar")
+//   tone: "primary" | "warn" | "danger"  (color del botón confirmar)
+//   busy: boolean  (deshabilita botones mientras la acción se ejecuta)
+//   children: contenido del modal (el cuerpo)
+
+export function ConfirmDialog({
+  open,
+  title,
+  onCancel,
+  onConfirm,
+  confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar",
+  tone = "primary",
+  busy = false,
+  children,
+}) {
+  // Cerrar con Escape si no está procesando.
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === "Escape" && !busy) onCancel?.(); };
+    window.addEventListener("keydown", handler);
+    // Lock scroll del body mientras el modal está abierto.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = prev;
+    };
+  }, [open, busy, onCancel]);
+
+  if (!open) return null;
+
+  const confirmVariant = tone === "danger" ? "ghost" : "primary";
+  const confirmStyle = tone === "danger"
+    ? { background: T.danger, color: "#fff", borderColor: T.danger }
+    : tone === "warn"
+      ? { background: T.warn, color: "#fff", borderColor: T.warn }
+      : undefined;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(13,36,16,0.55)",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        animation: "extractos-fadeUp 0.15s ease-out",
+      }}
+      onClick={(e) => {
+        // No cerrar al click en backdrop si está procesando.
+        if (busy) return;
+        if (e.target === e.currentTarget) onCancel?.();
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          maxWidth: 520,
+          width: "100%",
+          borderRadius: 12,
+          boxShadow: "0 24px 60px rgba(13,36,16,0.30)",
+          border: `1px solid ${T.border}`,
+          padding: 24,
+        }}
+      >
+        <h2
+          id="confirm-dialog-title"
+          className="display"
+          style={{ fontSize: 20, color: T.greenDark, marginBottom: 14, fontWeight: 500 }}
+        >
+          {title}
+        </h2>
+        <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.55, marginBottom: 22 }}>
+          {children}
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+          <Button variant="ghost" type="button" onClick={onCancel} disabled={busy}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={confirmVariant}
+            type="button"
+            onClick={onConfirm}
+            loading={busy}
+            disabled={busy}
+            style={confirmStyle}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Spinner CSS global ──────────────────────────────────────────────────── */
 export const SpinnerStyles = () => (
   <style>{`@keyframes extractos-spin { to { transform: rotate(360deg); } }`}</style>

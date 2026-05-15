@@ -131,6 +131,21 @@ export default function OrderDetail() {
     }
   }
 
+  // Al cancelar una orden, libera los slots de calendario que ocupaban sus
+  // extractos. La fila se conserva (historial), pero time_block y
+  // time_block_position pasan a null para que otra orden pueda tomar esos
+  // huecos y el calendario deje de contarla en los 24 del día.
+  async function releaseCalendarSlots(orderId) {
+    const supabase = getSupabaseBrowser();
+    const { error } = await supabase
+      .from("order_extracts")
+      .update({ time_block: null, time_block_position: null })
+      .eq("order_id", orderId);
+    if (error) {
+      console.warn("[OrderDetail] no se pudieron liberar slots:", error.message);
+    }
+  }
+
   // Reasignación manual de un extracto a otro bloque/posición.
   async function reassignExtractBlock(extractId, timeBlock, timeBlockPosition) {
     setBusy(true);
@@ -284,6 +299,7 @@ export default function OrderDetail() {
               userId={user?.id}
               settings={settings}
               assignTimeBlocks={assignTimeBlocks}
+              releaseCalendarSlots={releaseCalendarSlots}
             />
             <TimelineCard order={order} />
           </aside>
@@ -564,7 +580,7 @@ function Pair({ label, value }) {
   );
 }
 
-function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings, assignTimeBlocks }) {
+function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings, assignTimeBlocks, releaseCalendarSlots }) {
   const canMarkPaid = order.status === "pending_payment";
   const canCancel = !["completed", "cancelled"].includes(order.status);
 
@@ -605,16 +621,23 @@ function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings, as
     } else if (pending.kind === "complete") {
       patch({ status: "completed" }, "Marcada como completada.").finally(onDone);
     } else if (pending.kind === "cancel") {
-      patch(
-        {
-          status: "cancelled",
-          cancelled_at: new Date().toISOString(),
-          cancelled_by: userId || null,
-          cancelled_reason: cancelReason.trim() || "Sin motivo indicado",
-        },
-        "Orden cancelada.",
-        "cancelled",
-      ).finally(onDone);
+      // Liberar los slots A/B antes del patch para que el calendario y la
+      // capacidad del día se actualicen apenas la operadora vuelva a la lista.
+      // Si falla, igual seguimos: cancelar la orden es lo importante.
+      (async () => {
+        try { await releaseCalendarSlots?.(order.id); } catch (e) { console.warn(e); }
+        await patch(
+          {
+            status: "cancelled",
+            cancelled_at: new Date().toISOString(),
+            cancelled_by: userId || null,
+            cancelled_reason: cancelReason.trim() || "Sin motivo indicado",
+          },
+          "Orden cancelada.",
+          "cancelled",
+        );
+        onDone();
+      })();
     }
   }
 

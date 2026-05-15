@@ -3,6 +3,7 @@
 // El cliente recibe la propuesta con membrete de Radio Araucana.
 
 import { sendEmail, isMailerConfigured } from "../extractos/_lib/mailer.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
 import { consumirCupon } from "./_lib/tarifas-store.js";
 import { authOk } from "./_lib/auth.js";
 import { cotizaTo, cotizaCc } from "./_lib/recipients.js";
@@ -218,5 +219,44 @@ export default async function handler(req, res) {
     console.error("[/api/cotiza/enviar-cliente] envío falló:", result.error);
     return res.status(502).json({ error: "send_failed", detail: result.error });
   }
-  return res.status(200).json({ ok: true, messageId: result.messageId });
+
+  // Persistir la cotización para historial. Si la BD falla, no rompemos
+  // el flujo — el email ya salió y el cliente lo recibió.
+  let cotizacionGuardada = null;
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase
+        .from("cotiza_cotizaciones")
+        .insert({
+          solicitud_id: req.body.solicitudId || null,
+          cliente_nombre: cliente.nombre || "Cliente",
+          cliente_empresa: cliente.empresa || null,
+          cliente_telefono: cliente.telefono || null,
+          cliente_email: cliente.email || null,
+          lineas: lineas.map((l) => ({ detalle: l.detalle, subtotal: l.subtotal })),
+          comentarios: comentarios || null,
+          subtotal: totales.subtotal,
+          descuento_pyme: descPyme?.monto || 0,
+          descuento_agencia: descAgencia?.monto || 0,
+          descuento_cupon: cupon?.monto || 0,
+          iva: totales.iva,
+          total: totales.total,
+          pyme_aplicado: Boolean(descPyme),
+          agencia_tramo: descAgencia ? descAgencia.label : null,
+          cupon_codigo: cupon ? cupon.codigo : null,
+          estado: "enviada",
+          enviada_via: "email",
+          enviada_a: cliente.email,
+        })
+        .select("id, numero")
+        .single();
+      if (error) console.error("[/api/cotiza/enviar-cliente] insert cotización fail:", error.message);
+      else cotizacionGuardada = data;
+    } catch (err) {
+      console.error("[/api/cotiza/enviar-cliente] supabase error:", err?.message ?? err);
+    }
+  }
+
+  return res.status(200).json({ ok: true, messageId: result.messageId, cotizacion: cotizacionGuardada });
 }

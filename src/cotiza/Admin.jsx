@@ -2,12 +2,18 @@ import React, { useEffect, useState } from "react";
 import { K } from "./Layout.jsx";
 import { formatCLP, TARIFAS_DEFAULT } from "./tarifas.js";
 import LoginAdmin from "./LoginAdmin.jsx";
+import CotizacionesTab from "./CotizacionesTab.jsx";
 
 const STORAGE_KEY = "cotiza_admin_token";
+const TABS = [
+  { id: "cotizaciones", label: "Cotizaciones" },
+  { id: "tarifas", label: "Tarifas y cupones" },
+];
 
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem(STORAGE_KEY) || "");
   const [autenticado, setAutenticado] = useState(() => Boolean(sessionStorage.getItem(STORAGE_KEY)));
+  const [tab, setTab] = useState("cotizaciones");
   const [tarifas, setTarifas] = useState(null);
   const [errorCarga, setErrorCarga] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -63,7 +69,7 @@ export default function Admin() {
   };
 
   if (!autenticado) {
-    return <LoginAdmin titulo="Editor de tarifas" descripcion="Ingresa la contraseña de administración para editar los precios del cotizador." onLogin={intentarLogin} />;
+    return <LoginAdmin titulo="Administración del cotizador" descripcion="Historial de cotizaciones, edición de tarifas y cupones. Requiere clave de administración." onLogin={intentarLogin} />;
   }
 
   if (!tarifas) {
@@ -134,12 +140,12 @@ export default function Admin() {
 
   return (
     <section style={{ padding: "32px 24px 64px" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
           <div>
-            <h1 style={K({ fontSize: 24, fontWeight: 700, marginBottom: 4 })}>Editor de tarifas</h1>
+            <h1 style={K({ fontSize: 24, fontWeight: 700, marginBottom: 4 })}>Administración del cotizador</h1>
             <p style={K({ fontSize: 13, color: "rgba(255,255,255,0.5)" })}>
-              Actualizado: {tarifas.actualizado || "—"}
+              Historial de cotizaciones, tarifas y cupones.
             </p>
           </div>
           <button type="button" onClick={logout}
@@ -147,6 +153,31 @@ export default function Admin() {
             Cerrar sesión
           </button>
         </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 20, flexWrap: "wrap" }}>
+          {TABS.map((t) => (
+            <button key={t.id} type="button" onClick={() => setTab(t.id)}
+              style={K({
+                background: "transparent",
+                color: tab === t.id ? "#fff" : "rgba(255,255,255,0.5)",
+                border: "none",
+                borderBottom: tab === t.id ? "2px solid #52b870" : "2px solid transparent",
+                padding: "10px 16px", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", marginBottom: -1,
+              })}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "cotizaciones" && <CotizacionesTab token={token} />}
+
+        {tab === "tarifas" && (
+          <>
+        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 16 })}>
+          Tarifas actualizadas: {tarifas.actualizado || "—"}
+        </p>
 
         {/* IVA */}
         <div style={cardStyle}>
@@ -347,6 +378,8 @@ export default function Admin() {
             </button>
           </div>
         </div>
+        </>
+        )}
       </div>
     </section>
   );

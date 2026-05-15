@@ -139,28 +139,76 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
     }
   };
 
+  const buildPayloadBase = () => ({
+    cliente: {
+      nombre: cliente.nombre.trim() || "Cliente",
+      empresa: cliente.empresa.trim(),
+      telefono: cliente.telefono.trim(),
+      email: cliente.email.trim(),
+    },
+    lineas: lineas.map((l) => ({ detalle: l.detalle, subtotal: l.subtotal })),
+    descPyme: totales.descPyme ? { label: dPyme.label, porcentaje: dPyme.porcentaje, monto: totales.descPyme } : null,
+    descAgencia: totales.descAgencia ? { label: totales.agenciaTramoInfo.label, porcentaje: totales.agenciaTramoInfo.porcentaje, monto: totales.descAgencia } : null,
+    cupon: cuponAplicado ? { codigo: cuponAplicado.codigo, descripcion: cuponAplicado.descripcion || "", monto: totales.descCupon } : null,
+    subtotal: totales.subtotal,
+    iva: totales.iva,
+    total: totales.total,
+    comentarios: comentarios.trim(),
+    solicitudId: solicitudActiva || null,
+  });
+
   const enviarCliente = async () => {
     if (!puedeEnviar || enviando) return;
     setFeedback(null);
     setEnviando(true);
     try {
-      const payload = {
-        cliente: {
-          nombre: cliente.nombre.trim() || "Cliente",
-          empresa: cliente.empresa.trim(),
-          telefono: cliente.telefono.trim(),
-          email: cliente.email.trim(),
-        },
-        lineas: lineas.map((l) => ({ detalle: l.detalle, subtotal: l.subtotal })),
-        descPyme: totales.descPyme ? { label: dPyme.label, porcentaje: dPyme.porcentaje, monto: totales.descPyme } : null,
-        descAgencia: totales.descAgencia ? { label: totales.agenciaTramoInfo.label, porcentaje: totales.agenciaTramoInfo.porcentaje, monto: totales.descAgencia } : null,
-        cupon: cuponAplicado ? { codigo: cuponAplicado.codigo, descripcion: cuponAplicado.descripcion || "", monto: totales.descCupon } : null,
-        subtotal: totales.subtotal,
-        iva: totales.iva,
-        total: totales.total,
-        comentarios: comentarios.trim(),
-      };
       const r = await fetch("/api/cotiza/enviar-cliente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(buildPayloadBase()),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 401) { onLogout(); return; }
+        setFeedback({ ok: false, msg: data.message || data.error || `Error ${r.status}` });
+      } else {
+        const numero = data.cotizacion?.numero ? ` (${data.cotizacion.numero})` : "";
+        setFeedback({ ok: true, msg: `Enviado a ${cliente.email.trim()}${numero}` });
+        if (solicitudActiva) {
+          await marcarSolicitudAtendida(solicitudActiva, totales.total);
+        }
+      }
+    } catch (e) {
+      setFeedback({ ok: false, msg: e?.message || "Error de red" });
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const guardarComoEnviada = async (via) => {
+    if (!hayLineas || enviando) return;
+    setFeedback(null);
+    setEnviando(true);
+    try {
+      const base = buildPayloadBase();
+      const payload = {
+        cliente: base.cliente,
+        lineas: base.lineas,
+        comentarios: base.comentarios,
+        solicitud_id: base.solicitudId,
+        subtotal: base.subtotal,
+        descuento_pyme: base.descPyme?.monto || 0,
+        descuento_agencia: base.descAgencia?.monto || 0,
+        descuento_cupon: base.cupon?.monto || 0,
+        iva: base.iva,
+        total: base.total,
+        pyme_aplicado: Boolean(base.descPyme),
+        agencia_tramo: base.descAgencia?.label || null,
+        cupon_codigo: base.cupon?.codigo || null,
+        enviada_via: via,
+        enviada_a: via === "whatsapp" ? cliente.telefono.trim() : cliente.email.trim(),
+      };
+      const r = await fetch("/api/cotiza/guardar-cotizacion", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
@@ -168,10 +216,10 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
         if (r.status === 401) { onLogout(); return; }
-        setFeedback({ ok: false, msg: data.message || data.error || `Error ${r.status}` });
+        setFeedback({ ok: false, msg: data.error || `Error ${r.status}` });
       } else {
-        setFeedback({ ok: true, msg: `Enviado a ${cliente.email.trim()}` });
-        // Si esta cotización viene de una solicitud pública, marcarla atendida
+        const numero = data.cotizacion?.numero || "";
+        setFeedback({ ok: true, msg: `Cotización ${numero} guardada como enviada por ${via === "whatsapp" ? "WhatsApp" : via}` });
         if (solicitudActiva) {
           await marcarSolicitudAtendida(solicitudActiva, totales.total);
         }
@@ -492,14 +540,26 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
             <div style={{
               display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end",
             }}>
-              <button type="button" onClick={copiar}
+              <button type="button" onClick={copiar} disabled={enviando}
                 style={K({
                   background: "#fff", color: "#0a3d23",
                   border: "none", borderRadius: 6,
                   padding: "12px 22px", fontWeight: 700, fontSize: 14,
-                  cursor: "pointer", letterSpacing: "0.02em",
+                  cursor: enviando ? "wait" : "pointer", letterSpacing: "0.02em",
+                  opacity: enviando ? 0.6 : 1,
                 })}>
                 Copiar al portapapeles
+              </button>
+              <button type="button" onClick={() => guardarComoEnviada("whatsapp")}
+                disabled={!hayLineas || enviando}
+                title={!hayLineas ? "Selecciona al menos un formato" : "Registra la cotización como enviada por WhatsApp (úsalo cuando copiaste el texto y lo enviaste manualmente)"}
+                style={K({
+                  background: hayLineas && !enviando ? "rgba(37,211,102,0.95)" : "rgba(37,211,102,0.3)",
+                  color: "#0a3d23", border: "none", borderRadius: 6,
+                  padding: "12px 22px", fontWeight: 700, fontSize: 14,
+                  cursor: hayLineas && !enviando ? "pointer" : "not-allowed", letterSpacing: "0.02em",
+                })}>
+                Marcar enviada por WhatsApp
               </button>
               <button type="button" onClick={enviarCliente}
                 disabled={!puedeEnviar || enviando}

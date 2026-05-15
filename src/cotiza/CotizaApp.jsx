@@ -5,12 +5,9 @@ import Identificacion from "./Identificacion.jsx";
 import Solicitud from "./Solicitud.jsx";
 import Confirmacion from "./Confirmacion.jsx";
 import Admin from "./Admin.jsx";
-import LoginAdmin from "./LoginAdmin.jsx";
-import CotizadorInterno from "./CotizadorInterno.jsx";
 import { TARIFAS_DEFAULT } from "./tarifas.js";
 
 const STORAGE_CLIENTE = "cotiza_cliente";
-const STORAGE_TOKEN = "cotiza_admin_token";
 
 export default function CotizaApp() {
   return (
@@ -21,8 +18,10 @@ export default function CotizaApp() {
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<FlujoPublico />} />
-            <Route path="/interno" element={<FlujoInterno />} />
             <Route path="/admin" element={<Admin />} />
+            {/* Compatibilidad: /interno fue la URL del cotizador de equipo;
+                ahora está unificado dentro de /admin como tab "Armar cotización". */}
+            <Route path="/interno" element={<Navigate to="/admin?tab=armar" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
@@ -105,42 +104,4 @@ function FlujoPublico() {
       } />
     </Routes>
   );
-}
-
-/* ─── Flujo interno: login → cotizador con precios + descuentos ───────────── */
-function FlujoInterno() {
-  const [token, setToken] = useState(() => sessionStorage.getItem(STORAGE_TOKEN) || "");
-  const [autenticado, setAutenticado] = useState(() => Boolean(sessionStorage.getItem(STORAGE_TOKEN)));
-  const [tarifas, setTarifas] = useState(null);
-  const [errorCarga, setErrorCarga] = useState("");
-
-  useEffect(() => {
-    if (!autenticado) return;
-    fetch("/api/cotiza/tarifas", { cache: "no-store" })
-      .then((r) => r.json())
-      .then(setTarifas)
-      .catch((e) => setErrorCarga(e?.message || String(e)));
-  }, [autenticado]);
-
-  const login = (t) => {
-    sessionStorage.setItem(STORAGE_TOKEN, t);
-    setToken(t);
-    setAutenticado(true);
-  };
-  const logout = () => {
-    sessionStorage.removeItem(STORAGE_TOKEN);
-    setToken("");
-    setAutenticado(false);
-    setTarifas(null);
-  };
-
-  if (!autenticado) {
-    return <LoginAdmin titulo="Cotizador interno" descripcion="Herramienta interna del equipo comercial. Requiere clave de administración." onLogin={login} />;
-  }
-  if (!tarifas) {
-    return <p style={{ padding: 80, textAlign: "center", color: "rgba(255,255,255,0.5)" }}>
-      {errorCarga ? `Error: ${errorCarga}` : "Cargando tarifas…"}
-    </p>;
-  }
-  return <CotizadorInterno tarifas={tarifas} token={token} onLogout={logout} />;
 }

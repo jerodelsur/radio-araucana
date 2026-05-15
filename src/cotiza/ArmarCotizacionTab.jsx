@@ -6,7 +6,6 @@ import {
   validarCupon,
   aplicarCupon,
 } from "./tarifas.js";
-import SolicitudesPanel from "./SolicitudesPanel.jsx";
 
 const SectionTitle = {
   fontFamily: "'Open Sans', sans-serif",
@@ -18,15 +17,27 @@ const SectionTitle = {
 };
 
 /**
- * Cotizador para uso interno del equipo comercial. Requiere ADMIN_PASSWORD.
- * Muestra precios completos y permite aplicar descuentos PYME y Precio Agencia
- * que NO están disponibles en el cotizador público.
+ * Tab "Armar cotización" del panel de administración. Muestra precios completos
+ * y permite aplicar descuentos PYME y Precio Agencia.
  *
  * Acciones de salida:
  *   - Copiar texto formateado al portapapeles (para pegar manualmente).
- *   - Enviar email al cliente (requiere email) con la cotización ya armada.
+ *   - Marcar enviada por WhatsApp (registra sin enviar email).
+ *   - Enviar email al cliente con la cotización formateada.
+ *
+ * Props:
+ *   - solicitudPrecargada: opcional. Si viene, se pre-rellenan los datos del
+ *     cliente y se pre-seleccionan los formatos que pidió. Al enviar exitoso,
+ *     la solicitud se marca como atendida y se llama onSolicitudAtendida().
+ *   - onSolicitudAtendida: callback opcional cuando se atendió la solicitud.
  */
-export default function CotizadorInterno({ tarifas, token, onLogout }) {
+export default function ArmarCotizacionTab({
+  tarifas,
+  token,
+  onLogout,
+  solicitudPrecargada,
+  onSolicitudAtendida,
+}) {
   const [selecciones, setSelecciones] = useState({});
   const [cliente, setCliente] = useState({ nombre: "", empresa: "", telefono: "", email: "" });
   const [comentarios, setComentarios] = useState("");
@@ -42,7 +53,6 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
   const [enviando, setEnviando] = useState(false);
 
   const [solicitudActiva, setSolicitudActiva] = useState(null);
-  const [refreshSolicitudes, setRefreshSolicitudes] = useState(0);
 
   const formatos = tarifas.formatos;
   const dPyme = tarifas.descuentosInternos?.pyme;
@@ -239,11 +249,11 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
         body: JSON.stringify({ id, estado: "atendida", cotizacionTotal: total }),
       });
       setSolicitudActiva(null);
-      setRefreshSolicitudes((n) => n + 1);
+      onSolicitudAtendida?.();
     } catch (e) {
       console.warn("No se pudo marcar atendida:", e?.message);
     }
-  }, [token]);
+  }, [token, onSolicitudAtendida]);
 
   const precargarSolicitud = useCallback((sol) => {
     setCliente({
@@ -287,40 +297,30 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
   }, [formatos]);
 
+  // Reacciona cuando el Admin pasa una solicitud para precargar (al click "Cotizar"
+  // desde la tab Solicitudes).
+  useEffect(() => {
+    if (solicitudPrecargada) {
+      precargarSolicitud(solicitudPrecargada);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solicitudPrecargada?.id]);
+
   return (
     <>
-      <section style={{ background: "rgba(82,184,112,0.06)", borderBottom: "1px solid rgba(82,184,112,0.15)", padding: "12px 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.7)" })}>
-            <span style={{ color: "#52b870", fontWeight: 600 }}>HERRAMIENTA INTERNA</span>
-            <span style={{ color: "rgba(255,255,255,0.4)" }}> · cotizador del equipo comercial</span>
-          </p>
-          <button type="button" onClick={onLogout}
-            style={K({ background: "transparent", color: "rgba(255,255,255,0.5)", border: "none", fontSize: 12, cursor: "pointer", padding: 4, textDecoration: "underline" })}>
-            Cerrar sesión
-          </button>
-        </div>
-      </section>
-
-      <SolicitudesPanel
-        token={token}
-        onLogout={onLogout}
-        onPrecargar={precargarSolicitud}
-        refreshKey={refreshSolicitudes}
-        solicitudActivaId={solicitudActiva}
-      />
-
-      <section style={{ padding: "clamp(28px, 4vw, 40px) 24px 16px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <h1 style={K({ fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 8 })}>
-            {solicitudActiva ? "Cotizando esta solicitud" : "Armar cotización"}
-          </h1>
-          <p style={K({ fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.55)", lineHeight: 1.5 })}>
-            {solicitudActiva
-              ? "Configura cada formato, ajusta descuentos si corresponden, y envía la cotización al cliente. La solicitud se marca como atendida automáticamente al enviar."
-              : "Construye la cotización, aplica descuentos comerciales si corresponden, y copia el texto o envíalo directo al cliente."}
-          </p>
-          {solicitudActiva && (
+      {solicitudActiva && (
+        <section style={{ padding: "0 0 16px" }}>
+          <div style={{
+            background: "rgba(82,184,112,0.08)",
+            border: "1px solid rgba(82,184,112,0.3)",
+            borderRadius: 8, padding: "12px 16px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            gap: 12, flexWrap: "wrap",
+          }}>
+            <p style={K({ fontSize: 13, color: "rgba(255,255,255,0.85)" })}>
+              <span style={{ color: "#52b870", fontWeight: 600 }}>● Cotizando solicitud del público.</span>
+              {" "}Al enviar, se marca como atendida automáticamente.
+            </p>
             <button type="button" onClick={() => {
               setSolicitudActiva(null);
               setCliente({ nombre: "", empresa: "", telefono: "", email: "" });
@@ -328,12 +328,12 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
               setComentarios("");
               setFeedback(null);
             }}
-              style={K({ background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer", marginTop: 10 })}>
-              ← Volver a la lista (descarta esta cotización en curso)
+              style={K({ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" })}>
+              Descartar precarga
             </button>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Cliente */}
       <section style={{ padding: "16px 24px" }}>

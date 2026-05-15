@@ -213,7 +213,7 @@ insert into public.settings (key, value) values
   ('radio_coverage_default', '"Provincia de Cautín, IX Región de La Araucanía"'::jsonb),
   ('default_broadcast_times', '["10:00", "10:05", "10:10"]'::jsonb),
   ('notification_emails', '["administracion@araucanayfrontera.cl", "secretaria.araucana@gmail.com"]'::jsonb),
-  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 35000, "baseAboveMin": 25000, "perLineAboveMin": 2000}'::jsonb)
+  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 36000, "baseAboveMin": 26000, "perLineAboveMin": 2000, "maxLines": 20}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
 -- ============================================================================

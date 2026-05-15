@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { T, FONTS, S } from "../theme.js";
 import { Card, Field, Input, Textarea, Select, Button, Badge } from "../components/ui.jsx";
-import { calculatePriceCLP, formatCLP } from "../lib/pricing.js";
+import { calculatePriceCLP, exceedsMaxLines, formatCLP, DEFAULT_TARIFF } from "../lib/pricing.js";
 import { useSettings } from "../lib/settings-store.js";
 import { createLineMeter, LINE_COUNTER_FONT_STACK, LINE_COUNTER_WIDTH_CM } from "../lib/line-counter.js";
+import { MANDATORY_TITLE, withMandatoryTitle } from "../lib/extract-text.js";
 import { listUpcomingSlots, formatLongDateCL, resolveBroadcastDate } from "../lib/broadcast-date.js";
 import { isValidRUT, formatRUT } from "../lib/chilean/rut.js";
 import { searchComunas, findComunaExacta } from "../lib/chilean/regiones.js";
@@ -121,18 +122,26 @@ export default function Cotizador() {
     meterRef.current = createLineMeter();
     return () => meterRef.current?.dispose();
   }, []);
+  // El texto que se difunde y se cobra es siempre `withMandatoryTitle(...)`
+  // — la línea "EXTRACTOS" cuenta como una línea más.
+  const composedText = useMemo(() => withMandatoryTitle(state.extractText), [state.extractText]);
   useEffect(() => {
     if (!meterRef.current) return;
-    setLineCount(meterRef.current.measure(state.extractText));
-  }, [state.extractText]);
+    setLineCount(meterRef.current.measure(composedText));
+  }, [composedText]);
 
-  const priceCLP = lineCount > 0 ? calculatePriceCLP(lineCount, settings.tariff_table) : 0;
+  const tariff = settings.tariff_table ?? DEFAULT_TARIFF;
+  const maxLines = Number(tariff?.maxLines) || DEFAULT_TARIFF.maxLines;
+  const overLimit = exceedsMaxLines(lineCount, tariff);
+  const priceCLP = lineCount > 0 && !overLimit ? calculatePriceCLP(lineCount, tariff) : 0;
 
   // Validación zod (siempre, mostramos errores solo después de intento de submit).
+  // El server recibe el texto ya compuesto con la línea "EXTRACTOS" — así
+  // se difunde y se factura siempre con título.
   const formSnapshot = useMemo(() => {
     if (!selectedSlot) return null;
     return {
-      extractText: state.extractText,
+      extractText: composedText,
       procedureType: state.procedureType,
       comuna: state.comuna,
       provincia: state.provincia,
@@ -151,7 +160,7 @@ export default function Cotizador() {
       billingGiro: state.billingGiro,
       billingEmail: state.billingEmail,
     };
-  }, [state, selectedSlot]);
+  }, [state, selectedSlot, composedText]);
 
   const validation = useMemo(() => {
     if (!formSnapshot) return { ok: false, errors: {} };
@@ -183,6 +192,15 @@ export default function Cotizador() {
   async function handleSubmit(ev) {
     ev.preventDefault();
     setSubmitAttempted(true);
+    if (overLimit) {
+      setSubmitState({
+        status: "blocked",
+        message:
+          `Para extractos que superan las ${maxLines} líneas hay que escribir directamente a ` +
+          "administracion@araucanayfrontera.cl — se cotiza como cápsula, no como extracto.",
+      });
+      return;
+    }
     if (!validation.ok) {
       // Llevar foco al primer error.
       requestAnimationFrame(() => {
@@ -268,8 +286,11 @@ export default function Cotizador() {
           <StepBlock number={1} title="Pega el texto del extracto">
             <ExtractEditor
               value={state.extractText}
+              composedText={composedText}
               onChange={(v) => dispatch({ type: "set", field: "extractText", value: v })}
               lineCount={lineCount}
+              maxLines={maxLines}
+              overLimit={overLimit}
               error={e("extractText")}
             />
           </StepBlock>
@@ -509,6 +530,8 @@ export default function Cotizador() {
           onSubmit={handleSubmit}
           formValid={validation.ok}
           submitState={submitState}
+          overLimit={overLimit}
+          maxLines={maxLines}
         />
       </form>
     </div>
@@ -602,10 +625,14 @@ function StepBlock({ number, title, children }) {
   );
 }
 
-function ExtractEditor({ value, onChange, lineCount, error }) {
+function ExtractEditor({ value, composedText, onChange, lineCount, maxLines, overLimit, error }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
-      <Field label="Texto del extracto" hint="Pega el texto completo tal como debe difundirse." error={error}>
+      <Field
+        label="Texto del extracto"
+        hint={`Pega el texto completo tal como debe difundirse. La línea de título "${MANDATORY_TITLE}" se agrega automáticamente arriba y cuenta como una línea.`}
+        error={error}
+      >
         <Textarea
           data-field="extractText"
           value={value}
@@ -629,8 +656,11 @@ function ExtractEditor({ value, onChange, lineCount, error }) {
         <span className="mono" style={{ fontSize: 12, color: T.inkSoft, letterSpacing: 0.4, textTransform: "uppercase" }}>
           Vista previa — Bookman Old Style 12 (referencial)
         </span>
-        <span className="mono" style={{ fontSize: 12, color: T.greenDark, fontWeight: 600 }}>
-          {lineCount} {lineCount === 1 ? "línea" : "líneas"}
+        <span
+          className="mono"
+          style={{ fontSize: 12, color: overLimit ? T.danger : T.greenDark, fontWeight: 600 }}
+        >
+          {lineCount} {lineCount === 1 ? "línea" : "líneas"} {overLimit ? `· máx ${maxLines}` : ""}
         </span>
       </div>
 
@@ -648,9 +678,6 @@ function ExtractEditor({ value, onChange, lineCount, error }) {
           minHeight: 80,
         }}
       >
-        {/* El conteo lo hace un nodo OCULTO con ancho fijo 16cm (línea de Word).
-            Este preview visible se acomoda al contenedor para que en mobile no
-            genere scroll horizontal ni rompa el grid. */}
         <div
           className="bookman"
           style={{
@@ -664,18 +691,44 @@ function ExtractEditor({ value, onChange, lineCount, error }) {
             maxWidth: `${LINE_COUNTER_WIDTH_CM}cm`,
           }}
         >
-          {value || (
+          {value ? composedText : (
             <span style={{ color: T.inkMute, fontFamily: FONTS.body, fontStyle: "italic" }}>
-              Acá vas a ver tu texto tal como se cuenta para tarifar (referencial).
+              Acá vas a ver tu texto tal como se cuenta para tarifar (con la línea
+              de título "{MANDATORY_TITLE}" arriba).
             </span>
           )}
         </div>
       </div>
+
+      {overLimit && (
+        <div
+          role="alert"
+          style={{
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: T.danger,
+            background: "rgba(197,62,31,0.06)",
+            border: "1px solid rgba(197,62,31,0.35)",
+            borderRadius: 8,
+            padding: "12px 14px",
+          }}
+        >
+          <strong>Excediste el tope de {maxLines} líneas.</strong> Para extractos
+          más largos hay que cotizarlo como cápsula. Escríbenos a{" "}
+          <a
+            href="mailto:administracion@araucanayfrontera.cl"
+            style={{ color: T.danger, textDecoration: "underline" }}
+          >
+            administracion@araucanayfrontera.cl
+          </a>{" "}
+          y te respondemos en el día.
+        </div>
+      )}
     </div>
   );
 }
 
-function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState }) {
+function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState, overLimit, maxLines }) {
   return (
     <aside
       className="resumen-sticky"
@@ -694,7 +747,12 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState }
         </div>
 
         <ResumenRow label="Líneas" value={lineCount > 0 ? `${lineCount}` : "—"} mono />
-        <ResumenRow label="Monto (IVA incl.)" value={lineCount > 0 ? formatCLP(priceCLP) : "—"} highlight mono />
+        <ResumenRow
+          label="Monto (IVA incl.)"
+          value={overLimit ? "Cotizar aparte" : lineCount > 0 ? formatCLP(priceCLP) : "—"}
+          highlight
+          mono
+        />
         <hr style={{ border: 0, borderTop: `1px solid ${T.border}`, margin: "14px 0" }} />
         <ResumenRow
           label="Fecha de difusión"
@@ -728,11 +786,16 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState }
             variant="primary"
             size="lg"
             onClick={onSubmit}
-            disabled={lineCount === 0}
+            disabled={lineCount === 0 || overLimit}
             loading={submitState?.status === "submitting"}
           >
             {submitState?.status === "submitting" ? "Enviando…" : "Enviar solicitud"}
           </Button>
+          {overLimit && (
+            <p style={{ fontSize: 11.5, color: T.danger, textAlign: "center", lineHeight: 1.5 }}>
+              Supera {maxLines} líneas — escribir a administracion@araucanayfrontera.cl.
+            </p>
+          )}
           <p style={{ fontSize: 11.5, color: T.inkMute, lineHeight: 1.5, textAlign: "center" }}>
             Recibirás un email con el N° de orden y los datos para transferir.
             Cuando se acredite el pago, se confirma la difusión.

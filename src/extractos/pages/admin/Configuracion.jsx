@@ -121,15 +121,17 @@ export default function AdminConfiguracion() {
 function TariffSection({ settings }) {
   const initial = settings.tariff_table ?? DEFAULT_SETTINGS.tariff_table;
   const { draft, setField, dirty, savedAt, markSaved, revert } = useDraft({
-    minLinesFlat: Number(initial.minLinesFlat) || 4,
-    minPrice: Number(initial.minPrice) || 17850,
-    baseAboveMin: Number(initial.baseAboveMin) || 20000,
-    perLineAboveMin: Number(initial.perLineAboveMin) || 1000,
+    minLinesFlat: Number(initial.minLinesFlat) || 5,
+    minPrice: Number(initial.minPrice) || 36000,
+    baseAboveMin: Number(initial.baseAboveMin) || 26000,
+    perLineAboveMin: Number(initial.perLineAboveMin) || 2000,
+    maxLines: Number(initial.maxLines) || 20,
   });
 
   const simRows = useMemo(() => {
     const tariff = draft;
-    const lines = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40];
+    const max = Number(draft.maxLines) || 20;
+    const lines = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20].filter((n) => n <= max);
     return lines.map((n) => ({ n, price: calculatePriceCLP(n, tariff) }));
   }, [draft]);
 
@@ -141,7 +143,8 @@ function TariffSection({ settings }) {
           Hasta <strong>{draft.minLinesFlat}</strong> líneas se cobra el mínimo plano.
           Desde la línea {draft.minLinesFlat + 1} el precio es{" "}
           <strong>{formatCLP(draft.baseAboveMin)} + N × {formatCLP(draft.perLineAboveMin)}</strong>.
-          Todos los montos en CLP, IVA incluido.
+          Tope <strong>{draft.maxLines}</strong> líneas — sobre eso se cotiza
+          aparte como cápsula. Todos los montos en CLP, IVA incluido.
         </>
       }
       dirty={dirty}
@@ -187,6 +190,19 @@ function TariffSection({ settings }) {
             min="0"
             value={draft.perLineAboveMin}
             onChange={(ev) => setField("perLineAboveMin", Number(ev.target.value))}
+          />
+        </Field>
+        <Field
+          label="Tope de líneas"
+          htmlFor="maxLines"
+          hint="Sobre este número el cotizador deriva a administración (cápsula)."
+        >
+          <Input
+            id="maxLines"
+            type="number"
+            min="1"
+            value={draft.maxLines}
+            onChange={(ev) => setField("maxLines", Number(ev.target.value))}
           />
         </Field>
       </div>

@@ -6,8 +6,8 @@
 //   q=texto    (búsqueda en nombre/empresa/email/numero)
 //   limit=N    (default 100, max 500)
 
-import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
-import { authOk } from "./_lib/auth.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
+import { authOk } from "../_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
 

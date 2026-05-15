@@ -1,8 +1,9 @@
 // Plantillas HTML + texto plano para los emails transaccionales del sistema.
 // Inline CSS (Gmail-friendly, sin <style> en <head>). Sin assets externos.
 //
-// Las plantillas reciben { order, settings } donde:
-//   - order: registro de public.orders (con order_number, amount_clp, etc.)
+// Las plantillas reciben { order, extracts, settings } donde:
+//   - order: registro de public.orders (con order_number, amount_clp total, etc.)
+//   - extracts: array de public.order_extracts (los 1..20 extractos del bundle)
 //   - settings: blob { radio_legal_name, radio_bank_name, ... } leído desde public.settings
 
 const COLORS = {
@@ -43,11 +44,30 @@ function getStr(settings, key, fallback = "") {
   return typeof v === "string" ? v : fallback;
 }
 
+// Normaliza el parámetro `extracts`: si la función se llama sin él (callers
+// antiguos que solo pasaban `order`), reconstruimos un extracto a partir de
+// las columnas legacy de `order`.
+function normalizeExtracts(order, extracts) {
+  if (Array.isArray(extracts) && extracts.length > 0) return extracts;
+  return [{
+    extract_index: 1,
+    extract_text: order.extract_text,
+    line_count: order.line_count,
+    amount_clp: order.amount_clp,
+    procedure_type: order.procedure_type,
+    comuna: order.comuna,
+    provincia: order.provincia,
+    region: order.region,
+    resolved_publication_date: order.resolved_publication_date,
+  }];
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * 1) Email al CLIENTE — confirmación de orden + datos para transferencia
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export function clientOrderEmail({ order, settings }) {
+export function clientOrderEmail({ order, extracts, settings }) {
+  const list = normalizeExtracts(order, extracts);
   const bankName    = getStr(settings, "radio_bank_name", "Banco Santander");
   const accountType = getStr(settings, "radio_bank_account_type", "Cuenta Corriente");
   const accountNum  = getStr(settings, "radio_bank_account_number", "0-000-9874438-0");
@@ -57,9 +77,9 @@ export function clientOrderEmail({ order, settings }) {
   const adminEmail   = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
   const phoneMobile  = getStr(settings, "radio_phone_mobile", "+56 9 4239 0216");
 
-  const subject = `Recibimos tu solicitud — Orden ${order.order_number} · Radio La Frontera`;
-
-  const broadcastDate = fmtDate(order.resolved_publication_date);
+  const n = list.length;
+  const noun = n === 1 ? "tu extracto" : `tus ${n} extractos`;
+  const subject = `Recibimos tu solicitud — Orden ${order.order_number} (${n} ${n === 1 ? "extracto" : "extractos"}) · Radio La Frontera`;
   const amount = fmtCLP(order.amount_clp);
 
   const html = wrap(`
@@ -72,7 +92,7 @@ export function clientOrderEmail({ order, settings }) {
       </h1>
       <p style="color:${COLORS.inkSoft};font-size:15px;line-height:1.55;margin:0 0 20px;">
         Hola ${escapeHtml(order.client_name)}, gracias por preferir Radio La Frontera.
-        Tu solicitud quedó registrada con los siguientes datos.
+        Tu solicitud por ${escapeHtml(noun)} quedó registrada.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px dashed ${COLORS.border};border-radius:8px;margin-bottom:22px;">
@@ -82,11 +102,11 @@ export function clientOrderEmail({ order, settings }) {
         </td></tr>
       </table>
 
-      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">Resumen</h2>
-      ${row("Líneas del extracto", String(order.line_count || "—"))}
-      ${row("Monto a pagar (IVA incluido)", `<strong style="color:${COLORS.greenDark};font-size:18px;">${amount}</strong>`)}
-      ${row("Fecha de difusión", broadcastDate)}
-      ${row("Comuna del trámite", `${escapeHtml(order.comuna)}, ${escapeHtml(order.region)}`)}
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">${n === 1 ? "Tu extracto" : `Tus ${n} extractos`}</h2>
+      ${list.map((ex) => extractSummaryCardHtml(ex)).join("")}
+
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:18px 0 10px;font-weight:500;">Total a pagar</h2>
+      ${row("Monto (IVA incluido)", `<strong style="color:${COLORS.greenDark};font-size:18px;">${amount}</strong>`)}
 
       <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:24px 0 10px;font-weight:500;">Cómo pagar</h2>
       <p style="color:${COLORS.inkSoft};font-size:14px;line-height:1.55;margin:0 0 14px;">
@@ -104,17 +124,17 @@ export function clientOrderEmail({ order, settings }) {
       <p style="color:${COLORS.inkSoft};font-size:13px;line-height:1.55;margin:0 0 14px;">
         Importante: incluye el <strong>N° de orden ${escapeHtml(order.order_number)}</strong> en
         el comentario o detalle de la transferencia. Cuando recibamos el pago,
-        confirmaremos la difusión por email y emitiremos la factura electrónica
-        a los datos de facturación que indicaste.
+        confirmaremos las difusiones por email y emitiremos <strong>una sola factura electrónica</strong>
+        a los datos que indicaste.
       </p>
 
       <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:24px 0 10px;font-weight:500;">Qué pasa después</h2>
       <ol style="color:${COLORS.inkSoft};font-size:14px;line-height:1.7;margin:0 0 18px;padding-left:20px;">
         <li>Transfieres el monto y nos avisas por email a <a href="mailto:${escapeHtml(adminEmail)}" style="color:${COLORS.greenDark};">${escapeHtml(adminEmail)}</a> (opcional, también lo detectamos al revisar el banco).</li>
         <li>Te confirmamos por email que recibimos el pago, normalmente en menos de 24 horas hábiles.</li>
-        <li>El día <strong>${broadcastDate}</strong> la radio emite tu aviso 3 veces consecutivas.</li>
-        <li>Al día hábil siguiente recibes el certificado de difusión por email, con firma y timbre.</li>
-        <li>Junto al certificado va la factura electrónica.</li>
+        <li>Cada extracto se emite en la fecha indicada (3 veces consecutivas).</li>
+        <li>Al día hábil siguiente de cada difusión recibes <strong>un certificado individual</strong> por extracto, con firma y timbre.</li>
+        <li>La factura electrónica del bundle te llega cuando se confirma el pago.</li>
       </ol>
 
       <div style="background:rgba(201,146,60,0.08);border:1px solid rgba(201,146,60,0.35);border-radius:8px;padding:14px 18px;margin-bottom:18px;">
@@ -133,12 +153,12 @@ export function clientOrderEmail({ order, settings }) {
     `RECIBIMOS TU SOLICITUD — ORDEN ${order.order_number}`,
     ``,
     `Hola ${order.client_name}, gracias por preferir Radio La Frontera.`,
+    `Tu solicitud por ${noun} quedó registrada.`,
     ``,
-    `RESUMEN`,
-    `· Líneas: ${order.line_count}`,
-    `· Monto a pagar: ${amount} (IVA incl.)`,
-    `· Fecha de difusión: ${broadcastDate}`,
-    `· Comuna: ${order.comuna}, ${order.region}`,
+    `EXTRACTOS`,
+    ...list.map((ex) => extractSummaryLineText(ex)),
+    ``,
+    `TOTAL A PAGAR: ${amount} (IVA incl.)`,
     ``,
     `CÓMO PAGAR — Transferencia bancaria:`,
     `· ${legalName}`,
@@ -152,9 +172,9 @@ export function clientOrderEmail({ order, settings }) {
     `QUÉ PASA DESPUÉS`,
     `1. Transfieres y nos avisas (opcional) a ${adminEmail}.`,
     `2. Confirmamos pago por email en <24h hábiles.`,
-    `3. El ${broadcastDate} la radio emite tu aviso 3 veces.`,
-    `4. Al día siguiente recibes el certificado de difusión por email.`,
-    `5. La factura electrónica va junto al certificado.`,
+    `3. Cada extracto se emite en su fecha (3 veces).`,
+    `4. Al día siguiente recibes un certificado por extracto.`,
+    `5. Una sola factura electrónica por todo el bundle.`,
     ``,
     `Estamos en beta — confirmación manual. Dudas: ${supportEmail} / ${phoneMobile}`,
   ].join("\n");
@@ -166,16 +186,18 @@ export function clientOrderEmail({ order, settings }) {
  * 2) Email al ADMIN (Bertha) — alerta de orden nueva
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
-  const subject = `🆕 Nueva orden ${order.order_number} — ${fmtCLP(order.amount_clp)} · ${fmtDate(order.resolved_publication_date)}`;
+export function adminOrderNotificationEmail({ order, extracts, settings, dashboardUrl }) {
+  const list = normalizeExtracts(order, extracts);
+  const n = list.length;
+  const subject = `🆕 Nueva orden ${order.order_number} — ${n} ${n === 1 ? "extracto" : "extractos"} · ${fmtCLP(order.amount_clp)}`;
 
   const html = wrap(`
     <tr><td style="padding:0 32px;">
       <h1 style="font-family:Georgia,serif;font-size:24px;color:${COLORS.greenDark};margin:0 0 8px;line-height:1.2;font-weight:500;">
-        Nueva orden de extracto
+        Nueva orden de extracto${n > 1 ? "s" : ""}
       </h1>
       <p style="color:${COLORS.inkSoft};font-size:14px;line-height:1.55;margin:0 0 18px;">
-        El cliente envió la solicitud y está esperando confirmación de pago por transferencia.
+        El cliente envió la solicitud (${n} ${n === 1 ? "extracto" : "extractos"}) y está esperando confirmación de pago por transferencia.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px solid ${COLORS.border};border-radius:8px;margin-bottom:18px;">
@@ -192,25 +214,19 @@ export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
       ${row("Teléfono", escapeHtml(order.client_phone))}
       ${order.client_organization ? row("Organización", escapeHtml(order.client_organization)) : ""}
 
-      <h2 style="font-family:Georgia,serif;font-size:16px;color:${COLORS.greenDark};margin:18px 0 8px;font-weight:500;">Trámite y difusión</h2>
-      ${row("Tipo", escapeHtml(humanProcedureType(order.procedure_type)))}
-      ${row("Comuna", `${escapeHtml(order.comuna)}, ${escapeHtml(order.provincia)}, ${escapeHtml(order.region)}`)}
-      ${row("Fecha de difusión", fmtDate(order.resolved_publication_date))}
-      ${row("Líneas", String(order.line_count))}
-      ${row("Monto", `<strong style="color:${COLORS.greenDark};">${fmtCLP(order.amount_clp)}</strong>`)}
-
       <h2 style="font-family:Georgia,serif;font-size:16px;color:${COLORS.greenDark};margin:18px 0 8px;font-weight:500;">Facturación</h2>
       ${row("Razón social", escapeHtml(order.billing_legal_name || "—"))}
       ${row("RUT empresa", escapeHtml(order.billing_rut || "—"))}
       ${row("Giro", escapeHtml(order.billing_giro || "—"))}
       ${row("Domicilio", escapeHtml(order.billing_address || "—"))}
       ${row("Email factura", escapeHtml(order.billing_email || "—"))}
+      ${row("Total a facturar", `<strong style="color:${COLORS.greenDark};">${fmtCLP(order.amount_clp)}</strong>`)}
 
-      <h2 style="font-family:Georgia,serif;font-size:16px;color:${COLORS.greenDark};margin:18px 0 8px;font-weight:500;">Texto del extracto</h2>
-      <div style="background:${COLORS.paper};border:1px dashed ${COLORS.border};border-radius:8px;padding:14px 18px;font-family:'Bookman Old Style','Bookman',Georgia,serif;font-size:13px;line-height:1.5;white-space:pre-wrap;color:${COLORS.ink};margin-bottom:18px;">${escapeHtml(order.extract_text)}</div>
+      <h2 style="font-family:Georgia,serif;font-size:16px;color:${COLORS.greenDark};margin:18px 0 8px;font-weight:500;">${n === 1 ? "Extracto" : `${n} extractos`}</h2>
+      ${list.map((ex) => extractAdminCardHtml(ex)).join("")}
 
       ${dashboardUrl ? `
-        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:12px 22px;background:${COLORS.greenDark};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">
+        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:12px 22px;background:${COLORS.greenDark};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;margin-top:8px;">
           Ver en el panel →
         </a>
       ` : ""}
@@ -218,7 +234,7 @@ export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
   `, { settings, footerNote: "Notificación interna — no responder al cliente desde acá." });
 
   const text = [
-    `🆕 NUEVA ORDEN ${order.order_number}`,
+    `🆕 NUEVA ORDEN ${order.order_number} — ${n} ${n === 1 ? "extracto" : "extractos"}`,
     ``,
     `CLIENTE`,
     `· ${order.client_name}`,
@@ -227,22 +243,15 @@ export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
     `· Teléfono: ${order.client_phone}`,
     order.client_organization ? `· Org: ${order.client_organization}` : null,
     ``,
-    `TRÁMITE Y DIFUSIÓN`,
-    `· Tipo: ${humanProcedureType(order.procedure_type)}`,
-    `· Comuna: ${order.comuna}, ${order.provincia}, ${order.region}`,
-    `· Fecha difusión: ${fmtDate(order.resolved_publication_date)}`,
-    `· Líneas: ${order.line_count}`,
-    `· Monto: ${fmtCLP(order.amount_clp)}`,
-    ``,
     `FACTURACIÓN`,
     `· Razón social: ${order.billing_legal_name || "—"}`,
     `· RUT empresa: ${order.billing_rut || "—"}`,
     `· Giro: ${order.billing_giro || "—"}`,
     `· Domicilio: ${order.billing_address || "—"}`,
     `· Email factura: ${order.billing_email || "—"}`,
+    `· Total a facturar: ${fmtCLP(order.amount_clp)}`,
     ``,
-    `EXTRACTO`,
-    order.extract_text,
+    ...list.flatMap((ex) => extractAdminLinesText(ex)),
     ``,
     dashboardUrl ? `Panel: ${dashboardUrl}` : "",
   ].filter(Boolean).join("\n");
@@ -254,13 +263,13 @@ export function adminOrderNotificationEmail({ order, settings, dashboardUrl }) {
  * 3) Email al CLIENTE — confirmación de pago recibido (Bertha marcó "Pagada")
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export function paymentConfirmedEmail({ order, settings }) {
+export function paymentConfirmedEmail({ order, extracts, settings }) {
+  const list = normalizeExtracts(order, extracts);
   const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
-  const adminEmail = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
 
-  const broadcastDate = fmtDate(order.resolved_publication_date);
   const amount = fmtCLP(order.amount_clp);
-  const subject = `Pago recibido — Tu aviso queda agendado para el ${broadcastDate} (${order.order_number})`;
+  const n = list.length;
+  const subject = `Pago recibido — ${n} ${n === 1 ? "aviso queda agendado" : "avisos quedan agendados"} (${order.order_number})`;
 
   const html = wrap(`
     <tr><td style="padding:0 32px;">
@@ -273,21 +282,17 @@ export function paymentConfirmedEmail({ order, settings }) {
       <p style="color:${COLORS.inkSoft};font-size:15px;line-height:1.55;margin:0 0 22px;">
         Acabamos de confirmar tu transferencia de <strong>${amount}</strong> por la orden
         <strong style="font-family:'Courier New',monospace;">${escapeHtml(order.order_number)}</strong>.
-        Tu aviso queda <strong>agendado en firme</strong> para difusión el día indicado.
+        ${n === 1 ? "Tu aviso queda agendado en firme" : `Tus ${n} avisos quedan agendados en firme`} para las fechas indicadas.
       </p>
 
-      <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px dashed ${COLORS.border};border-radius:8px;margin-bottom:22px;">
-        <tr><td style="padding:18px 22px;text-align:center;">
-          <div style="font-size:11px;color:${COLORS.inkSoft};letter-spacing:0.4px;text-transform:uppercase;font-family:'Courier New',monospace;">Fecha de difusión</div>
-          <div style="font-family:Georgia,serif;font-size:22px;color:${COLORS.greenDark};font-weight:600;margin-top:4px;">${broadcastDate}</div>
-        </td></tr>
-      </table>
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">${n === 1 ? "Tu aviso" : "Tus avisos"}</h2>
+      ${list.map((ex) => extractSummaryCardHtml(ex)).join("")}
 
-      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:0 0 10px;font-weight:500;">Qué viene después</h2>
+      <h2 style="font-family:Georgia,serif;font-size:17px;color:${COLORS.greenDark};margin:18px 0 10px;font-weight:500;">Qué viene después</h2>
       <ol style="color:${COLORS.inkSoft};font-size:14px;line-height:1.7;margin:0 0 18px;padding-left:20px;">
-        <li>El día <strong>${broadcastDate}</strong> nuestra emisora transmite tu aviso 3 veces consecutivas en horario establecido.</li>
-        <li>Al día hábil siguiente recibirás por email <strong>el certificado de difusión</strong> (con firma y timbre) y la <strong>factura electrónica</strong> a los datos de facturación que indicaste.</li>
-        <li>Con eso, tu trámite queda completo desde el lado de la radio.</li>
+        <li>Cada extracto se transmite en la fecha indicada (3 veces consecutivas en horario establecido).</li>
+        <li>Al día hábil siguiente de cada difusión recibes <strong>el certificado individual</strong> de ese extracto, con firma y timbre.</li>
+        <li>La factura electrónica única del bundle te llega junto al primer certificado.</li>
       </ol>
 
       <div style="background:rgba(78,165,82,0.06);border:1px solid rgba(78,165,82,0.25);border-radius:8px;padding:14px 18px;margin-bottom:8px;">
@@ -305,12 +310,13 @@ export function paymentConfirmedEmail({ order, settings }) {
     ``,
     `Hola ${firstName(order.client_name)}, recibimos tu transferencia de ${amount}.`,
     ``,
-    `Tu aviso queda agendado en firme para el ${broadcastDate}.`,
+    n === 1 ? "Tu aviso queda agendado en firme:" : `Tus ${n} avisos quedan agendados en firme:`,
+    ...list.map((ex) => extractSummaryLineText(ex)),
     ``,
-    `QUÉ VIENE DESPUÉS:`,
-    `1. El ${broadcastDate} la emisora transmite tu aviso 3 veces.`,
-    `2. Al día hábil siguiente recibes por email el certificado de difusión y la factura electrónica.`,
-    `3. Con eso tu trámite queda completo.`,
+    `QUÉ VIENE DESPUÉS`,
+    `1. Cada extracto se transmite en su fecha (3 veces).`,
+    `2. Al día siguiente de cada difusión recibes el certificado individual.`,
+    `3. La factura electrónica única va con el primer certificado.`,
     ``,
     `Dudas: ${supportEmail} (menciona el N° ${order.order_number}).`,
   ].join("\n");
@@ -327,7 +333,6 @@ export function paymentConfirmedEmail({ order, settings }) {
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export function orderCancelledEmail({ order, settings }) {
-  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
   const adminEmail = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
   const subject = `Orden ${order.order_number} cancelada`;
 
@@ -370,6 +375,62 @@ export function orderCancelledEmail({ order, settings }) {
   ].filter(Boolean).join("\n");
 
   return { subject, html, text };
+}
+
+/* ─── helpers de extractos ──────────────────────────────────────────────── */
+
+function extractSummaryCardHtml(ex) {
+  return `
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px solid ${COLORS.border};border-radius:8px;margin-bottom:10px;">
+      <tr><td style="padding:14px 18px;">
+        <div style="font-family:'Courier New',monospace;font-size:11px;color:${COLORS.inkSoft};letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px;">
+          Extracto #${ex.extract_index}
+        </div>
+        <div style="font-size:13.5px;color:${COLORS.ink};line-height:1.6;">
+          <strong>${escapeHtml(humanProcedureType(ex.procedure_type))}</strong><br/>
+          ${escapeHtml(ex.comuna || "—")}, ${escapeHtml(ex.region || "—")}<br/>
+          Difusión: <strong>${fmtDate(ex.resolved_publication_date)}</strong><br/>
+          ${ex.line_count || 0} ${ex.line_count === 1 ? "línea" : "líneas"} · ${fmtCLP(ex.amount_clp)}
+        </div>
+      </td></tr>
+    </table>
+  `;
+}
+
+function extractSummaryLineText(ex) {
+  return `· #${ex.extract_index} — ${humanProcedureType(ex.procedure_type)} — ${ex.comuna}, ${ex.region} — ${fmtDate(ex.resolved_publication_date)} — ${ex.line_count} líneas · ${fmtCLP(ex.amount_clp)}`;
+}
+
+function extractAdminCardHtml(ex) {
+  return `
+    <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px solid ${COLORS.border};border-radius:8px;margin-bottom:12px;">
+      <tr><td style="padding:14px 18px;">
+        <div style="font-family:'Courier New',monospace;font-size:11px;color:${COLORS.inkSoft};letter-spacing:0.4px;text-transform:uppercase;margin-bottom:8px;">
+          Extracto #${ex.extract_index}
+        </div>
+        ${row("Tipo", escapeHtml(humanProcedureType(ex.procedure_type)))}
+        ${row("Comuna", `${escapeHtml(ex.comuna)}, ${escapeHtml(ex.provincia)}, ${escapeHtml(ex.region)}`)}
+        ${row("Fecha de difusión", fmtDate(ex.resolved_publication_date))}
+        ${row("Líneas", String(ex.line_count))}
+        ${row("Monto", `<strong style="color:${COLORS.greenDark};">${fmtCLP(ex.amount_clp)}</strong>`)}
+        <div style="margin-top:10px;background:${COLORS.paper};border:1px dashed ${COLORS.border};border-radius:6px;padding:12px 14px;font-family:'Bookman Old Style','Bookman',Georgia,serif;font-size:13px;line-height:1.5;white-space:pre-wrap;color:${COLORS.ink};">${escapeHtml(ex.extract_text)}</div>
+      </td></tr>
+    </table>
+  `;
+}
+
+function extractAdminLinesText(ex) {
+  return [
+    `── EXTRACTO #${ex.extract_index} ──`,
+    `· Tipo: ${humanProcedureType(ex.procedure_type)}`,
+    `· Comuna: ${ex.comuna}, ${ex.provincia}, ${ex.region}`,
+    `· Fecha difusión: ${fmtDate(ex.resolved_publication_date)}`,
+    `· Líneas: ${ex.line_count}`,
+    `· Monto: ${fmtCLP(ex.amount_clp)}`,
+    ``,
+    ex.extract_text,
+    ``,
+  ];
 }
 
 /* ─── helpers ────────────────────────────────────────────────────────────── */

@@ -1,7 +1,11 @@
 // POST /api/extractos/orders
 //
-// Crea una orden en estado `pending_payment` a partir de la cotización
-// del cliente. Recalcula precio y fecha de difusión server-side (autoritativo).
+// Crea una orden (bundle) en estado `pending_payment` a partir de la cotización
+// del cliente. Una cotización agrupa 1..20 extractos. Cada extracto vive en
+// `order_extracts` con su propia fecha, comuna, monto y estado de difusión.
+// La orden bundle lleva cliente, facturación, total y estado de pago.
+//
+// Recalcula precio y fecha de difusión server-side (autoritativo).
 //
 // Beta: la confirmación de pago es manual (transferencia + factura). Tras crear
 // la orden enviamos:
@@ -52,31 +56,59 @@ export default async function handler(req, res) {
     });
   }
 
-  // Recalcular pricing y fecha (server-side autoritativo).
+  // Recalcular pricing y fechas (server-side autoritativo) por cada extracto.
   const supabase = getSupabaseAdmin();
   const settings = await fetchSettings(supabase);
   const tariff = settingsTariff(settings);
-  // Aseguramos la línea de título "EXTRACTOS" arriba — siempre se difunde así.
-  const finalText = withMandatoryTitle(input.extractText);
-  const lineCount = countLinesEstimate(finalText);
-  if (exceedsMaxLines(lineCount, tariff)) {
-    return res.status(400).json({
-      error: "extract_too_long",
-      message:
-        `Para extractos que superan las ${tariff.maxLines} líneas hay que escribir directamente a ` +
-        "administracion@araucanayfrontera.cl — se cotiza como cápsula, no como extracto.",
+
+  /** @type {Array<{
+   *   index: number, finalText: string, lineCount: number, amountCLP: number,
+   *   procedureType: string, comuna: string, provincia: string, region: string,
+   *   publicationDay: 1|15, publicationMonth: string, resolvedDateIso: string,
+   * }>} */
+  const computedExtracts = [];
+  const nowMinus24h = Date.now() - 24 * 3600 * 1000;
+
+  for (let i = 0; i < input.extracts.length; i++) {
+    const ex = input.extracts[i];
+    const finalText = withMandatoryTitle(ex.extractText);
+    const lineCount = countLinesEstimate(finalText);
+    if (exceedsMaxLines(lineCount, tariff)) {
+      return res.status(400).json({
+        error: "extract_too_long",
+        message:
+          `El extracto #${i + 1} supera las ${tariff.maxLines} líneas. Para extractos largos hay que ` +
+          "escribir directamente a administracion@araucanayfrontera.cl — se cotiza como cápsula.",
+      });
+    }
+    const amountCLP = calculatePriceCLP(lineCount, tariff);
+    const resolved = resolveBroadcastDate(ex.publicationDay, ex.publicationMonth);
+    if (resolved.resolvedDate.getTime() < nowMinus24h) {
+      return res.status(400).json({
+        error: "publication_date_in_past",
+        message: `La fecha de difusión del extracto #${i + 1} es anterior a hoy. Selecciona un mes futuro.`,
+      });
+    }
+    computedExtracts.push({
+      index: i + 1,
+      finalText,
+      lineCount,
+      amountCLP,
+      procedureType: ex.procedureType,
+      comuna: ex.comuna,
+      provincia: ex.provincia,
+      region: ex.region,
+      publicationDay: ex.publicationDay,
+      publicationMonth: ex.publicationMonth,
+      resolvedDateIso: toIsoDate(resolved.resolvedDate),
     });
   }
-  const amountCLP = calculatePriceCLP(lineCount, tariff);
-  const resolved = resolveBroadcastDate(input.publicationDay, input.publicationMonth);
 
-  if (resolved.resolvedDate.getTime() < Date.now() - 24 * 3600 * 1000) {
-    return res.status(400).json({
-      error: "publication_date_in_past",
-      message: "La fecha resuelta de difusión es anterior a hoy. Selecciona un mes futuro.",
-    });
-  }
+  const totalCLP = computedExtracts.reduce((s, e) => s + e.amountCLP, 0);
+  const first = computedExtracts[0];
 
+  // Insertamos la orden bundle. Las columnas legacy (extract_text, comuna, etc)
+  // se llenan con los datos del primer extracto para back-compat.
   const { data: order, error } = await supabase
     .from("orders")
     .insert({
@@ -86,16 +118,18 @@ export default async function handler(req, res) {
       client_phone: input.clientPhone,
       client_organization: input.clientOrganization || null,
       client_gender: input.gender,
-      extract_text: finalText,
-      line_count: lineCount,
-      amount_clp: amountCLP,
-      procedure_type: input.procedureType,
-      comuna: input.comuna,
-      provincia: input.provincia,
-      region: input.region,
-      publication_day: input.publicationDay,
-      publication_month: input.publicationMonth,
-      resolved_publication_date: toIsoDate(resolved.resolvedDate),
+      // Total del bundle.
+      amount_clp: totalCLP,
+      // Snapshot legacy del primer extracto (la tabla order_extracts es la fuente de verdad).
+      extract_text: first.finalText,
+      line_count: first.lineCount,
+      procedure_type: first.procedureType,
+      comuna: first.comuna,
+      provincia: first.provincia,
+      region: first.region,
+      publication_day: first.publicationDay,
+      publication_month: first.publicationMonth,
+      resolved_publication_date: first.resolvedDateIso,
       status: "pending_payment",
       requires_invoice: true,
       billing_legal_name: input.billingLegalName,
@@ -108,10 +142,42 @@ export default async function handler(req, res) {
     .single();
 
   if (error) {
-    console.error("[/api/extractos/orders] insert error:", error);
+    console.error("[/api/extractos/orders] insert order error:", error);
     return res.status(500).json({
       error: "db_error",
       message: "No pudimos guardar tu orden. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL,
+    });
+  }
+
+  // Insertamos los N extractos hijos. Si alguno falla, borramos la orden y devolvemos error.
+  const extractRows = computedExtracts.map((e) => ({
+    order_id: order.id,
+    extract_index: e.index,
+    extract_text: e.finalText,
+    line_count: e.lineCount,
+    amount_clp: e.amountCLP,
+    procedure_type: e.procedureType,
+    comuna: e.comuna,
+    provincia: e.provincia,
+    region: e.region,
+    publication_day: e.publicationDay,
+    publication_month: e.publicationMonth,
+    resolved_publication_date: e.resolvedDateIso,
+    status: "scheduled",
+  }));
+  const { data: insertedExtracts, error: exErr } = await supabase
+    .from("order_extracts")
+    .insert(extractRows)
+    .select("*")
+    .order("extract_index", { ascending: true });
+
+  if (exErr || !insertedExtracts) {
+    console.error("[/api/extractos/orders] insert extracts error:", exErr);
+    // Cleanup: borrar la orden bundle (cascade borra extractos si quedaron parciales).
+    await supabase.from("orders").delete().eq("id", order.id);
+    return res.status(500).json({
+      error: "db_error",
+      message: "No pudimos guardar los extractos. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL,
     });
   }
 
@@ -125,8 +191,8 @@ export default async function handler(req, res) {
   const dashboardUrl = `${baseUrl}/frontera/extractos/admin/orden/${encodeURIComponent(order.order_number)}`;
 
   if (isMailerConfigured()) {
-    const clientMsg = clientOrderEmail({ order, settings });
-    const adminMsg = adminOrderNotificationEmail({ order, settings, dashboardUrl });
+    const clientMsg = clientOrderEmail({ order, extracts: insertedExtracts, settings });
+    const adminMsg = adminOrderNotificationEmail({ order, extracts: insertedExtracts, settings, dashboardUrl });
 
     const [clientResult, adminResult] = await Promise.allSettled([
       sendEmail({
@@ -158,7 +224,7 @@ export default async function handler(req, res) {
   return res.status(200).json({
     orderNumber: order.order_number,
     amountCLP: order.amount_clp,
-    resolvedPublicationDate: order.resolved_publication_date,
+    extractCount: insertedExtracts.length,
     paymentRedirectUrl: null,
   });
 }

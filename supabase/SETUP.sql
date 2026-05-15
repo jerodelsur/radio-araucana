@@ -59,17 +59,20 @@ create table if not exists public.orders (
   client_organization text,
   client_gender text not null default 'ambos' check (client_gender in ('sr', 'sra', 'ambos')),
 
-  extract_text text not null,
-  line_count integer not null check (line_count >= 1),
+  -- Columnas legacy: snapshot del primer extracto (back-compat con código
+  -- pre-multi-extract). Las órdenes nuevas las llenan con datos del primer
+  -- extracto pero la fuente de verdad es la tabla `order_extracts`.
+  extract_text text,
+  line_count integer check (line_count >= 1),
   amount_clp integer not null check (amount_clp >= 0),
 
-  procedure_type text not null check (procedure_type in ('dga_subterraneas', 'dga_superficiales', 'dia_seia', 'otro')),
-  comuna text not null,
-  provincia text not null,
-  region text not null,
-  publication_day smallint not null check (publication_day in (1, 15)),
-  publication_month text not null,
-  resolved_publication_date date not null,
+  procedure_type text check (procedure_type in ('dga_subterraneas', 'dga_superficiales', 'dia_seia', 'otro')),
+  comuna text,
+  provincia text,
+  region text,
+  publication_day smallint check (publication_day in (1, 15)),
+  publication_month text,
+  resolved_publication_date date,
 
   status text not null default 'draft' check (status in (
     'draft', 'pending_payment', 'paid', 'scheduled',
@@ -113,6 +116,54 @@ create index if not exists idx_orders_email on public.orders(lower(client_email)
 create index if not exists idx_orders_created_at on public.orders(created_at desc);
 create index if not exists idx_orders_billing_rut on public.orders(billing_rut) where billing_rut is not null;
 
+-- ─── order_extracts ────────────────────────────────────────────────────────
+-- Una orden (bundle) agrupa 1..20 extractos. Cada extracto sigue su propio
+-- camino de difusión y certificado. Comparten cliente, facturación y pago.
+create table if not exists public.order_extracts (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  extract_index smallint not null check (extract_index between 1 and 20),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  extract_text text not null,
+  line_count integer not null check (line_count >= 1),
+  amount_clp integer not null check (amount_clp >= 0),
+
+  procedure_type text not null check (procedure_type in (
+    'dga_subterraneas', 'dga_superficiales', 'dia_seia', 'otro'
+  )),
+  comuna text not null,
+  provincia text not null,
+  region text not null,
+  publication_day smallint not null check (publication_day in (1, 15)),
+  publication_month text not null,
+  resolved_publication_date date not null,
+
+  status text not null default 'scheduled' check (status in (
+    'scheduled', 'broadcast_complete',
+    'certificate_generated', 'certificate_sent', 'cancelled'
+  )),
+
+  broadcast_time_1 time,
+  broadcast_time_2 time,
+  broadcast_time_3 time,
+  broadcast_marked_at timestamptz,
+  broadcast_marked_by uuid references public.admin_users(id),
+
+  certificate_pdf_path text,
+  certificate_generated_at timestamptz,
+  certificate_sent_at timestamptz,
+  certificate_sent_to text,
+  certificate_signer_id uuid references public.signers(id),
+
+  unique (order_id, extract_index)
+);
+
+create index if not exists idx_order_extracts_order_id on public.order_extracts(order_id);
+create index if not exists idx_order_extracts_status on public.order_extracts(status);
+create index if not exists idx_order_extracts_resolved_date on public.order_extracts(resolved_publication_date);
+
 -- ─── Trigger updated_at ─────────────────────────────────────────────────────
 create or replace function public.set_updated_at()
 returns trigger
@@ -132,6 +183,11 @@ create trigger trg_orders_updated_at
 drop trigger if exists trg_settings_updated_at on public.settings;
 create trigger trg_settings_updated_at
   before update on public.settings
+  for each row execute function public.set_updated_at();
+
+drop trigger if exists trg_order_extracts_updated_at on public.order_extracts;
+create trigger trg_order_extracts_updated_at
+  before update on public.order_extracts
   for each row execute function public.set_updated_at();
 
 -- ─── Trigger asignar order_number RLF-YYYY-NNNN ─────────────────────────────
@@ -163,6 +219,7 @@ create trigger trg_orders_assign_number
 
 -- ─── RLS ────────────────────────────────────────────────────────────────────
 alter table public.orders enable row level security;
+alter table public.order_extracts enable row level security;
 alter table public.settings enable row level security;
 alter table public.signers enable row level security;
 alter table public.admin_users enable row level security;
@@ -193,6 +250,11 @@ create policy "admin_users_self_read" on public.admin_users for select to authen
 
 drop policy if exists "orders_admin_all" on public.orders;
 create policy "orders_admin_all" on public.orders for all to authenticated
+  using (exists (select 1 from public.admin_users where id = auth.uid()))
+  with check (exists (select 1 from public.admin_users where id = auth.uid()));
+
+drop policy if exists "order_extracts_admin_all" on public.order_extracts;
+create policy "order_extracts_admin_all" on public.order_extracts for all to authenticated
   using (exists (select 1 from public.admin_users where id = auth.uid()))
   with check (exists (select 1 from public.admin_users where id = auth.uid()));
 

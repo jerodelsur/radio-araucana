@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { T, FONTS, S } from "../theme.js";
+import { T, FONTS } from "../theme.js";
 import { Card, Field, Input, Textarea, Select, Button, Badge } from "../components/ui.jsx";
 import { calculatePriceCLP, exceedsMaxLines, formatCLP, DEFAULT_TARIFF } from "../lib/pricing.js";
 import { useSettings } from "../lib/settings-store.js";
 import { createLineMeter, LINE_COUNTER_FONT_STACK, LINE_COUNTER_WIDTH_CM } from "../lib/line-counter.js";
 import { MANDATORY_TITLE, withMandatoryTitle } from "../lib/extract-text.js";
-import { listUpcomingSlots, formatLongDateCL, resolveBroadcastDate } from "../lib/broadcast-date.js";
+import { listUpcomingSlots, formatLongDateCL } from "../lib/broadcast-date.js";
 import { isValidRUT, formatRUT } from "../lib/chilean/rut.js";
 import { searchComunas, findComunaExacta } from "../lib/chilean/regiones.js";
 
@@ -25,10 +25,10 @@ const GENDER_OPTIONS = [
   { value: "sra", label: "Sra." },
 ];
 
-/* ─── Esquema zod (snapshot del estado al pagar) ──────────────────────────── */
-// La radio emite siempre factura — boleta a persona no es una opción.
-// Por eso billing_* es siempre obligatorio.
-const orderSchema = z.object({
+const MAX_EXTRACTS = 20;
+
+/* ─── Esquema zod ─────────────────────────────────────────────────────────── */
+const extractSchema = z.object({
   extractText: z.string().trim().min(10, "El texto del extracto es muy corto").max(50000, "Máximo 50.000 caracteres"),
   procedureType: z.enum(["dga_subterraneas", "dga_superficiales", "dia_seia", "otro"]),
   comuna: z.string().trim().min(2, "Indica la comuna"),
@@ -36,6 +36,10 @@ const orderSchema = z.object({
   region: z.string().trim().min(2, "Indica la región"),
   publicationDay: z.union([z.literal(1), z.literal(15)]),
   publicationMonth: z.string().regex(/^\d{4}-\d{2}$/, "Mes inválido"),
+});
+
+const orderSchema = z.object({
+  extracts: z.array(extractSchema).min(1).max(MAX_EXTRACTS),
   clientName: z.string().trim().min(2, "Tu nombre completo"),
   clientRUT: z.string().refine(isValidRUT, "RUT inválido"),
   clientEmail: z.string().email("Email inválido"),
@@ -53,14 +57,23 @@ const orderSchema = z.object({
 });
 
 /* ─── Estado del formulario ───────────────────────────────────────────────── */
+let extractIdCounter = 0;
+function newExtractDraft() {
+  extractIdCounter += 1;
+  return {
+    id: `ex-${Date.now().toString(36)}-${extractIdCounter}`,
+    extractText: "",
+    procedureType: "dga_subterraneas",
+    comuna: "",
+    provincia: "",
+    region: "",
+    comunaInputDirty: false,
+    publicationSlotIndex: 0,
+  };
+}
+
 const initialState = {
-  extractText: "",
-  procedureType: "dga_subterraneas",
-  comuna: "",
-  provincia: "",
-  region: "",
-  comunaInputDirty: false,
-  publicationSlotIndex: 0, // índice dentro de upcomingSlots
+  extracts: [newExtractDraft()],
   clientName: "",
   clientRUT: "",
   clientEmail: "",
@@ -78,19 +91,39 @@ function reducer(state, action) {
   switch (action.type) {
     case "set":
       return { ...state, [action.field]: action.value };
-    case "setComuna": {
+    case "setRUT":
+      return { ...state, [action.field]: action.value };
+    case "addExtract": {
+      if (state.extracts.length >= MAX_EXTRACTS) return state;
+      return { ...state, extracts: [...state.extracts, newExtractDraft()] };
+    }
+    case "removeExtract": {
+      if (state.extracts.length <= 1) return state;
+      return { ...state, extracts: state.extracts.filter((e) => e.id !== action.id) };
+    }
+    case "setExtractField": {
+      return {
+        ...state,
+        extracts: state.extracts.map((e) =>
+          e.id === action.id ? { ...e, [action.field]: action.value } : e
+        ),
+      };
+    }
+    case "setExtractComuna": {
       const match = findComunaExacta(action.value);
       return {
         ...state,
-        comuna: action.value,
-        comunaInputDirty: true,
-        provincia: match ? match.provincia : state.provincia,
-        region: match ? match.region : state.region,
+        extracts: state.extracts.map((e) => {
+          if (e.id !== action.id) return e;
+          return {
+            ...e,
+            comuna: action.value,
+            comunaInputDirty: true,
+            provincia: match ? match.provincia : e.provincia,
+            region: match ? match.region : e.region,
+          };
+        }),
       };
-    }
-    case "setRUT": {
-      // Permitir tipear con o sin formato; aplicamos formato canónico solo si parece RUT.
-      return { ...state, clientRUT: action.value };
     }
     default:
       return state;
@@ -99,7 +132,6 @@ function reducer(state, action) {
 
 /* ─── Página principal ────────────────────────────────────────────────────── */
 export default function Cotizador() {
-  // Habilitar indexación: esta es la única página pública del módulo.
   useEffect(() => {
     const meta = document.querySelector('meta[name="robots"]');
     if (meta) meta.setAttribute("content", "index, follow, max-image-preview:large");
@@ -111,43 +143,54 @@ export default function Cotizador() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submitState, setSubmitState] = useState({ status: "idle", message: null });
 
-  // Slots de difusión: próximos agendamientos válidos.
   const upcomingSlots = useMemo(() => listUpcomingSlots(new Date(), 12), []);
-  const selectedSlot = upcomingSlots[state.publicationSlotIndex] ?? upcomingSlots[0];
 
-  // Conteo de líneas en vivo.
+  // Un único line-meter compartido entre extractos (es un nodo DOM oculto).
   const meterRef = useRef(null);
-  const [lineCount, setLineCount] = useState(0);
   useEffect(() => {
     meterRef.current = createLineMeter();
     return () => meterRef.current?.dispose();
   }, []);
-  // El texto que se difunde y se cobra es siempre `withMandatoryTitle(...)`
-  // — la línea "EXTRACTOS" cuenta como una línea más.
-  const composedText = useMemo(() => withMandatoryTitle(state.extractText), [state.extractText]);
-  useEffect(() => {
-    if (!meterRef.current) return;
-    setLineCount(meterRef.current.measure(composedText));
-  }, [composedText]);
 
   const tariff = settings.tariff_table ?? DEFAULT_TARIFF;
   const maxLines = Number(tariff?.maxLines) || DEFAULT_TARIFF.maxLines;
-  const overLimit = exceedsMaxLines(lineCount, tariff);
-  const priceCLP = lineCount > 0 && !overLimit ? calculatePriceCLP(lineCount, tariff) : 0;
 
-  // Validación zod (siempre, mostramos errores solo después de intento de submit).
-  // El server recibe el texto ya compuesto con la línea "EXTRACTOS" — así
-  // se difunde y se factura siempre con título.
+  // Per extracto: { composedText, lineCount, priceCLP, overLimit, slot }.
+  const [extractMetrics, setExtractMetrics] = useState({});
+  useEffect(() => {
+    if (!meterRef.current) return;
+    const next = {};
+    for (const ex of state.extracts) {
+      const composedText = withMandatoryTitle(ex.extractText);
+      const lineCount = meterRef.current.measure(composedText);
+      const overLimit = exceedsMaxLines(lineCount, tariff);
+      const priceCLP = lineCount > 0 && !overLimit ? calculatePriceCLP(lineCount, tariff) : 0;
+      const slot = upcomingSlots[ex.publicationSlotIndex] ?? upcomingSlots[0];
+      next[ex.id] = { composedText, lineCount, overLimit, priceCLP, slot };
+    }
+    setExtractMetrics(next);
+  }, [state.extracts, upcomingSlots, tariff]);
+
+  const totalCLP = state.extracts.reduce((sum, ex) => sum + (extractMetrics[ex.id]?.priceCLP || 0), 0);
+  const anyOverLimit = state.extracts.some((ex) => extractMetrics[ex.id]?.overLimit);
+  const allHaveText = state.extracts.every((ex) => (extractMetrics[ex.id]?.lineCount || 0) > 0);
+
+  // Snapshot para validación + submit.
   const formSnapshot = useMemo(() => {
-    if (!selectedSlot) return null;
     return {
-      extractText: composedText,
-      procedureType: state.procedureType,
-      comuna: state.comuna,
-      provincia: state.provincia,
-      region: state.region,
-      publicationDay: selectedSlot.day,
-      publicationMonth: selectedSlot.monthYear,
+      extracts: state.extracts.map((ex) => {
+        const m = extractMetrics[ex.id];
+        const slot = m?.slot;
+        return {
+          extractText: m?.composedText ?? "",
+          procedureType: ex.procedureType,
+          comuna: ex.comuna,
+          provincia: ex.provincia,
+          region: ex.region,
+          publicationDay: slot?.day,
+          publicationMonth: slot?.monthYear,
+        };
+      }),
       clientName: state.clientName,
       clientRUT: state.clientRUT,
       clientEmail: state.clientEmail,
@@ -160,54 +203,53 @@ export default function Cotizador() {
       billingGiro: state.billingGiro,
       billingEmail: state.billingEmail,
     };
-  }, [state, selectedSlot, composedText]);
+  }, [state, extractMetrics]);
 
   const validation = useMemo(() => {
-    if (!formSnapshot) return { ok: false, errors: {} };
     const result = orderSchema.safeParse(formSnapshot);
-    if (result.success) return { ok: true, errors: {} };
+    if (result.success) return { ok: true, errors: {}, extractErrors: [] };
     const errors = {};
+    const extractErrors = state.extracts.map(() => ({}));
     for (const issue of result.error.issues) {
-      const key = issue.path[0];
-      if (key && !errors[key]) errors[key] = issue.message;
+      const [first, indexOrKey, key] = issue.path;
+      if (first === "extracts" && typeof indexOrKey === "number") {
+        if (!extractErrors[indexOrKey][key]) extractErrors[indexOrKey][key] = issue.message;
+      } else if (first && !errors[first]) {
+        errors[first] = issue.message;
+      }
     }
-    return { ok: false, errors };
-  }, [formSnapshot]);
+    return { ok: false, errors, extractErrors };
+  }, [formSnapshot, state.extracts]);
 
   const showErrors = submitAttempted;
   const e = (field) => (showErrors ? validation.errors[field] : undefined);
-
-  // Comuna: warning si el usuario escribió algo y no matchea exacto.
-  const comunaWarning = useMemo(() => {
-    if (!state.comuna || !state.comunaInputDirty) return null;
-    const match = findComunaExacta(state.comuna);
-    return match ? null : "No reconocemos esa comuna. Verifica el nombre o avanza igual y la radio confirmará cobertura.";
-  }, [state.comuna, state.comunaInputDirty]);
-
-  // Sugerencias para datalist HTML nativo.
-  const comunaSuggestions = useMemo(() => {
-    return state.comuna ? searchComunas(state.comuna, 8).map((c) => c.comuna) : [];
-  }, [state.comuna]);
+  const exErr = (index, field) =>
+    showErrors ? validation.extractErrors[index]?.[field] : undefined;
 
   async function handleSubmit(ev) {
     ev.preventDefault();
     setSubmitAttempted(true);
-    if (overLimit) {
+    if (anyOverLimit) {
       setSubmitState({
         status: "blocked",
         message:
-          `Para extractos que superan las ${maxLines} líneas hay que escribir directamente a ` +
-          "administracion@araucanayfrontera.cl — se cotiza como cápsula, no como extracto.",
+          `Para extractos que superan las ${maxLines} líneas hay que escribir a ` +
+          "administracion@araucanayfrontera.cl — se cotiza como cápsula.",
       });
       return;
     }
     if (!validation.ok) {
-      // Llevar foco al primer error.
       requestAnimationFrame(() => {
-        const firstErrorField = Object.keys(validation.errors)[0];
-        const el = firstErrorField ? document.querySelector(`[data-field="${firstErrorField}"]`) : null;
-        if (el && typeof el.scrollIntoView === "function") {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Foco al primer error visible.
+        const firstExtractErrorIdx = validation.extractErrors.findIndex((e) => Object.keys(e).length > 0);
+        if (firstExtractErrorIdx >= 0) {
+          const firstField = Object.keys(validation.extractErrors[firstExtractErrorIdx])[0];
+          const el = document.querySelector(`[data-field="${firstField}"][data-extract-idx="${firstExtractErrorIdx}"]`);
+          if (el?.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          const firstField = Object.keys(validation.errors)[0];
+          const el = firstField ? document.querySelector(`[data-field="${firstField}"]`) : null;
+          if (el?.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       });
       return;
@@ -221,7 +263,6 @@ export default function Cotizador() {
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.orderNumber) {
-        // TODO: cuando Flow esté integrado, redirigir a data.paymentRedirectUrl.
         navigate(`/orden/${encodeURIComponent(data.orderNumber)}`);
         return;
       }
@@ -283,102 +324,56 @@ export default function Cotizador() {
       `}</style>
       <form className="cotizador-form" onSubmit={handleSubmit}>
         <div style={{ display: "flex", flexDirection: "column", gap: 22, minWidth: 0 }} className="cotizador-cols">
-          <StepBlock number={1} title="Pega el texto del extracto">
-            <ExtractEditor
-              value={state.extractText}
-              composedText={composedText}
-              onChange={(v) => dispatch({ type: "set", field: "extractText", value: v })}
-              lineCount={lineCount}
-              maxLines={maxLines}
-              overLimit={overLimit}
-              error={e("extractText")}
-            />
-          </StepBlock>
-
-          <StepBlock number={2} title="Detalles del trámite y la difusión">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 0 }}>
-              <Field label="Tipo de trámite" required htmlFor="procedureType">
-                <Select
-                  id="procedureType"
-                  data-field="procedureType"
-                  value={state.procedureType}
-                  onChange={(ev) => dispatch({ type: "set", field: "procedureType", value: ev.target.value })}
-                >
-                  {PROCEDURE_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </Select>
-              </Field>
-
-              <Field
-                label="Comuna donde se ubica el predio o trámite"
-                required
-                htmlFor="comuna"
-                hint={comunaWarning ?? "Empieza a escribir y te sugerimos comunas."}
-                error={e("comuna")}
-              >
-                <Input
-                  id="comuna"
-                  data-field="comuna"
-                  list="comunas-sugeridas"
-                  autoComplete="off"
-                  placeholder="Ej. Temuco"
-                  value={state.comuna}
-                  invalid={!!e("comuna")}
-                  onChange={(ev) => dispatch({ type: "setComuna", value: ev.target.value })}
+          <StepBlock number={1} title={`Extractos a difundir (${state.extracts.length}/${MAX_EXTRACTS})`}>
+            <p style={{ fontSize: 13, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 }}>
+              Puedes incluir hasta {MAX_EXTRACTS} extractos en una sola cotización.
+              Pagas y facturas todo junto; recibes <strong>un certificado por
+              cada extracto</strong> según su fecha de difusión.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {state.extracts.map((ex, idx) => (
+                <ExtractCard
+                  key={ex.id}
+                  extract={ex}
+                  index={idx}
+                  total={state.extracts.length}
+                  metrics={extractMetrics[ex.id]}
+                  upcomingSlots={upcomingSlots}
+                  maxLines={maxLines}
+                  errors={showErrors ? validation.extractErrors[idx] : {}}
+                  onChange={(field, value) =>
+                    dispatch({ type: "setExtractField", id: ex.id, field, value })
+                  }
+                  onChangeComuna={(value) =>
+                    dispatch({ type: "setExtractComuna", id: ex.id, value })
+                  }
+                  onRemove={
+                    state.extracts.length > 1
+                      ? () => dispatch({ type: "removeExtract", id: ex.id })
+                      : null
+                  }
                 />
-                <datalist id="comunas-sugeridas">
-                  {comunaSuggestions.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </Field>
+              ))}
+            </div>
 
-              <div className="cotizador-grid-2">
-                <Field label="Provincia" htmlFor="provincia" hint="Auto-completa según comuna." error={e("provincia")}>
-                  <Input
-                    id="provincia"
-                    data-field="provincia"
-                    value={state.provincia}
-                    invalid={!!e("provincia")}
-                    onChange={(ev) => dispatch({ type: "set", field: "provincia", value: ev.target.value })}
-                  />
-                </Field>
-                <Field label="Región" htmlFor="region" hint="Auto-completa según comuna." error={e("region")}>
-                  <Input
-                    id="region"
-                    data-field="region"
-                    value={state.region}
-                    invalid={!!e("region")}
-                    onChange={(ev) => dispatch({ type: "set", field: "region", value: ev.target.value })}
-                  />
-                </Field>
-              </div>
-
-              <Field
-                label="Fecha de difusión"
-                required
-                htmlFor="publicationSlot"
-                hint="La radio difunde los días 1 o 15 de cada mes. Si caen domingo o festivo, pasa al día hábil siguiente."
+            <div style={{ marginTop: 18 }}>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={state.extracts.length >= MAX_EXTRACTS}
+                onClick={() => dispatch({ type: "addExtract" })}
               >
-                <Select
-                  id="publicationSlot"
-                  data-field="publicationSlot"
-                  value={state.publicationSlotIndex}
-                  onChange={(ev) => dispatch({ type: "set", field: "publicationSlotIndex", value: Number(ev.target.value) })}
-                >
-                  {upcomingSlots.map((slot, i) => (
-                    <option key={`${slot.monthYear}-${slot.day}`} value={i}>
-                      Día {slot.day} de {slot.monthYear} → {formatLongDateCL(slot.resolved.resolvedDate)}
-                      {slot.resolved.shifted ? " (corrido por feriado/domingo)" : ""}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+                + Agregar otro extracto
+              </Button>
+              {state.extracts.length >= MAX_EXTRACTS && (
+                <p style={{ fontSize: 12, color: T.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
+                  Máximo {MAX_EXTRACTS} extractos por cotización. Si necesitas más, envía una nueva solicitud.
+                </p>
+              )}
             </div>
           </StepBlock>
 
-          <StepBlock number={3} title="Tus datos">
+          <StepBlock number={2} title="Tus datos">
             <Field label="Nombre completo" required htmlFor="clientName" error={e("clientName")}>
               <Input
                 id="clientName"
@@ -397,15 +392,15 @@ export default function Cotizador() {
                   placeholder="12.345.678-9"
                   value={state.clientRUT}
                   invalid={!!e("clientRUT")}
-                  onChange={(ev) => dispatch({ type: "setRUT", value: ev.target.value })}
+                  onChange={(ev) => dispatch({ type: "setRUT", field: "clientRUT", value: ev.target.value })}
                   onBlur={(ev) => {
                     if (isValidRUT(ev.target.value)) {
-                      dispatch({ type: "setRUT", value: formatRUT(ev.target.value) });
+                      dispatch({ type: "setRUT", field: "clientRUT", value: formatRUT(ev.target.value) });
                     }
                   }}
                 />
               </Field>
-              <Field label="Tratamiento" htmlFor="gender" hint="Aparecerá en el certificado.">
+              <Field label="Tratamiento" htmlFor="gender" hint="Aparecerá en los certificados.">
                 <Select
                   id="gender"
                   data-field="gender"
@@ -419,7 +414,7 @@ export default function Cotizador() {
               </Field>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Field label="Email" required htmlFor="clientEmail" error={e("clientEmail")} hint="Acá te llega el certificado.">
+              <Field label="Email" required htmlFor="clientEmail" error={e("clientEmail")} hint="Acá te llegan los certificados.">
                 <Input
                   id="clientEmail"
                   data-field="clientEmail"
@@ -457,9 +452,12 @@ export default function Cotizador() {
             </Field>
           </StepBlock>
 
-          <StepBlock number={4} title="Facturación">
+          <StepBlock number={3} title="Facturación">
             <p style={{ fontSize: 13, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 }}>
               Toda difusión radial se factura. Indica los datos de la empresa o persona a nombre de quien va la factura.
+              {state.extracts.length > 1 && (
+                <> Aunque incluyas varios extractos, recibes <strong>una sola factura</strong> por el total.</>
+              )}
             </p>
             <Field label="Razón social" required htmlFor="billingLegalName" error={e("billingLegalName")}>
               <Input
@@ -524,14 +522,15 @@ export default function Cotizador() {
         </div>
 
         <Resumen
-          lineCount={lineCount}
-          priceCLP={priceCLP}
-          slot={selectedSlot}
+          extracts={state.extracts}
+          metrics={extractMetrics}
+          totalCLP={totalCLP}
           onSubmit={handleSubmit}
           formValid={validation.ok}
           submitState={submitState}
-          overLimit={overLimit}
+          overLimit={anyOverLimit}
           maxLines={maxLines}
+          allHaveText={allHaveText}
         />
       </form>
     </div>
@@ -568,10 +567,8 @@ function Hero() {
         </h1>
         <p style={{ fontSize: 17, lineHeight: 1.55, color: T.inkSoft, maxWidth: 700 }}>
           Cotiza online tu aviso radial para trámites de la DGA, DIA al SEIA y
-          publicaciones administrativas. Cuando envíes la solicitud te llegan por
-          email los datos de transferencia y el N° de orden. Pagada la transferencia,
-          la radio difunde en la fecha agendada y al día siguiente recibes tu
-          certificado.
+          publicaciones administrativas. Puedes incluir hasta {MAX_EXTRACTS} extractos
+          en una sola cotización (1 factura, certificado por cada uno).
         </p>
         <p
           style={{
@@ -625,57 +622,115 @@ function StepBlock({ number, title, children }) {
   );
 }
 
-function ExtractEditor({ value, composedText, onChange, lineCount, maxLines, overLimit, error }) {
+function ExtractCard({
+  extract,
+  index,
+  total,
+  metrics,
+  upcomingSlots,
+  maxLines,
+  errors,
+  onChange,
+  onChangeComuna,
+  onRemove,
+}) {
+  const lineCount = metrics?.lineCount ?? 0;
+  const overLimit = metrics?.overLimit ?? false;
+  const priceCLP = metrics?.priceCLP ?? 0;
+  const composedText = metrics?.composedText ?? "";
+
+  const comunaWarning = useMemo(() => {
+    if (!extract.comuna || !extract.comunaInputDirty) return null;
+    const match = findComunaExacta(extract.comuna);
+    return match ? null : "No reconocemos esa comuna. Verifica el nombre o avanza igual y la radio confirma cobertura.";
+  }, [extract.comuna, extract.comunaInputDirty]);
+
+  const comunaSuggestions = useMemo(() => {
+    return extract.comuna ? searchComunas(extract.comuna, 8).map((c) => c.comuna) : [];
+  }, [extract.comuna]);
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+    <div
+      style={{
+        border: `1px solid ${T.border}`,
+        borderRadius: 10,
+        padding: 16,
+        background: T.paper,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            className="mono"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: T.greenDark,
+              background: "rgba(78,165,82,0.10)",
+              padding: "4px 10px",
+              borderRadius: 999,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+            }}
+          >
+            Extracto #{index + 1}
+          </span>
+          {lineCount > 0 && (
+            <span
+              className="mono"
+              style={{ fontSize: 12, color: overLimit ? T.danger : T.inkSoft }}
+            >
+              {lineCount} líneas {overLimit ? `· máx ${maxLines}` : `· ${formatCLP(priceCLP)}`}
+            </span>
+          )}
+        </div>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Quitar extracto ${index + 1}`}
+            style={{
+              border: "none",
+              background: "transparent",
+              color: T.danger,
+              cursor: "pointer",
+              fontSize: 13,
+              padding: "4px 8px",
+              borderRadius: 4,
+            }}
+          >
+            × Quitar
+          </button>
+        )}
+      </div>
+
       <Field
         label="Texto del extracto"
-        hint={`Pega el texto completo tal como debe difundirse. La línea de título "${MANDATORY_TITLE}" se agrega automáticamente arriba y cuenta como una línea.`}
-        error={error}
+        hint={`La línea "${MANDATORY_TITLE}" se agrega arriba automáticamente y cuenta como una línea.`}
+        error={errors?.extractText}
       >
         <Textarea
           data-field="extractText"
-          value={value}
-          invalid={!!error}
+          data-extract-idx={index}
+          value={extract.extractText}
+          invalid={!!errors?.extractText}
           placeholder="Ej. Denisse Francisca Contreras Leiva, Rut: 18.036.339-4. Solicita un derecho de aprovechamiento de aguas subterráneas…"
-          onChange={(ev) => onChange(ev.target.value)}
+          onChange={(ev) => onChange("extractText", ev.target.value)}
           spellCheck
           lang="es-CL"
         />
       </Field>
 
       <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <span className="mono" style={{ fontSize: 12, color: T.inkSoft, letterSpacing: 0.4, textTransform: "uppercase" }}>
-          Vista previa — Bookman Old Style 12 (referencial)
-        </span>
-        <span
-          className="mono"
-          style={{ fontSize: 12, color: overLimit ? T.danger : T.greenDark, fontWeight: 600 }}
-        >
-          {lineCount} {lineCount === 1 ? "línea" : "líneas"} {overLimit ? `· máx ${maxLines}` : ""}
-        </span>
-      </div>
-
-      <div
         aria-label="Vista previa del texto a difundir"
         style={{
-          background: "#fff",
+          background: T.cream,
           border: `1px dashed ${T.border}`,
           borderRadius: 8,
-          padding: 16,
+          padding: 14,
+          marginTop: 10,
           width: "100%",
-          maxWidth: "100%",
           overflowX: "auto",
-          color: T.ink,
-          minHeight: 80,
         }}
       >
         <div
@@ -689,12 +744,12 @@ function ExtractEditor({ value, composedText, onChange, lineCount, maxLines, ove
             overflowWrap: "break-word",
             width: "100%",
             maxWidth: `${LINE_COUNTER_WIDTH_CM}cm`,
+            color: T.ink,
           }}
         >
-          {value ? composedText : (
+          {extract.extractText ? composedText : (
             <span style={{ color: T.inkMute, fontFamily: FONTS.body, fontStyle: "italic" }}>
-              Acá vas a ver tu texto tal como se cuenta para tarifar (con la línea
-              de título "{MANDATORY_TITLE}" arriba).
+              Vista previa con la línea de título "{MANDATORY_TITLE}" arriba.
             </span>
           )}
         </div>
@@ -704,31 +759,114 @@ function ExtractEditor({ value, composedText, onChange, lineCount, maxLines, ove
         <div
           role="alert"
           style={{
-            fontSize: 13,
+            marginTop: 10,
+            fontSize: 12.5,
             lineHeight: 1.5,
             color: T.danger,
             background: "rgba(197,62,31,0.06)",
             border: "1px solid rgba(197,62,31,0.35)",
             borderRadius: 8,
-            padding: "12px 14px",
+            padding: "10px 12px",
           }}
         >
-          <strong>Excediste el tope de {maxLines} líneas.</strong> Para extractos
-          más largos hay que cotizarlo como cápsula. Escríbenos a{" "}
-          <a
-            href="mailto:administracion@araucanayfrontera.cl"
-            style={{ color: T.danger, textDecoration: "underline" }}
-          >
+          <strong>Excede {maxLines} líneas.</strong> Escribe a{" "}
+          <a href="mailto:administracion@araucanayfrontera.cl" style={{ color: T.danger, textDecoration: "underline" }}>
             administracion@araucanayfrontera.cl
           </a>{" "}
-          y te respondemos en el día.
+          — extractos sobre {maxLines} líneas se cotizan como cápsula.
         </div>
       )}
+
+      <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr", gap: 0 }}>
+        <Field label="Tipo de trámite" required htmlFor={`procedureType-${index}`}>
+          <Select
+            id={`procedureType-${index}`}
+            data-field="procedureType"
+            data-extract-idx={index}
+            value={extract.procedureType}
+            onChange={(ev) => onChange("procedureType", ev.target.value)}
+          >
+            {PROCEDURE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field
+          label="Comuna del trámite"
+          required
+          htmlFor={`comuna-${index}`}
+          hint={comunaWarning ?? "Empieza a escribir y te sugerimos."}
+          error={errors?.comuna}
+        >
+          <Input
+            id={`comuna-${index}`}
+            data-field="comuna"
+            data-extract-idx={index}
+            list={`comunas-${index}`}
+            autoComplete="off"
+            placeholder="Ej. Temuco"
+            value={extract.comuna}
+            invalid={!!errors?.comuna}
+            onChange={(ev) => onChangeComuna(ev.target.value)}
+          />
+          <datalist id={`comunas-${index}`}>
+            {comunaSuggestions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </Field>
+
+        <div className="cotizador-grid-2">
+          <Field label="Provincia" htmlFor={`provincia-${index}`} hint="Auto-completa según comuna." error={errors?.provincia}>
+            <Input
+              id={`provincia-${index}`}
+              data-field="provincia"
+              data-extract-idx={index}
+              value={extract.provincia}
+              invalid={!!errors?.provincia}
+              onChange={(ev) => onChange("provincia", ev.target.value)}
+            />
+          </Field>
+          <Field label="Región" htmlFor={`region-${index}`} hint="Auto-completa según comuna." error={errors?.region}>
+            <Input
+              id={`region-${index}`}
+              data-field="region"
+              data-extract-idx={index}
+              value={extract.region}
+              invalid={!!errors?.region}
+              onChange={(ev) => onChange("region", ev.target.value)}
+            />
+          </Field>
+        </div>
+
+        <Field
+          label="Fecha de difusión"
+          required
+          htmlFor={`publicationSlot-${index}`}
+          hint="La radio difunde los días 1 o 15 de cada mes. Si caen domingo o festivo, pasa al día hábil siguiente."
+        >
+          <Select
+            id={`publicationSlot-${index}`}
+            data-field="publicationSlot"
+            data-extract-idx={index}
+            value={extract.publicationSlotIndex}
+            onChange={(ev) => onChange("publicationSlotIndex", Number(ev.target.value))}
+          >
+            {upcomingSlots.map((slot, i) => (
+              <option key={`${slot.monthYear}-${slot.day}`} value={i}>
+                Día {slot.day} de {slot.monthYear} → {formatLongDateCL(slot.resolved.resolvedDate)}
+                {slot.resolved.shifted ? " (corrido por feriado/domingo)" : ""}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
     </div>
   );
 }
 
-function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState, overLimit, maxLines }) {
+function Resumen({ extracts, metrics, totalCLP, onSubmit, formValid, submitState, overLimit, maxLines, allHaveText }) {
   return (
     <aside
       className="resumen-sticky"
@@ -741,44 +879,49 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState, 
       <Card style={{ padding: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <h3 className="display" style={{ fontSize: 18, color: T.greenDark, fontWeight: 500 }}>Resumen</h3>
-          <Badge tone={lineCount > 0 ? "primary" : "neutral"}>
-            {lineCount > 0 ? "Cotización viva" : "Sin texto"}
+          <Badge tone={allHaveText ? "primary" : "neutral"}>
+            {allHaveText ? "Cotización viva" : "Faltan textos"}
           </Badge>
         </div>
 
-        <ResumenRow label="Líneas" value={lineCount > 0 ? `${lineCount}` : "—"} mono />
+        <ResumenRow label="Extractos" value={`${extracts.length}`} mono />
         <ResumenRow
-          label="Monto (IVA incl.)"
-          value={overLimit ? "Cotizar aparte" : lineCount > 0 ? formatCLP(priceCLP) : "—"}
+          label="Total (IVA incl.)"
+          value={overLimit ? "Cotizar aparte" : allHaveText ? formatCLP(totalCLP) : "—"}
           highlight
           mono
         />
+
         <hr style={{ border: 0, borderTop: `1px solid ${T.border}`, margin: "14px 0" }} />
-        <ResumenRow
-          label="Fecha de difusión"
-          value={slot ? formatLongDateCL(slot.resolved.resolvedDate) : "—"}
-        />
-        <ResumenRow
-          label="3 emisiones diarias"
-          value={slot?.resolved.warning ? "—" : "Sí"}
-          mono
-        />
-        {slot?.resolved.warning && (
-          <p
-            style={{
-              fontSize: 12,
-              color: T.warn,
-              background: "rgba(201,146,60,0.10)",
-              border: "1px solid rgba(201,146,60,0.4)",
-              borderRadius: 6,
-              padding: 10,
-              marginTop: 8,
-              lineHeight: 1.4,
-            }}
-          >
-            ⚠ {slot.resolved.warning}
-          </p>
-        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {extracts.map((ex, i) => {
+            const m = metrics[ex.id];
+            const slotDate = m?.slot ? formatLongDateCL(m.slot.resolved.resolvedDate) : "—";
+            return (
+              <div
+                key={ex.id}
+                style={{
+                  fontSize: 12,
+                  color: T.inkSoft,
+                  lineHeight: 1.5,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 8,
+                }}
+              >
+                <span style={{ color: T.ink, fontWeight: 500 }}>#{i + 1}</span>
+                <span style={{ flex: 1 }}>
+                  {ex.comuna || <em style={{ color: T.inkMute }}>comuna…</em>}<br/>
+                  <span style={{ fontSize: 11 }}>{slotDate}</span>
+                </span>
+                <span className="mono" style={{ color: m?.overLimit ? T.danger : T.ink }}>
+                  {m?.overLimit ? "—" : m?.priceCLP ? formatCLP(m.priceCLP) : "—"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
 
         <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
           <Button
@@ -786,23 +929,23 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState, 
             variant="primary"
             size="lg"
             onClick={onSubmit}
-            disabled={lineCount === 0 || overLimit}
+            disabled={!allHaveText || overLimit}
             loading={submitState?.status === "submitting"}
           >
             {submitState?.status === "submitting" ? "Enviando…" : "Enviar solicitud"}
           </Button>
           {overLimit && (
             <p style={{ fontSize: 11.5, color: T.danger, textAlign: "center", lineHeight: 1.5 }}>
-              Supera {maxLines} líneas — escribir a administracion@araucanayfrontera.cl.
+              Hay extractos que superan {maxLines} líneas — escribir a administracion@araucanayfrontera.cl.
             </p>
           )}
           <p style={{ fontSize: 11.5, color: T.inkMute, lineHeight: 1.5, textAlign: "center" }}>
             Recibirás un email con el N° de orden y los datos para transferir.
-            Cuando se acredite el pago, se confirma la difusión.
+            Una sola factura por el total cuando se acredite el pago.
           </p>
-          {!formValid && lineCount > 0 && submitState?.status !== "submitting" && !submitState?.message && (
+          {!formValid && allHaveText && !overLimit && submitState?.status !== "submitting" && !submitState?.message && (
             <p style={{ fontSize: 11.5, color: T.warn, textAlign: "center" }}>
-              Completa los datos del trámite para continuar.
+              Completa los datos del trámite, cliente y facturación.
             </p>
           )}
           {submitState?.message && (
@@ -837,9 +980,9 @@ function Resumen({ lineCount, priceCLP, slot, onSubmit, formValid, submitState, 
           borderRadius: 8,
         }}
       >
-        <strong style={{ color: T.greenDark }}>Sobre el conteo de líneas:</strong> es referencial. Si tu navegador no tiene
-        Bookman Old Style instalada, el conteo puede diferir levemente del que hace
-        la radio en Word. La operadora ajusta el monto antes del cobro si detecta diferencia.
+        <strong style={{ color: T.greenDark }}>Conteo de líneas:</strong> es referencial.
+        Si tu navegador no tiene Bookman Old Style instalada, el conteo puede diferir
+        levemente del que hace la radio en Word. La operadora ajusta el monto antes del cobro si detecta diferencia.
       </div>
     </aside>
   );

@@ -834,8 +834,6 @@ function SponsorStrip() {
 }
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
-const FOOTER_COTIZA_MSG = "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?";
-
 const FOOTER_LINKS = [
   { title: "Radio", links: [
     { label: "Quiénes somos", href: "/sobre-nosotros" },
@@ -853,7 +851,7 @@ const FOOTER_LINKS = [
     { label: "En vivo ahora", href: "#inicio" },
   ]},
   { title: "Publicidad", links: [
-    { label: "Cotiza tu publicidad", whatsapp: FOOTER_COTIZA_MSG },
+    { label: "Cotiza tu publicidad", href: "/cotiza" },
     { label: "Contacto", href: "#contacto" },
   ]},
 ];

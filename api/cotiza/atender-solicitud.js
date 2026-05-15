@@ -2,16 +2,9 @@
 // Body: { id, estado: "atendida" | "descartada", cotizacionTotal?, notasInternas?, atendidaPor? }
 
 import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { authOk } from "./_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
-
-function authOk(req) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  const header = req.headers.authorization || "";
-  const [scheme, token] = header.split(" ");
-  return scheme === "Bearer" && token === expected;
-}
 
 function clean(s, max = 400) {
   return typeof s === "string" ? s.trim().slice(0, max) : "";

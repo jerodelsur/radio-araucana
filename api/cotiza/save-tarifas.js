@@ -3,18 +3,11 @@
 // Body: el JSON completo de tarifas (mismo shape que src/content/cotiza-tarifas.json)
 
 import { put } from "@vercel/blob";
+import { authOk } from "./_lib/auth.js";
 
 const BLOB_KEY = "cotiza-tarifas.json";
 
 export const config = { runtime: "nodejs" };
-
-function authOk(req) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  const header = req.headers.authorization || "";
-  const [scheme, token] = header.split(" ");
-  return scheme === "Bearer" && token === expected;
-}
 
 function isFiniteNumber(n) {
   return typeof n === "number" && Number.isFinite(n) && n >= 0;

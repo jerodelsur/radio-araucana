@@ -4,8 +4,8 @@
 //  - Externamente desde el botón "Marcar enviada por WhatsApp" del cotizador
 // El trigger asigna número COT-YYYY-NNNN automáticamente.
 
-import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
-import { authOk } from "../_lib/auth.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { authOk } from "./_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
 

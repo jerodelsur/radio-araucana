@@ -271,7 +271,7 @@ export default function Cotizador() {
           status: "blocked",
           message:
             data.message ??
-            "Estamos terminando de configurar el sistema. Por ahora escríbenos a secretaria.araucana@gmail.com con tu cotización y te respondemos.",
+            "Estamos terminando de configurar el sistema. Por ahora escríbenos a administracion@araucanayfrontera.cl con tu cotización y te respondemos.",
         });
         return;
       }
@@ -286,7 +286,7 @@ export default function Cotizador() {
         status: "error",
         message:
           data.message ||
-          "No pudimos procesar tu solicitud en este momento. Intenta de nuevo o escríbenos a secretaria.araucana@gmail.com.",
+          "No pudimos procesar tu solicitud en este momento. Intenta de nuevo o escríbenos a administracion@araucanayfrontera.cl.",
       });
     } catch (err) {
       setSubmitState({

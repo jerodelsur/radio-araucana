@@ -51,9 +51,9 @@ export function getTransporter() {
   return cachedTransporter;
 }
 
-function fromHeader() {
+function fromHeader(overrideName) {
   const c = smtpConfig();
-  const name = process.env.EMAIL_FROM_NAME || "Radio La Frontera — Extractos";
+  const name = overrideName || process.env.EMAIL_FROM_NAME || "Radio La Frontera — Extractos";
   return `"${name}" <${c.from}>`;
 }
 
@@ -66,7 +66,7 @@ function adminRecipients() {
  * Envía un email. Devuelve { ok: boolean, messageId?: string, error?: string }.
  * Nunca lanza — captura errores para no romper la creación de órdenes si SMTP falla.
  */
-export async function sendEmail({ to, subject, html, text, replyTo, cc }) {
+export async function sendEmail({ to, subject, html, text, replyTo, cc, fromName }) {
   if (!isMailerConfigured()) {
     return { ok: false, error: "mailer_not_configured" };
   }
@@ -74,7 +74,7 @@ export async function sendEmail({ to, subject, html, text, replyTo, cc }) {
     const t = getTransporter();
     const c = smtpConfig();
     const info = await t.sendMail({
-      from: fromHeader(),
+      from: fromHeader(fromName),
       to: Array.isArray(to) ? to.join(", ") : to,
       cc: cc ? (Array.isArray(cc) ? cc.join(", ") : cc) : undefined,
       replyTo: replyTo || c.from,

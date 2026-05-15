@@ -15,7 +15,8 @@ import { createOrderInputSchema } from "./_lib/order-schema.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./_lib/supabase.js";
 import { sendEmail, isMailerConfigured, adminRecipients } from "./_lib/mailer.js";
 import { clientOrderEmail, adminOrderNotificationEmail } from "./_lib/email-templates.js";
-import { calculatePriceCLP, DEFAULT_TARIFF } from "../../src/extractos/lib/pricing.js";
+import { calculatePriceCLP, exceedsMaxLines, DEFAULT_TARIFF } from "../../src/extractos/lib/pricing.js";
+import { withMandatoryTitle } from "../../src/extractos/lib/extract-text.js";
 import { resolveBroadcastDate } from "../../src/extractos/lib/broadcast-date.js";
 
 export const config = { runtime: "nodejs" };
@@ -55,7 +56,17 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
   const settings = await fetchSettings(supabase);
   const tariff = settingsTariff(settings);
-  const lineCount = countLinesEstimate(input.extractText);
+  // Aseguramos la línea de título "EXTRACTOS" arriba — siempre se difunde así.
+  const finalText = withMandatoryTitle(input.extractText);
+  const lineCount = countLinesEstimate(finalText);
+  if (exceedsMaxLines(lineCount, tariff)) {
+    return res.status(400).json({
+      error: "extract_too_long",
+      message:
+        `Para extractos que superan las ${tariff.maxLines} líneas hay que escribir directamente a ` +
+        "administracion@araucanayfrontera.cl — se cotiza como cápsula, no como extracto.",
+    });
+  }
   const amountCLP = calculatePriceCLP(lineCount, tariff);
   const resolved = resolveBroadcastDate(input.publicationDay, input.publicationMonth);
 
@@ -75,7 +86,7 @@ export default async function handler(req, res) {
       client_phone: input.clientPhone,
       client_organization: input.clientOrganization || null,
       client_gender: input.gender,
-      extract_text: input.extractText,
+      extract_text: finalText,
       line_count: lineCount,
       amount_clp: amountCLP,
       procedure_type: input.procedureType,
@@ -175,6 +186,7 @@ function settingsTariff(settings) {
       minPrice: Number(t.minPrice) || DEFAULT_TARIFF.minPrice,
       baseAboveMin: Number(t.baseAboveMin) || DEFAULT_TARIFF.baseAboveMin,
       perLineAboveMin: Number(t.perLineAboveMin) || DEFAULT_TARIFF.perLineAboveMin,
+      maxLines: Number(t.maxLines) || DEFAULT_TARIFF.maxLines,
     };
   }
   return DEFAULT_TARIFF;

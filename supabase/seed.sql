@@ -25,9 +25,10 @@ insert into public.settings (key, value) values
   ('default_broadcast_times', '["10:00", "10:05", "10:10"]'::jsonb),
   -- Lista de destinatarios para alertas internas (nuevas órdenes, recordatorios).
   ('notification_emails', '["administracion@araucanayfrontera.cl", "secretaria.araucana@gmail.com"]'::jsonb),
-  -- Tarifario confirmado por la operadora (Bertha Cabral) el 2026-05-04:
-  -- mínimo 5 líneas $35.000, +$2.000 por línea adicional.
-  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 35000, "baseAboveMin": 25000, "perLineAboveMin": 2000}'::jsonb)
+  -- Tarifario confirmado por la operadora (Bertha Cabral) el 2026-05-15:
+  -- mínimo 5 líneas $36.000, +$2.000 por línea adicional, tope 20 líneas.
+  -- Sobre 20 líneas → escribir a administracion@araucanayfrontera.cl (cápsula).
+  ('tariff_table', '{"minLinesFlat": 5, "minPrice": 36000, "baseAboveMin": 26000, "perLineAboveMin": 2000, "maxLines": 20}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
 -- Firmante por defecto: Bertha Raquel Cabral Corrales, RUT 25.829.757-1.

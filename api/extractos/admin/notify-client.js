@@ -1,24 +1,27 @@
 // POST /api/extractos/admin/notify-client
 //
-// Disparado por el admin panel después de marcar una orden como pagada/difundida/
+// Disparado por el admin panel después de marcar una orden como pagada o
 // cancelada. Verifica que el caller esté autenticado y tenga fila en
 // public.admin_users, lee la orden y los settings, y envía el email
 // correspondiente al cliente.
 //
-// Body: { orderNumber: string, eventType: "payment_confirmed" | "broadcast_complete" | "cancelled" }
+// Body: { orderNumber: string, eventType: "payment_confirmed" | "cancelled" }
 // Auth: header `Authorization: Bearer <jwt>` del admin (Supabase auth).
+//
+// Nota (Bertha, 2026-05-15): el evento "broadcast_complete" no manda email
+// — el cliente recibe directamente el certificado + factura que envía la
+// operadora luego de difundir.
 
 import { getSupabaseAdmin, isSupabaseConfigured } from "../_lib/supabase.js";
 import { sendEmail, isMailerConfigured } from "../_lib/mailer.js";
 import {
   paymentConfirmedEmail,
-  broadcastCompleteEmail,
   orderCancelledEmail,
 } from "../_lib/email-templates.js";
 
 export const config = { runtime: "nodejs" };
 
-const ALLOWED_EVENTS = new Set(["payment_confirmed", "broadcast_complete", "cancelled"]);
+const ALLOWED_EVENTS = new Set(["payment_confirmed", "cancelled"]);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -83,9 +86,6 @@ export default async function handler(req, res) {
   switch (eventType) {
     case "payment_confirmed":
       msg = paymentConfirmedEmail({ order, settings });
-      break;
-    case "broadcast_complete":
-      msg = broadcastCompleteEmail({ order, settings });
       break;
     case "cancelled":
       msg = orderCancelledEmail({ order, settings });

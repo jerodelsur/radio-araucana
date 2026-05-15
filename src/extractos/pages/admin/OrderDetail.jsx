@@ -307,6 +307,8 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
         "payment_confirmed",
       ).finally(onDone);
     } else if (pending.kind === "broadcast") {
+      // Sin notifyEvent: el cliente NO recibe email al marcar difundida.
+      // Bertha le manda directamente el certificado + factura luego (Bertha 2026-05-15).
       patch(
         {
           status: "broadcast_complete",
@@ -317,7 +319,6 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
           broadcast_time_3: broadcastTimes[2] || null,
         },
         "Marcada como difundida.",
-        "broadcast_complete",
       ).finally(onDone);
     } else if (pending.kind === "complete") {
       patch({ status: "completed" }, "Marcada como completada.").finally(onDone);
@@ -383,8 +384,9 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
       </div>
 
       <p style={{ marginTop: 12, fontSize: 11, color: T.inkMute, lineHeight: 1.5 }}>
-        Las acciones que envían email al cliente (pagada, difundida, cancelada)
-        muestran un resumen antes de confirmar.
+        Las acciones que envían email al cliente (pagada, cancelada) muestran
+        un resumen antes de confirmar. "Marcar difundida" y "Marcar completada"
+        no envían email.
       </p>
 
       {/* Diálogo de confirmación: pagada */}
@@ -409,26 +411,25 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
         />
       </ConfirmDialog>
 
-      {/* Diálogo de confirmación: difundida */}
+      {/* Diálogo de confirmación: difundida (sin email al cliente) */}
       <ConfirmDialog
         open={pending?.kind === "broadcast"}
         title="Marcar como difundida"
-        confirmLabel="Sí, marcar difundida y enviar email"
+        confirmLabel="Sí, marcar difundida"
         cancelLabel="Cancelar"
         tone="primary"
         busy={busy}
         onCancel={close}
         onConfirm={execute}
       >
-        <p style={{ marginBottom: 14 }}>
+        <p style={{ marginBottom: 8 }}>
           Estás confirmando que el aviso fue transmitido hoy en los horarios:{" "}
           <strong>{broadcastTimes.slice(0, 3).join(" · ")}</strong>.
         </p>
-        <EmailPreview
-          to={order.client_email}
-          subject={`Tu aviso fue difundido hoy — Orden ${order.order_number}`}
-          summary={`Confirmación de difusión hoy con horarios. Mensaje al cliente: "esperá en las próximas horas hábiles el certificado y la factura".`}
-        />
+        <p style={{ fontSize: 12, color: T.inkSoft }}>
+          Esta acción <strong>no envía email al cliente</strong> — al cliente le
+          llega directamente el certificado y la factura cuando los emitas.
+        </p>
       </ConfirmDialog>
 
       {/* Diálogo de confirmación: completada (sin email) */}

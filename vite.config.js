@@ -97,52 +97,52 @@ const devApiStub = () => ({
 
     server.middlewares.use('/api/cotiza/tarifas', async (req, res, next) => {
       if (req.method !== 'GET') return next()
-      await runHandler('/api/cotiza/tarifas.js', req, res)
+      await runHandler('/api/cotiza/_handlers/tarifas.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/save-tarifas', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/save-tarifas.js', req, res)
+      await runHandler('/api/cotiza/_handlers/save-tarifas.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/submit', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/submit.js', req, res)
+      await runHandler('/api/cotiza/_handlers/submit.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/enviar-cliente', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/enviar-cliente.js', req, res)
+      await runHandler('/api/cotiza/_handlers/enviar-cliente.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/solicitudes', async (req, res, next) => {
       if (req.method !== 'GET') return next()
-      await runHandler('/api/cotiza/solicitudes.js', req, res)
+      await runHandler('/api/cotiza/_handlers/solicitudes.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/atender-solicitud', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/atender-solicitud.js', req, res)
+      await runHandler('/api/cotiza/_handlers/atender-solicitud.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/guardar-cotizacion', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/guardar-cotizacion.js', req, res)
+      await runHandler('/api/cotiza/_handlers/guardar-cotizacion.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/cotizaciones', async (req, res, next) => {
       if (req.method !== 'GET') return next()
-      await runHandler('/api/cotiza/cotizaciones.js', req, res)
+      await runHandler('/api/cotiza/_handlers/cotizaciones.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/cotizacion-estado', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/cotizacion-estado.js', req, res)
+      await runHandler('/api/cotiza/_handlers/cotizacion-estado.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/login', async (req, res, next) => {
       if (req.method !== 'POST') return next()
-      await runHandler('/api/cotiza/login.js', req, res)
+      await runHandler('/api/cotiza/_handlers/login.js', req, res)
     })
   },
 })

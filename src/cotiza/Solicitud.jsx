@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { K } from "./Layout.jsx";
+import FAQ from "./FAQ.jsx";
 
 const SectionTitle = {
   fontFamily: "'Open Sans', sans-serif",
@@ -113,6 +114,16 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
                   </div>
                   <h3 style={K({ fontSize: 18, fontWeight: 700, marginBottom: 6 })}>{f.titulo}</h3>
                   <p style={K({ fontSize: 13, fontWeight: 300, color: "rgba(255,255,255,0.6)", lineHeight: 1.55 })}>{f.descripcion}</p>
+                  {f.horarios && (
+                    <p style={K({
+                      fontSize: 11, fontWeight: 400,
+                      color: "rgba(82,184,112,0.85)", lineHeight: 1.5,
+                      marginTop: 10, paddingTop: 10,
+                      borderTop: "1px dashed rgba(255,255,255,0.08)",
+                    })}>
+                      Hasta 30 seg por frase. Si dura más, se cobra como 2 frases.
+                    </p>
+                  )}
                 </button>
               );
             })}
@@ -181,6 +192,8 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
             }} />
         </div>
       </section>
+
+      <FAQ />
 
       <section style={{ padding: "16px 24px 64px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>

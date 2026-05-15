@@ -22,7 +22,7 @@
       "destination": "/cotiza.html"
     },
     {
-      "source": "/cotiza/:path*",
+      "source": "/cotiza/:path+",
       "destination": "/cotiza.html"
     },
     {

@@ -20,6 +20,7 @@ export default function OrderDetail() {
   const { user } = useAuth();
   const settings = useSettings();
   const [order, setOrder] = useState(null);
+  const [extracts, setExtracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [actionMsg, setActionMsg] = useState(null);
@@ -32,7 +33,7 @@ export default function OrderDetail() {
     try {
       const queryPromise = supabase
         .from("orders")
-        .select("*")
+        .select("*, order_extracts(*)")
         .eq("order_number", orderNumber)
         .maybeSingle();
       const timeoutPromise = new Promise((_, reject) =>
@@ -42,12 +43,21 @@ export default function OrderDetail() {
       if (error) {
         setErr(error.message);
         setOrder(null);
+        setExtracts([]);
+      } else if (data) {
+        const { order_extracts: childExtracts, ...orderRow } = data;
+        setOrder(orderRow);
+        const list = Array.isArray(childExtracts) ? [...childExtracts] : [];
+        list.sort((a, b) => (a.extract_index || 0) - (b.extract_index || 0));
+        setExtracts(list);
       } else {
-        setOrder(data);
+        setOrder(null);
+        setExtracts([]);
       }
     } catch (e) {
       setErr(e?.message || "Error al cargar la orden.");
       setOrder(null);
+      setExtracts([]);
     } finally {
       setLoading(false);
     }
@@ -110,6 +120,25 @@ export default function OrderDetail() {
     await reload();
   }
 
+  // Actualizar un extracto individual (no manda email — el cliente recibe el
+  // certificado directamente cuando Bertha lo emite).
+  async function patchExtract(extractId, updates, successMsg) {
+    setBusy(true);
+    setActionMsg(null);
+    const supabase = getSupabaseBrowser();
+    const { error } = await supabase
+      .from("order_extracts")
+      .update(updates)
+      .eq("id", extractId);
+    setBusy(false);
+    if (error) {
+      setActionMsg({ type: "error", text: error.message });
+      return;
+    }
+    setActionMsg({ type: "ok", text: successMsg || "Extracto actualizado." });
+    await reload();
+  }
+
   if (loading) {
     return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Cargando orden…</div>;
   }
@@ -143,7 +172,9 @@ export default function OrderDetail() {
             </h1>
             <p style={{ fontSize: 13, color: T.inkSoft }}>
               Recibida {formatTimestamp(order.created_at)} ·
-              difusión {formatLongDate(order.resolved_publication_date)}
+              {extracts.length === 1
+                ? ` 1 extracto · difusión ${formatLongDate(extracts[0]?.resolved_publication_date || order.resolved_publication_date)}`
+                : ` ${extracts.length} extractos`}
             </p>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -151,7 +182,9 @@ export default function OrderDetail() {
               {formatCLPSimple(order.amount_clp)}
             </div>
             <div style={{ fontSize: 12, color: T.inkSoft }}>
-              {order.line_count} {order.line_count === 1 ? "línea" : "líneas"} · IVA incl.
+              {extracts.length === 1
+                ? `${extracts[0]?.line_count || order.line_count} líneas · IVA incl.`
+                : `${extracts.length} extractos · IVA incl.`}
             </div>
           </div>
         </header>
@@ -192,33 +225,14 @@ export default function OrderDetail() {
               <Pair label="Tratamiento" value={order.client_gender === "sr" ? "Sr." : order.client_gender === "sra" ? "Sra." : "Sr./Sra."} />
             </Section>
 
-            <Section title="Trámite">
-              <Pair label="Tipo" value={procedureLabel(order.procedure_type)} />
-              <Pair label="Comuna" value={order.comuna} />
-              <Pair label="Provincia" value={order.provincia} />
-              <Pair label="Región" value={order.region} />
-              <Pair label="Día solicitado" value={`${order.publication_day} de ${order.publication_month}`} />
-              <Pair label="Fecha resuelta" value={formatLongDate(order.resolved_publication_date)} />
-            </Section>
-
-            <Section title="Texto del extracto">
-              <div
-                className="bookman"
-                style={{
-                  background: "#fff",
-                  border: `1px dashed ${T.border}`,
-                  borderRadius: 8,
-                  padding: 16,
-                  fontFamily: LINE_COUNTER_FONT_STACK,
-                  fontSize: "12pt",
-                  lineHeight: 1.4,
-                  whiteSpace: "pre-wrap",
-                  wordWrap: "break-word",
-                }}
-              >
-                {order.extract_text}
-              </div>
-            </Section>
+            <ExtractsSection
+              extracts={extracts}
+              busy={busy}
+              order={order}
+              userId={user?.id}
+              settings={settings}
+              patchExtract={patchExtract}
+            />
 
             <Section title="Facturación">
               <Pair label="Razón social" value={order.billing_legal_name || "—"} />
@@ -255,6 +269,177 @@ function Section({ title, children }) {
   );
 }
 
+function ExtractsSection({ extracts, busy, order, userId, settings, patchExtract }) {
+  if (!extracts || extracts.length === 0) {
+    return (
+      <Card>
+        <h2 className="display" style={{ fontSize: 16, color: T.greenDark, marginBottom: 12, fontWeight: 500 }}>
+          Extractos
+        </h2>
+        <p style={{ fontSize: 13, color: T.inkSoft }}>
+          No hay extractos asociados a esta orden. Si es una orden histórica, los datos
+          del trámite están en las columnas legacy de la orden.
+        </p>
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <h2 className="display" style={{ fontSize: 16, color: T.greenDark, marginBottom: 12, fontWeight: 500 }}>
+        {extracts.length === 1 ? "Extracto" : `${extracts.length} extractos`}
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {extracts.map((ex) => (
+          <ExtractItem
+            key={ex.id}
+            extract={ex}
+            order={order}
+            busy={busy}
+            userId={userId}
+            settings={settings}
+            patchExtract={patchExtract}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function ExtractItem({ extract: ex, order, busy, userId, settings, patchExtract }) {
+  const broadcastTimes = Array.isArray(settings?.default_broadcast_times) && settings.default_broadcast_times.length >= 3
+    ? settings.default_broadcast_times
+    : ["10:00", "10:05", "10:10"];
+  const [confirming, setConfirming] = useState(false);
+
+  const orderPaid = order.status === "paid" || order.status === "broadcast_complete";
+  const canMarkBroadcast = ex.status === "scheduled" && orderPaid;
+
+  function markBroadcast() {
+    patchExtract(
+      ex.id,
+      {
+        status: "broadcast_complete",
+        broadcast_marked_at: new Date().toISOString(),
+        broadcast_marked_by: userId || null,
+        broadcast_time_1: broadcastTimes[0] || null,
+        broadcast_time_2: broadcastTimes[1] || null,
+        broadcast_time_3: broadcastTimes[2] || null,
+      },
+      `Extracto #${ex.extract_index} marcado como difundido.`,
+    );
+    setConfirming(false);
+  }
+
+  const statusTone = {
+    scheduled: "neutral",
+    broadcast_complete: "primary",
+    certificate_generated: "accent",
+    certificate_sent: "accent",
+    cancelled: "warn",
+  }[ex.status] || "neutral";
+  const statusText = {
+    scheduled: "Agendado",
+    broadcast_complete: "Difundido",
+    certificate_generated: "Certificado generado",
+    certificate_sent: "Certificado enviado",
+    cancelled: "Cancelado",
+  }[ex.status] || ex.status;
+
+  return (
+    <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            className="mono"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: T.greenDark,
+              background: "rgba(78,165,82,0.10)",
+              padding: "4px 10px",
+              borderRadius: 999,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+            }}
+          >
+            Extracto #{ex.extract_index}
+          </span>
+          <Badge tone={statusTone}>{statusText}</Badge>
+        </div>
+        <div className="mono" style={{ fontSize: 13, color: T.ink }}>
+          {ex.line_count} líneas · {formatCLPSimple(ex.amount_clp)}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 6, fontSize: 12.5, marginBottom: 10 }}>
+        <span style={{ color: T.inkSoft }}>Trámite</span>
+        <span>{procedureLabel(ex.procedure_type)}</span>
+        <span style={{ color: T.inkSoft }}>Comuna</span>
+        <span>{ex.comuna}, {ex.provincia}, {ex.region}</span>
+        <span style={{ color: T.inkSoft }}>Difusión</span>
+        <span>{formatLongDate(ex.resolved_publication_date)}</span>
+        {ex.broadcast_marked_at && (
+          <>
+            <span style={{ color: T.inkSoft }}>Marcado difundido</span>
+            <span>
+              {formatTimestamp(ex.broadcast_marked_at)}
+              {ex.broadcast_time_1 ? ` · ${[ex.broadcast_time_1, ex.broadcast_time_2, ex.broadcast_time_3].filter(Boolean).map((t)=>String(t).slice(0,5)).join(" · ")}` : ""}
+            </span>
+          </>
+        )}
+      </div>
+
+      <div
+        className="bookman"
+        style={{
+          background: "#fff",
+          border: `1px dashed ${T.border}`,
+          borderRadius: 8,
+          padding: 14,
+          fontFamily: LINE_COUNTER_FONT_STACK,
+          fontSize: "12pt",
+          lineHeight: 1.4,
+          whiteSpace: "pre-wrap",
+          wordWrap: "break-word",
+          marginBottom: 12,
+        }}
+      >
+        {ex.extract_text}
+      </div>
+
+      {confirming ? (
+        <div style={{ background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: 12 }}>
+          <p style={{ fontSize: 13, marginBottom: 4 }}>
+            Confirmas que el extracto #{ex.extract_index} se transmitió hoy en{" "}
+            <strong>{broadcastTimes.slice(0,3).join(" · ")}</strong>.
+          </p>
+          <p style={{ fontSize: 11.5, color: T.inkSoft, marginBottom: 10 }}>
+            Esta acción no envía email al cliente — Bertha envía después el certificado y la factura.
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button type="button" variant="primary" size="sm" disabled={busy} onClick={markBroadcast}>
+              Sí, marcar difundido
+            </Button>
+            <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => setConfirming(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={!canMarkBroadcast || busy}
+          onClick={() => setConfirming(true)}
+        >
+          📻 Marcar este extracto difundido
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function Pair({ label, value }) {
   return (
     <div
@@ -273,18 +458,14 @@ function Pair({ label, value }) {
   );
 }
 
-function ActionsCard({ order, busy, patch, userId, settings }) {
+function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings }) {
   const canMarkPaid = order.status === "pending_payment";
-  const canMarkBroadcast = order.status === "paid" || order.status === "scheduled";
   const canCancel = !["completed", "cancelled"].includes(order.status);
-  const broadcastTimes = Array.isArray(settings?.default_broadcast_times) && settings.default_broadcast_times.length >= 3
-    ? settings.default_broadcast_times
-    : ["10:00", "10:05", "10:10"];
 
   // Estado del modal: null = cerrado; objeto = modal abierto con esa acción.
-  // kind ∈ "pay" | "broadcast" | "complete" | "cancel"
+  // kind ∈ "pay" | "complete" | "cancel"
+  // (Las acciones "Marcar difundida" pasaron al nivel de cada extracto.)
   const [pending, setPending] = useState(null);
-  // Para cancelar: motivo escrito por la operadora.
   const [cancelReason, setCancelReason] = useState("");
 
   function close() {
@@ -305,20 +486,6 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
         },
         "Marcada como pagada.",
         "payment_confirmed",
-      ).finally(onDone);
-    } else if (pending.kind === "broadcast") {
-      // Sin notifyEvent: el cliente NO recibe email al marcar difundida.
-      // Bertha le manda directamente el certificado + factura luego (Bertha 2026-05-15).
-      patch(
-        {
-          status: "broadcast_complete",
-          broadcast_marked_at: new Date().toISOString(),
-          broadcast_marked_by: userId || null,
-          broadcast_time_1: broadcastTimes[0] || null,
-          broadcast_time_2: broadcastTimes[1] || null,
-          broadcast_time_3: broadcastTimes[2] || null,
-        },
-        "Marcada como difundida.",
       ).finally(onDone);
     } else if (pending.kind === "complete") {
       patch({ status: "completed" }, "Marcada como completada.").finally(onDone);
@@ -354,15 +521,6 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
 
         <Button
           type="button"
-          variant="secondary"
-          disabled={!canMarkBroadcast || busy}
-          onClick={() => setPending({ kind: "broadcast" })}
-        >
-          📻 Marcar difundida
-        </Button>
-
-        <Button
-          type="button"
           variant="ghost"
           disabled={busy}
           onClick={() => setPending({ kind: "complete" })}
@@ -384,9 +542,8 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
       </div>
 
       <p style={{ marginTop: 12, fontSize: 11, color: T.inkMute, lineHeight: 1.5 }}>
-        Las acciones que envían email al cliente (pagada, cancelada) muestran
-        un resumen antes de confirmar. "Marcar difundida" y "Marcar completada"
-        no envían email.
+        "Marcar pagada" y "Cancelar" envían email al cliente.<br/>
+        "Marcar difundida" se hace por extracto, abajo en la lista.
       </p>
 
       {/* Diálogo de confirmación: pagada */}
@@ -411,26 +568,6 @@ function ActionsCard({ order, busy, patch, userId, settings }) {
         />
       </ConfirmDialog>
 
-      {/* Diálogo de confirmación: difundida (sin email al cliente) */}
-      <ConfirmDialog
-        open={pending?.kind === "broadcast"}
-        title="Marcar como difundida"
-        confirmLabel="Sí, marcar difundida"
-        cancelLabel="Cancelar"
-        tone="primary"
-        busy={busy}
-        onCancel={close}
-        onConfirm={execute}
-      >
-        <p style={{ marginBottom: 8 }}>
-          Estás confirmando que el aviso fue transmitido hoy en los horarios:{" "}
-          <strong>{broadcastTimes.slice(0, 3).join(" · ")}</strong>.
-        </p>
-        <p style={{ fontSize: 12, color: T.inkSoft }}>
-          Esta acción <strong>no envía email al cliente</strong> — al cliente le
-          llega directamente el certificado y la factura cuando los emitas.
-        </p>
-      </ConfirmDialog>
 
       {/* Diálogo de confirmación: completada (sin email) */}
       <ConfirmDialog

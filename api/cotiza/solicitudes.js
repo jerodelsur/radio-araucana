@@ -2,8 +2,8 @@
 // las pendientes ordenadas por más reciente. Aceptan ?estado=atendida para
 // histórico.
 
-import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
-import { authOk } from "../_lib/auth.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { authOk } from "./_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
 

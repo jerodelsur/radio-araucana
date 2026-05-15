@@ -1,8 +1,8 @@
 // POST con auth: marca una solicitud como atendida (o descartada).
 // Body: { id, estado: "atendida" | "descartada", cotizacionTotal?, notasInternas?, atendidaPor? }
 
-import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
-import { authOk } from "../_lib/auth.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { authOk } from "./_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
 

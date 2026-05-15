@@ -3,7 +3,7 @@
 // Body: el JSON completo de tarifas (mismo shape que src/content/cotiza-tarifas.json)
 
 import { put } from "@vercel/blob";
-import { authOk } from "../_lib/auth.js";
+import { authOk } from "./_lib/auth.js";
 
 const BLOB_KEY = "cotiza-tarifas.json";
 

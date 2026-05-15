@@ -114,6 +114,16 @@ const devApiStub = () => ({
       if (req.method !== 'POST') return next()
       await runHandler('/api/cotiza/enviar-cliente.js', req, res)
     })
+
+    server.middlewares.use('/api/cotiza/solicitudes', async (req, res, next) => {
+      if (req.method !== 'GET') return next()
+      await runHandler('/api/cotiza/solicitudes.js', req, res)
+    })
+
+    server.middlewares.use('/api/cotiza/atender-solicitud', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/atender-solicitud.js', req, res)
+    })
   },
 })
 

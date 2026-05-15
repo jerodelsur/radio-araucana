@@ -110,7 +110,7 @@ function FlujoPublico() {
 /* ─── Flujo interno: login → cotizador con precios + descuentos ───────────── */
 function FlujoInterno() {
   const [token, setToken] = useState(() => sessionStorage.getItem(STORAGE_TOKEN) || "");
-  const [autenticado, setAutenticado] = useState(false);
+  const [autenticado, setAutenticado] = useState(() => Boolean(sessionStorage.getItem(STORAGE_TOKEN)));
   const [tarifas, setTarifas] = useState(null);
   const [errorCarga, setErrorCarga] = useState("");
 

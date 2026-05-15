@@ -7,7 +7,7 @@ const STORAGE_KEY = "cotiza_admin_token";
 
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem(STORAGE_KEY) || "");
-  const [autenticado, setAutenticado] = useState(false);
+  const [autenticado, setAutenticado] = useState(() => Boolean(sessionStorage.getItem(STORAGE_KEY)));
   const [tarifas, setTarifas] = useState(null);
   const [errorCarga, setErrorCarga] = useState("");
   const [guardando, setGuardando] = useState(false);

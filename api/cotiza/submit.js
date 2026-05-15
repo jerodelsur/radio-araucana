@@ -3,6 +3,7 @@
 // pedido del cliente por email y arma la cotización formal desde /cotiza/interno.
 
 import { sendEmail, isMailerConfigured, adminRecipients } from "../extractos/_lib/mailer.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -133,6 +134,31 @@ export default async function handler(req, res) {
   }));
   const comentarios = clean(req.body.comentarios, 2000);
   const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  // Persistir la solicitud en Supabase ANTES de mandar el email. Si la BD
+  // falla seguimos enviando el correo igual — la información no se pierde.
+  let solicitudId = null;
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase
+        .from("cotiza_solicitudes")
+        .insert({
+          cliente_nombre: cliente.nombre,
+          cliente_empresa: cliente.empresa || null,
+          cliente_telefono: cliente.telefono || null,
+          cliente_email: cliente.email || null,
+          pedido,
+          comentarios: comentarios || null,
+        })
+        .select("id")
+        .single();
+      if (error) console.error("[/api/cotiza/submit] insert fail:", error?.message);
+      else solicitudId = data.id;
+    } catch (err) {
+      console.error("[/api/cotiza/submit] supabase error:", err?.message ?? err);
+    }
+  }
 
   if (!isMailerConfigured()) {
     console.warn("[/api/cotiza/submit] SMTP no configurado");

@@ -132,15 +132,11 @@ export default function OrderDetail() {
   }
 
   // Al cancelar una orden, libera los slots de calendario que ocupaban sus
-  // extractos. La fila se conserva (historial), pero time_block y
-  // time_block_position pasan a null para que otra orden pueda tomar esos
-  // huecos y el calendario deje de contarla en los 24 del día.
+  // extractos y renumera los sobrevivientes 1..N en cada (date, block). La
+  // fila del cancelado se conserva (historial) pero pasa a time_block null.
   async function releaseCalendarSlots(orderId) {
     const supabase = getSupabaseBrowser();
-    const { error } = await supabase
-      .from("order_extracts")
-      .update({ time_block: null, time_block_position: null })
-      .eq("order_id", orderId);
+    const { error } = await supabase.rpc("release_and_renumber_slots", { p_order_id: orderId });
     if (error) {
       console.warn("[OrderDetail] no se pudieron liberar slots:", error.message);
     }

@@ -16,6 +16,9 @@ const devRewrites = () => ({
         // Preservar querystring si la hubiese.
         const qIdx = url.indexOf('?')
         req.url = qIdx >= 0 ? `/extractos.html${url.slice(qIdx)}` : '/extractos.html'
+      } else if (url === '/cotiza' || url.startsWith('/cotiza/') || url.startsWith('/cotiza?')) {
+        const qIdx = url.indexOf('?')
+        req.url = qIdx >= 0 ? `/cotiza.html${url.slice(qIdx)}` : '/cotiza.html'
       }
       next()
     })
@@ -91,6 +94,26 @@ const devApiStub = () => ({
       if (req.method !== 'POST') return next()
       await runHandler('/api/extractos/admin/notify-client.js', req, res)
     })
+
+    server.middlewares.use('/api/cotiza/tarifas', async (req, res, next) => {
+      if (req.method !== 'GET') return next()
+      await runHandler('/api/cotiza/tarifas.js', req, res)
+    })
+
+    server.middlewares.use('/api/cotiza/save-tarifas', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/save-tarifas.js', req, res)
+    })
+
+    server.middlewares.use('/api/cotiza/submit', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/submit.js', req, res)
+    })
+
+    server.middlewares.use('/api/cotiza/enviar-cliente', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/enviar-cliente.js', req, res)
+    })
   },
 })
 
@@ -111,6 +134,7 @@ export default defineConfig(({ mode }) => {
           main: resolve(__dirname, 'index.html'),
           frontera: resolve(__dirname, 'frontera.html'),
           extractos: resolve(__dirname, 'extractos.html'),
+          cotiza: resolve(__dirname, 'cotiza.html'),
         },
       },
     },

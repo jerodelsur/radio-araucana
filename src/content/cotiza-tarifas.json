@@ -1,0 +1,102 @@
+{
+  "iva": 0.19,
+  "moneda": "CLP",
+  "actualizado": "2026-05-15",
+  "formatos": [
+    {
+      "id": "frase_comercial",
+      "titulo": "Frase publicitaria",
+      "duracion": "30 segundos",
+      "icon": "📣",
+      "descripcion": "Spot comercial de 30 segundos. Elige horario repartido (rotativo durante toda la programación) o seleccionado (en bloques de mayor audiencia).",
+      "horarios": [
+        {
+          "id": "base",
+          "label": "Horario Repartido (BASE)",
+          "hint": "Rotativo durante toda la programación",
+          "packs": [
+            { "id": "suelta", "label": "Tarifa suelta", "frases": 1, "precioUnitario": 9000 },
+            { "id": "30", "label": "Pack BASE 30 (mensual)", "frases": 30, "precioUnitario": 8500 },
+            { "id": "60", "label": "Pack BASE 60 (mensual)", "frases": 60, "precioUnitario": 8000 },
+            { "id": "90", "label": "Pack BASE 90 (mensual)", "frases": 90, "precioUnitario": 7500 },
+            { "id": "120", "label": "Pack BASE 120 (mensual)", "frases": 120, "precioUnitario": 7000 }
+          ]
+        },
+        {
+          "id": "prime",
+          "label": "Horario Seleccionado (PRIME)",
+          "hint": "En bloques específicos de alta audiencia",
+          "packs": [
+            { "id": "suelta", "label": "Tarifa suelta", "frases": 1, "precioUnitario": 12000 },
+            { "id": "30", "label": "Pack PRIME 30 (mensual)", "frases": 30, "precioUnitario": 11500 },
+            { "id": "60", "label": "Pack PRIME 60 (mensual)", "frases": 60, "precioUnitario": 11000 },
+            { "id": "90", "label": "Pack PRIME 90 (mensual)", "frases": 90, "precioUnitario": 10500 },
+            { "id": "120", "label": "Pack PRIME 120 (mensual)", "frases": 120, "precioUnitario": 10000 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frase_politica",
+      "titulo": "Frase política",
+      "duracion": "30 segundos",
+      "icon": "🗳️",
+      "descripcion": "Cuña electoral o de campaña de 30 segundos, regulada por la ley chilena de propaganda política. Horario repartido.",
+      "horarios": [
+        {
+          "id": "base",
+          "label": "Horario Repartido",
+          "hint": "Rotativo durante toda la programación",
+          "packs": [
+            { "id": "suelta", "label": "Tarifa suelta", "frases": 1, "precioUnitario": 18000 },
+            { "id": "30", "label": "Pack 30 (mensual)", "frases": 30, "precioUnitario": 17000 },
+            { "id": "60", "label": "Pack 60 (mensual)", "frases": 60, "precioUnitario": 16000 },
+            { "id": "90", "label": "Pack 90 (mensual)", "frases": 90, "precioUnitario": 15000 },
+            { "id": "120", "label": "Pack 120 (mensual)", "frases": 120, "precioUnitario": 14000 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entrevista",
+      "titulo": "Entrevista",
+      "duracion": "5 o 10 min",
+      "icon": "🎙️",
+      "descripcion": "Entrevista en estudio o por teléfono dentro de los bloques periodísticos. Pensada para autoridades, candidatos, voceros y lanzamientos.",
+      "unidades": [
+        { "id": "5min", "label": "Entrevista de 5 minutos", "precio": 50000 },
+        { "id": "10min", "label": "Entrevista de 10 minutos", "precio": 100000 }
+      ],
+      "unidadNombre": "entrevistas"
+    },
+    {
+      "id": "podcast",
+      "titulo": "Podcast",
+      "duracion": "30 o 60 min",
+      "icon": "🎧",
+      "descripcion": "Programa de larga duración producido en estudios de Radio Araucana. Se publica en el sitio, en plataformas y sale al aire.",
+      "unidades": [
+        { "id": "30min", "label": "Podcast de 30 minutos", "precio": 300000 },
+        { "id": "60min", "label": "Podcast de 60 minutos", "precio": 500000 }
+      ],
+      "unidadNombre": "episodios"
+    }
+  ],
+  "cupones": [],
+  "descuentosInternos": {
+    "pyme": {
+      "label": "PYME REGIONAL",
+      "descripcion": "Empresa con única sede en Temuco",
+      "porcentaje": 30
+    },
+    "agencia": {
+      "label": "Precio Agencia (compromiso anual)",
+      "descripcion": "Exclusivo para agencias con alto volumen anual comprometido",
+      "tramos": [
+        { "id": "2000", "label": "2.000 frases anuales", "porcentaje": 33 },
+        { "id": "4000", "label": "4.000 frases anuales", "porcentaje": 39 },
+        { "id": "6000", "label": "6.000 frases anuales", "porcentaje": 44 }
+      ]
+    }
+  }
+}

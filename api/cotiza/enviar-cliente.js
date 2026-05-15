@@ -210,6 +210,7 @@ export default async function handler(req, res) {
     html,
     text,
     replyTo: undefined, // Que las respuestas vuelvan al EMAIL_FROM por defecto
+    fromName: "Radio Araucana 95.9 FM — Publicidad",
   });
 
   if (!result.ok) {

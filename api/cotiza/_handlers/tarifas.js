@@ -2,7 +2,7 @@
 // Lee desde Vercel Blob (cotiza-tarifas.json) con fallback al JSON bundled.
 
 import { list } from "@vercel/blob";
-import defaultTarifas from "../../src/content/cotiza-tarifas.json" with { type: "json" };
+import defaultTarifas from "../../../src/content/cotiza-tarifas.json" with { type: "json" };
 
 const BLOB_KEY = "cotiza-tarifas.json";
 

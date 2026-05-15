@@ -78,6 +78,13 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: "order_not_found", message: orderErr?.message });
   }
 
+  // Cargar extractos del bundle (orden con 1..20 extractos).
+  const { data: extracts } = await supabase
+    .from("order_extracts")
+    .select("*")
+    .eq("order_id", order.id)
+    .order("extract_index", { ascending: true });
+
   // Cargar settings
   const settings = await fetchSettings(supabase);
 
@@ -85,7 +92,7 @@ export default async function handler(req, res) {
   let msg;
   switch (eventType) {
     case "payment_confirmed":
-      msg = paymentConfirmedEmail({ order, settings });
+      msg = paymentConfirmedEmail({ order, extracts: extracts || [], settings });
       break;
     case "cancelled":
       msg = orderCancelledEmail({ order, settings });

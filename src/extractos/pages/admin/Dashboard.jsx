@@ -33,9 +33,12 @@ export default function AdminDashboard() {
 
     (async () => {
       const supabase = getSupabaseBrowser();
+      // Las columnas comuna/region/line_count/resolved_publication_date son legacy
+      // (snapshot del primer extracto del bundle). order_extracts(id) trae los
+      // IDs de cada extracto del bundle para poder contar cuántos hay.
       let q = supabase
         .from("orders")
-        .select("order_number, status, client_name, client_email, comuna, region, line_count, amount_clp, resolved_publication_date, created_at")
+        .select("order_number, status, client_name, client_email, comuna, region, line_count, amount_clp, resolved_publication_date, created_at, order_extracts(id)")
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
 
@@ -223,16 +226,17 @@ function OrdersTable({ orders }) {
           <tr style={{ background: T.cream, color: T.inkSoft }}>
             <Th>N° orden</Th>
             <Th>Cliente</Th>
-            <Th>Comuna</Th>
-            <Th>Difusión</Th>
-            <Th align="right">Líneas</Th>
-            <Th align="right">Monto</Th>
+            <Th align="right">Extractos</Th>
+            <Th>1ª difusión</Th>
+            <Th align="right">Monto total</Th>
             <Th>Estado</Th>
             <Th>Recibida</Th>
           </tr>
         </thead>
         <tbody>
-          {orders.map((o) => (
+          {orders.map((o) => {
+            const extractCount = Array.isArray(o.order_extracts) ? o.order_extracts.length : 1;
+            return (
             <tr
               key={o.order_number}
               style={{ borderTop: `1px solid ${T.border}`, transition: "background 80ms ease" }}
@@ -252,14 +256,21 @@ function OrdersTable({ orders }) {
                 <div style={{ color: T.ink }}>{o.client_name}</div>
                 <div style={{ fontSize: 11, color: T.inkMute }}>{o.client_email}</div>
               </Td>
-              <Td>{o.comuna}<div style={{ fontSize: 11, color: T.inkMute }}>{o.region}</div></Td>
+              <Td align="right">
+                <span style={{ fontWeight: extractCount > 1 ? 600 : 400, color: extractCount > 1 ? T.greenDark : T.ink }}>
+                  {extractCount}
+                </span>
+                {extractCount === 1 && o.comuna && (
+                  <div style={{ fontSize: 11, color: T.inkMute }}>{o.comuna}</div>
+                )}
+              </Td>
               <Td>{formatShortDate(o.resolved_publication_date)}</Td>
-              <Td align="right">{o.line_count}</Td>
               <Td align="right" className="mono">{formatCLPSimple(o.amount_clp)}</Td>
               <Td><Badge tone={statusTone(o.status)}>{statusLabel(o.status)}</Badge></Td>
               <Td>{formatTimestamp(o.created_at)}</Td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

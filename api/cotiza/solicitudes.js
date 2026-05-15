@@ -3,16 +3,9 @@
 // histórico.
 
 import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { authOk } from "./_lib/auth.js";
 
 export const config = { runtime: "nodejs" };
-
-function authOk(req) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  const header = req.headers.authorization || "";
-  const [scheme, token] = header.split(" ");
-  return scheme === "Bearer" && token === expected;
-}
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {

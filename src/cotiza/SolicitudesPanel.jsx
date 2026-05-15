@@ -35,7 +35,12 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
-      if (r.status === 401) { onLogout(); return; }
+      if (r.status === 401) {
+        setError("La clave no es válida o no tiene permisos para listar solicitudes. Usá 'Cerrar sesión' arriba si querés volver a intentar.");
+        setSolicitudes([]);
+        setCargando(false);
+        return;
+      }
       const data = await r.json();
       if (!r.ok) {
         setError(data.error || `Error ${r.status}`);

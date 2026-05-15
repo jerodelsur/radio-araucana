@@ -380,6 +380,9 @@ export function orderCancelledEmail({ order, settings }) {
 /* ─── helpers de extractos ──────────────────────────────────────────────── */
 
 function extractSummaryCardHtml(ex) {
+  const blockLine = ex.time_block
+    ? `Horario: <strong>${escapeHtml(ex.time_block)} — ${blockHoursLabel(ex.time_block)}</strong><br/>`
+    : "";
   return `
     <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${COLORS.cream};border:1px solid ${COLORS.border};border-radius:8px;margin-bottom:10px;">
       <tr><td style="padding:14px 18px;">
@@ -390,6 +393,7 @@ function extractSummaryCardHtml(ex) {
           <strong>${escapeHtml(humanProcedureType(ex.procedure_type))}</strong><br/>
           ${escapeHtml(ex.comuna || "—")}, ${escapeHtml(ex.region || "—")}<br/>
           Difusión: <strong>${fmtDate(ex.resolved_publication_date)}</strong><br/>
+          ${blockLine}
           ${ex.line_count || 0} ${ex.line_count === 1 ? "línea" : "líneas"} · ${fmtCLP(ex.amount_clp)}
         </div>
       </td></tr>
@@ -398,7 +402,14 @@ function extractSummaryCardHtml(ex) {
 }
 
 function extractSummaryLineText(ex) {
-  return `· #${ex.extract_index} — ${humanProcedureType(ex.procedure_type)} — ${ex.comuna}, ${ex.region} — ${fmtDate(ex.resolved_publication_date)} — ${ex.line_count} líneas · ${fmtCLP(ex.amount_clp)}`;
+  const blockTxt = ex.time_block ? ` — Horario ${ex.time_block} (${blockHoursLabel(ex.time_block)})` : "";
+  return `· #${ex.extract_index} — ${humanProcedureType(ex.procedure_type)} — ${ex.comuna}, ${ex.region} — ${fmtDate(ex.resolved_publication_date)}${blockTxt} — ${ex.line_count} líneas · ${fmtCLP(ex.amount_clp)}`;
+}
+
+function blockHoursLabel(block) {
+  if (block === "A") return "08:00, 10:00, 12:00";
+  if (block === "B") return "09:00, 11:00, 13:00";
+  return "";
 }
 
 function extractAdminCardHtml(ex) {

@@ -115,6 +115,22 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
+            <Link
+              to="/admin/calendario"
+              style={{
+                padding: "6px 14px",
+                background: T.greenDark,
+                color: T.cream,
+                borderRadius: 6,
+                fontSize: 12,
+                textDecoration: "none",
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              📅 Calendario
+            </Link>
             <Button variant="ghost" size="sm" type="button" onClick={() => setRefreshKey((k) => k + 1)}>
               ↻ Actualizar
             </Button>

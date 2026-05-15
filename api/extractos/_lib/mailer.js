@@ -58,7 +58,7 @@ function fromHeader() {
 }
 
 function adminRecipients() {
-  const raw = process.env.ADMIN_NOTIFICATION_EMAILS || "secretaria.araucana@gmail.com";
+  const raw = process.env.ADMIN_NOTIFICATION_EMAILS || "administracion@araucanayfrontera.cl";
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 

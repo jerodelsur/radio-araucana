@@ -25,7 +25,7 @@ import { resolveBroadcastDate } from "../../src/extractos/lib/broadcast-date.js"
 
 export const config = { runtime: "nodejs" };
 
-const SUPPORT_EMAIL = "secretaria.araucana@gmail.com";
+const SUPPORT_EMAIL = "administracion@araucanayfrontera.cl";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

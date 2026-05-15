@@ -73,7 +73,7 @@ export function clientOrderEmail({ order, extracts, settings }) {
   const accountNum  = getStr(settings, "radio_bank_account_number", "0-000-9874438-0");
   const legalName   = getStr(settings, "radio_legal_name", "Radio La Frontera");
   const legalRut    = getStr(settings, "radio_legal_rut", "79.966.670-7");
-  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
+  const supportEmail = getStr(settings, "radio_email_secretary", "administracion@araucanayfrontera.cl");
   const adminEmail   = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
   const phoneMobile  = getStr(settings, "radio_phone_mobile", "+56 9 4239 0216");
 
@@ -265,7 +265,7 @@ export function adminOrderNotificationEmail({ order, extracts, settings, dashboa
 
 export function paymentConfirmedEmail({ order, extracts, settings }) {
   const list = normalizeExtracts(order, extracts);
-  const supportEmail = getStr(settings, "radio_email_secretary", "secretaria.araucana@gmail.com");
+  const supportEmail = getStr(settings, "radio_email_secretary", "administracion@araucanayfrontera.cl");
 
   const amount = fmtCLP(order.amount_clp);
   const n = list.length;

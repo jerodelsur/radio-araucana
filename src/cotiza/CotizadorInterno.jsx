@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { K } from "./Layout.jsx";
 import {
   calcularLineas,
@@ -6,6 +6,7 @@ import {
   validarCupon,
   aplicarCupon,
 } from "./tarifas.js";
+import SolicitudesPanel from "./SolicitudesPanel.jsx";
 
 const SectionTitle = {
   fontFamily: "'Open Sans', sans-serif",
@@ -39,6 +40,9 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
 
   const [feedback, setFeedback] = useState(null);
   const [enviando, setEnviando] = useState(false);
+
+  const [solicitudActiva, setSolicitudActiva] = useState(null);
+  const [refreshSolicitudes, setRefreshSolicitudes] = useState(0);
 
   const formatos = tarifas.formatos;
   const dPyme = tarifas.descuentosInternos?.pyme;
@@ -167,6 +171,10 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
         setFeedback({ ok: false, msg: data.message || data.error || `Error ${r.status}` });
       } else {
         setFeedback({ ok: true, msg: `Enviado a ${cliente.email.trim()}` });
+        // Si esta cotización viene de una solicitud pública, marcarla atendida
+        if (solicitudActiva) {
+          await marcarSolicitudAtendida(solicitudActiva, totales.total);
+        }
       }
     } catch (e) {
       setFeedback({ ok: false, msg: e?.message || "Error de red" });
@@ -174,6 +182,62 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
       setEnviando(false);
     }
   };
+
+  const marcarSolicitudAtendida = useCallback(async (id, total) => {
+    try {
+      await fetch("/api/cotiza/atender-solicitud", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, estado: "atendida", cotizacionTotal: total }),
+      });
+      setSolicitudActiva(null);
+      setRefreshSolicitudes((n) => n + 1);
+    } catch (e) {
+      console.warn("No se pudo marcar atendida:", e?.message);
+    }
+  }, [token]);
+
+  const precargarSolicitud = useCallback((sol) => {
+    setCliente({
+      nombre: sol.cliente_nombre || "",
+      empresa: sol.cliente_empresa || "",
+      telefono: sol.cliente_telefono || "",
+      email: sol.cliente_email || "",
+    });
+
+    // Pre-seleccionar formatos con defaults; el vendedor termina de configurar
+    const nuevas = {};
+    (sol.pedido || []).forEach((p) => {
+      const f = formatos.find((x) => x.id === p.formatoId);
+      if (!f) return;
+      if (f.horarios) {
+        nuevas[f.id] = {
+          horarioId: f.horarios[0].id,
+          packId: f.horarios[0].packs[1]?.id || f.horarios[0].packs[0].id,
+          meses: 1,
+        };
+      } else {
+        nuevas[f.id] = { unidadId: f.unidades[0].id, cantidad: 1 };
+      }
+    });
+    setSelecciones(nuevas);
+
+    // Concatenar comentarios y necesidades del cliente como referencia
+    const necesidades = (sol.pedido || [])
+      .filter((p) => p.necesidad)
+      .map((p) => `${p.titulo}: ${p.necesidad}`)
+      .join("\n");
+    const partes = [];
+    if (necesidades) partes.push("Lo que pidió el cliente:\n" + necesidades);
+    if (sol.comentarios) partes.push("Comentarios: " + sol.comentarios);
+    setComentarios(partes.join("\n\n"));
+
+    setSolicitudActiva(sol.id);
+    setFeedback(null);
+
+    // Scroll al inicio del cotizador
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  }, [formatos]);
 
   return (
     <>
@@ -190,15 +254,36 @@ export default function CotizadorInterno({ tarifas, token, onLogout }) {
         </div>
       </section>
 
+      <SolicitudesPanel
+        token={token}
+        onLogout={onLogout}
+        onPrecargar={precargarSolicitud}
+        refreshKey={refreshSolicitudes}
+        solicitudActivaId={solicitudActiva}
+      />
+
       <section style={{ padding: "clamp(28px, 4vw, 40px) 24px 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <h1 style={K({ fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 8 })}>
-            Armar cotización
+            {solicitudActiva ? "Cotizando esta solicitud" : "Armar cotización"}
           </h1>
           <p style={K({ fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.55)", lineHeight: 1.5 })}>
-            Construye la cotización, aplica descuentos comerciales si corresponden, y copia el texto o envíalo
-            directo al cliente.
+            {solicitudActiva
+              ? "Configura cada formato, ajusta descuentos si corresponden, y envía la cotización al cliente. La solicitud se marca como atendida automáticamente al enviar."
+              : "Construye la cotización, aplica descuentos comerciales si corresponden, y copia el texto o envíalo directo al cliente."}
           </p>
+          {solicitudActiva && (
+            <button type="button" onClick={() => {
+              setSolicitudActiva(null);
+              setCliente({ nombre: "", empresa: "", telefono: "", email: "" });
+              setSelecciones({});
+              setComentarios("");
+              setFeedback(null);
+            }}
+              style={K({ background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer", marginTop: 10 })}>
+              ← Volver a la lista (descarta esta cotización en curso)
+            </button>
+          )}
         </div>
       </section>
 

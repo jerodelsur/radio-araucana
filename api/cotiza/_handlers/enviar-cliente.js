@@ -2,11 +2,11 @@
 // directo al email del cliente. Auth requiere ADMIN_PASSWORD (es interno).
 // El cliente recibe la propuesta con membrete de Radio Araucana.
 
-import { sendEmail, isMailerConfigured } from "../extractos/_lib/mailer.js";
-import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
-import { consumirCupon } from "./_lib/tarifas-store.js";
-import { authOk } from "./_lib/auth.js";
-import { cotizaTo, cotizaCc } from "./_lib/recipients.js";
+import { sendEmail, isMailerConfigured } from "../../extractos/_lib/mailer.js";
+import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
+import { consumirCupon } from "../_lib/tarifas-store.js";
+import { authOk } from "../_lib/auth.js";
+import { cotizaTo, cotizaCc } from "../_lib/recipients.js";
 
 export const config = { runtime: "nodejs" };
 

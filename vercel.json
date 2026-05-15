@@ -19,11 +19,11 @@
     },
     {
       "source": "/cotiza",
-      "destination": "/cotiza.html"
+      "destination": "/cotiza"
     },
     {
-      "source": "/cotiza/:path+",
-      "destination": "/cotiza.html"
+      "source": "/cotiza/:path*",
+      "destination": "/cotiza"
     },
     {
       "source": "/frontera/extractos",

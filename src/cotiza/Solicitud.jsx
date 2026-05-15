@@ -15,6 +15,122 @@ const WHATSAPP_URL =
   "https://wa.me/56992872087?text=" +
   encodeURIComponent("Hola Radio Araucana, quiero cotizar publicidad y necesito una respuesta urgente.");
 
+/* ─── Opciones cerradas por formato ────────────────────────────────────────
+   Cada formato pide al cliente N preguntas con respuestas predefinidas, así
+   los datos que llegan a /cotiza/admin son consistentes y comparables. La
+   estructura de "selecciones" guarda { preguntaId: opcionId } por formato.
+─────────────────────────────────────────────────────────────────────────── */
+const PREGUNTAS_POR_FORMATO = {
+  frase_comercial: [
+    {
+      id: "cantidad",
+      label: "¿Cuántas pasadas por día?",
+      opciones: [
+        { id: "1-2", label: "1 a 2" },
+        { id: "3-5", label: "3 a 5" },
+        { id: "6-10", label: "6 a 10" },
+        { id: "10+", label: "Más de 10" },
+      ],
+    },
+    {
+      id: "duracion",
+      label: "¿Por cuánto tiempo?",
+      opciones: [
+        { id: "una-semana", label: "Una semana" },
+        { id: "un-mes", label: "Un mes" },
+        { id: "2-3-meses", label: "2 a 3 meses" },
+        { id: "4-mas-meses", label: "Más de 3 meses" },
+      ],
+    },
+    {
+      id: "horario",
+      label: "¿En qué momento del día?",
+      opciones: [
+        { id: "cualquier", label: "Cualquier momento" },
+        { id: "manana-mediodia", label: "Mañana / mediodía" },
+        { id: "tarde-noche", label: "Tarde / noche" },
+      ],
+    },
+  ],
+  frase_politica: [
+    {
+      id: "cantidad",
+      label: "¿Cuántas pasadas por día?",
+      opciones: [
+        { id: "1-2", label: "1 a 2" },
+        { id: "3-5", label: "3 a 5" },
+        { id: "6-10", label: "6 a 10" },
+        { id: "10+", label: "Más de 10" },
+      ],
+    },
+    {
+      id: "duracion",
+      label: "¿Por cuánto tiempo?",
+      opciones: [
+        { id: "una-semana", label: "Una semana" },
+        { id: "dos-semanas", label: "Dos semanas" },
+        { id: "un-mes", label: "Un mes" },
+        { id: "hasta-eleccion", label: "Hasta la elección" },
+      ],
+    },
+  ],
+  entrevista: [
+    {
+      id: "duracion",
+      label: "¿De cuánto?",
+      opciones: [
+        { id: "5min", label: "5 minutos" },
+        { id: "10min", label: "10 minutos" },
+      ],
+    },
+    {
+      id: "cantidad",
+      label: "¿Cuántas entrevistas?",
+      opciones: [
+        { id: "1", label: "1 entrevista" },
+        { id: "2", label: "2 entrevistas" },
+        { id: "3-5", label: "Serie de 3 a 5" },
+      ],
+    },
+  ],
+  podcast: [
+    {
+      id: "duracion",
+      label: "¿De cuánto?",
+      opciones: [
+        { id: "30min", label: "30 minutos" },
+        { id: "60min", label: "60 minutos" },
+      ],
+    },
+    {
+      id: "cantidad",
+      label: "¿Cuántos episodios?",
+      opciones: [
+        { id: "1", label: "1 episodio" },
+        { id: "2-4", label: "2 a 4 episodios" },
+        { id: "mensual", label: "Programa mensual" },
+      ],
+    },
+  ],
+};
+
+function preguntasFor(formatoId) {
+  return PREGUNTAS_POR_FORMATO[formatoId] || [];
+}
+
+function necesidadString(formato, respuestas) {
+  const preguntas = preguntasFor(formato.id);
+  const partes = [];
+  preguntas.forEach((p) => {
+    const op = p.opciones.find((o) => o.id === respuestas?.[p.id]);
+    if (op) {
+      const labelLimpio = p.label.replace(/^¿/, "").replace(/\?$/, "");
+      partes.push(`${labelLimpio}: ${op.label}`);
+    }
+  });
+  return partes.join(" · ");
+}
+
 /**
  * Flujo público: el cliente indica qué formatos le interesan y la cantidad
  * aproximada, sin que vea precios. La cotización formal la arma el equipo
@@ -33,23 +149,44 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
         delete next[id];
         return next;
       }
-      return { ...s, [id]: { necesidad: "" } };
+      // Inicializa cada pregunta sin respuesta hasta que el cliente la marque.
+      const respuestasIniciales = {};
+      preguntasFor(id).forEach((p) => { respuestasIniciales[p.id] = ""; });
+      return { ...s, [id]: { respuestas: respuestasIniciales } };
     });
   };
-  const update = (id, patch) => setSelecciones((s) => ({ ...s, [id]: { ...s[id], ...patch } }));
+  const setRespuesta = (formatoId, preguntaId, opcionId) =>
+    setSelecciones((s) => ({
+      ...s,
+      [formatoId]: {
+        ...s[formatoId],
+        respuestas: { ...(s[formatoId]?.respuestas || {}), [preguntaId]: opcionId },
+      },
+    }));
 
   const formatosElegidos = formatos.filter((f) => selecciones[f.id]);
   const haySeleccion = formatosElegidos.length > 0;
-  const canSubmit = haySeleccion && !enviando;
+
+  // Todos los formatos seleccionados deben tener todas sus preguntas respondidas.
+  const todasRespondidas = formatosElegidos.every((f) => {
+    const preguntas = preguntasFor(f.id);
+    const respuestas = selecciones[f.id]?.respuestas || {};
+    return preguntas.every((p) => Boolean(respuestas[p.id]));
+  });
+  const canSubmit = haySeleccion && todasRespondidas && !enviando;
 
   const enviar = () => {
     if (!canSubmit) return;
-    const pedido = formatosElegidos.map((f) => ({
-      formatoId: f.id,
-      titulo: f.titulo,
-      duracion: f.duracion,
-      necesidad: (selecciones[f.id].necesidad || "").trim(),
-    }));
+    const pedido = formatosElegidos.map((f) => {
+      const respuestas = selecciones[f.id]?.respuestas || {};
+      return {
+        formatoId: f.id,
+        titulo: f.titulo,
+        duracion: f.duracion,
+        opciones: respuestas,             // estructurado para el panel
+        necesidad: necesidadString(f, respuestas), // legible para email/listado
+      };
+    });
     onEnviar({ cliente, pedido, comentarios: comentarios.trim() });
   };
 
@@ -136,41 +273,66 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <h2 style={SectionTitle}>2 · Cuéntanos qué necesitas en cada uno</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {formatosElegidos.map((f) => (
-                <div key={f.id} style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 10, padding: 16,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 22 }} aria-hidden>{f.icon}</span>
-                      <strong style={K({ fontSize: 15, fontWeight: 700 })}>{f.titulo}</strong>
-                      <span style={K({ fontSize: 12, color: "rgba(255,255,255,0.4)" })}>· {f.duracion}</span>
+              {formatosElegidos.map((f) => {
+                const preguntas = preguntasFor(f.id);
+                const respuestas = selecciones[f.id]?.respuestas || {};
+                return (
+                  <div key={f.id} style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 10, padding: 16,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 22 }} aria-hidden>{f.icon}</span>
+                        <strong style={K({ fontSize: 15, fontWeight: 700 })}>{f.titulo}</strong>
+                        <span style={K({ fontSize: 12, color: "rgba(255,255,255,0.4)" })}>· {f.duracion}</span>
+                      </div>
+                      <button type="button" onClick={() => toggle(f.id)}
+                        style={K({ background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", fontSize: 12, cursor: "pointer", padding: 4 })}
+                        aria-label={`Quitar ${f.titulo}`}>
+                        Quitar ✕
+                      </button>
                     </div>
-                    <button type="button" onClick={() => toggle(f.id)}
-                      style={K({ background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", fontSize: 12, cursor: "pointer", padding: 4 })}
-                      aria-label={`Quitar ${f.titulo}`}>
-                      Quitar ✕
-                    </button>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {preguntas.map((p) => (
+                        <div key={p.id}>
+                          <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 8 })}>
+                            {p.label}
+                          </p>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {p.opciones.map((o) => {
+                              const activa = respuestas[p.id] === o.id;
+                              return (
+                                <button key={o.id} type="button"
+                                  onClick={() => setRespuesta(f.id, p.id, o.id)}
+                                  style={K({
+                                    background: activa ? "#52b870" : "rgba(255,255,255,0.04)",
+                                    color: activa ? "#0a3d23" : "rgba(255,255,255,0.8)",
+                                    border: activa ? "1px solid #52b870" : "1px solid rgba(255,255,255,0.15)",
+                                    borderRadius: 999, padding: "8px 14px",
+                                    fontSize: 13, fontWeight: activa ? 700 : 500,
+                                    cursor: "pointer",
+                                    transition: "all 150ms ease",
+                                  })}>
+                                  {o.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <label style={K({ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: "rgba(255,255,255,0.55)" })}>
-                    ¿Qué cantidad o frecuencia tienes en mente?
-                    <input type="text" value={selecciones[f.id].necesidad}
-                      onChange={(e) => update(f.id, { necesidad: e.target.value })}
-                      placeholder={placeholderPara(f.id)}
-                      style={{
-                        width: "100%",
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        borderRadius: 6, padding: "12px 14px",
-                        color: "#fff", fontFamily: "'Open Sans', sans-serif",
-                        fontSize: 14, outline: "none",
-                      }} />
-                  </label>
-                </div>
-              ))}
+                );
+              })}
             </div>
+            {!todasRespondidas && (
+              <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 10, fontStyle: "italic" })}>
+                Completa todas las preguntas de cada formato para poder enviar.
+              </p>
+            )}
           </div>
         </section>
       )}
@@ -242,16 +404,3 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
   );
 }
 
-function placeholderPara(id) {
-  switch (id) {
-    case "frase_comercial":
-    case "frase_politica":
-      return "Ej: 6 pasadas diarias por 2 meses · campaña de invierno";
-    case "entrevista":
-      return "Ej: 2 entrevistas durante el mes · lanzamiento de producto";
-    case "podcast":
-      return "Ej: 4 episodios mensuales · serie sobre turismo";
-    default:
-      return "Cuéntanos qué necesitas";
-  }
-}

@@ -128,11 +128,27 @@ export default async function handler(req, res) {
     telefono: clean(req.body.cliente.telefono),
     email: clean(req.body.cliente.email),
   };
-  const pedido = req.body.pedido.map((p) => ({
-    titulo: clean(p.titulo, 80),
-    duracion: clean(p.duracion, 40),
-    necesidad: clean(p.necesidad, 400),
-  }));
+  const pedido = req.body.pedido.map((p) => {
+    // Sanitizar el objeto de opciones (estructurado para el panel admin).
+    // Keys y valores cortos, máximo 20 entradas por seguridad.
+    let opciones = null;
+    if (p.opciones && typeof p.opciones === "object" && !Array.isArray(p.opciones)) {
+      opciones = {};
+      const keys = Object.keys(p.opciones).slice(0, 20);
+      for (const k of keys) {
+        const key = clean(k, 40);
+        const val = clean(p.opciones[k], 80);
+        if (key && val) opciones[key] = val;
+      }
+    }
+    return {
+      formatoId: clean(p.formatoId, 60) || null,
+      titulo: clean(p.titulo, 80),
+      duracion: clean(p.duracion, 40),
+      necesidad: clean(p.necesidad, 400),
+      opciones,
+    };
+  });
   const comentarios = clean(req.body.comentarios, 2000);
   const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 

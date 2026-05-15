@@ -123,16 +123,16 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 10 }}>
           {solicitudes.map((s) => {
             const activa = solicitudActivaId === s.id;
-            const titulosPedido = (s.pedido || []).map((p) => p.titulo).join(", ") || "—";
+            const pedido = Array.isArray(s.pedido) ? s.pedido : [];
             return (
               <div key={s.id} style={{
                 background: activa ? "rgba(82,184,112,0.1)" : "rgba(255,255,255,0.03)",
                 border: activa ? "1px solid #52b870" : "1px solid rgba(255,255,255,0.08)",
                 borderRadius: 10, padding: 14,
-                display: "flex", flexDirection: "column", gap: 6,
+                display: "flex", flexDirection: "column", gap: 8,
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                   <strong style={K({ fontSize: 14 })}>{s.cliente_nombre}</strong>
@@ -141,12 +141,36 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
                 {s.cliente_empresa && (
                   <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.55)" })}>{s.cliente_empresa}</p>
                 )}
-                <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
-                  <span style={{ color: "#52b870" }}>{titulosPedido}</span>
-                </p>
+
+                {/* Detalle por formato: título + lo que pidió */}
+                <div style={{
+                  background: "rgba(82,184,112,0.04)",
+                  border: "1px solid rgba(82,184,112,0.15)",
+                  borderRadius: 6, padding: 10,
+                  display: "flex", flexDirection: "column", gap: 8,
+                }}>
+                  {pedido.length === 0 && (
+                    <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.4)", fontStyle: "italic" })}>
+                      Sin formatos especificados.
+                    </p>
+                  )}
+                  {pedido.map((p, i) => (
+                    <div key={i}>
+                      <p style={K({ fontSize: 12, color: "#52b870", fontWeight: 600 })}>
+                        {p.titulo}{p.duracion ? <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 400 }}> · {p.duracion}</span> : null}
+                      </p>
+                      {p.necesidad && (
+                        <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginTop: 2 })}>
+                          {p.necesidad}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
                 {s.comentarios && (
                   <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.45)", fontStyle: "italic", lineHeight: 1.4 })}>
-                    "{s.comentarios.slice(0, 100)}{s.comentarios.length > 100 ? "…" : ""}"
+                    "{s.comentarios.slice(0, 200)}{s.comentarios.length > 200 ? "…" : ""}"
                   </p>
                 )}
                 <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>

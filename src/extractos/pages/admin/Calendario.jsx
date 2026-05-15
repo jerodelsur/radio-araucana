@@ -62,10 +62,14 @@ export default function AdminCalendario() {
     setErr(null);
     const supabase = getSupabaseBrowser();
     try {
+      // Excluimos órdenes canceladas: aunque sus extractos persistan en la
+      // tabla por historial, no deben aparecer en la cuadrícula del día ni
+      // contar contra la capacidad de 24 cupos por bloque.
       const { data, error } = await supabase
         .from("order_extracts")
         .select("id, extract_index, time_block, time_block_position, line_count, amount_clp, comuna, region, procedure_type, status, extract_text, order_id, orders!inner(order_number, client_name, client_email, status, amount_clp, billing_legal_name)")
         .eq("resolved_publication_date", selectedDate)
+        .neq("orders.status", "cancelled")
         .order("time_block", { ascending: true })
         .order("time_block_position", { ascending: true })
         .order("extract_index", { ascending: true });

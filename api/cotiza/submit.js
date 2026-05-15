@@ -2,8 +2,9 @@
 // precios (que quedan ocultos por estrategia comercial). El equipo recibe el
 // pedido del cliente por email y arma la cotización formal desde /cotiza/interno.
 
-import { sendEmail, isMailerConfigured, adminRecipients } from "../extractos/_lib/mailer.js";
+import { sendEmail, isMailerConfigured } from "../extractos/_lib/mailer.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../extractos/_lib/supabase.js";
+import { cotizaTo, cotizaCc } from "./_lib/recipients.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -173,7 +174,8 @@ export default async function handler(req, res) {
   const text = renderText({ cliente, pedido, comentarios, fecha });
 
   const result = await sendEmail({
-    to: adminRecipients(),
+    to: cotizaTo(),
+    cc: cotizaCc(),
     subject,
     html,
     text,

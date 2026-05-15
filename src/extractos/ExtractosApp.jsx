@@ -14,6 +14,7 @@ const AdminResetPassword = lazy(() => import("./pages/admin/ResetPassword.jsx"))
 const RequireAdmin = lazy(() => import("./pages/admin/RequireAdmin.jsx"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard.jsx"));
 const AdminOrderDetail = lazy(() => import("./pages/admin/OrderDetail.jsx"));
+const AdminCalendario = lazy(() => import("./pages/admin/Calendario.jsx"));
 const AdminConfiguracion = lazy(() => import("./pages/admin/Configuracion.jsx"));
 
 const BASENAME = "/frontera/extractos";
@@ -49,6 +50,14 @@ export default function ExtractosApp() {
                 element={
                   <RequireAdmin>
                     <AdminOrderDetail />
+                  </RequireAdmin>
+                }
+              />
+              <Route
+                path="/admin/calendario"
+                element={
+                  <RequireAdmin>
+                    <AdminCalendario />
                   </RequireAdmin>
                 }
               />

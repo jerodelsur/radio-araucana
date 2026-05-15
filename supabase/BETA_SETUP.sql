@@ -174,12 +174,21 @@ create table if not exists public.order_extracts (
   certificate_sent_to text,
   certificate_signer_id uuid references public.signers(id),
 
+  -- Horario asignado (Bertha 2026-05-15): A = 8/10/12, B = 9/11/13.
+  -- Cada bloque tiene 24 cupos por fecha. Se asigna al marcar la orden pagada.
+  time_block text check (time_block in ('A', 'B')),
+  time_block_position smallint check (time_block_position between 1 and 24),
+
   unique (order_id, extract_index)
 );
 
 create index if not exists idx_order_extracts_order_id on public.order_extracts(order_id);
 create index if not exists idx_order_extracts_status on public.order_extracts(status);
 create index if not exists idx_order_extracts_resolved_date on public.order_extracts(resolved_publication_date);
+create index if not exists idx_order_extracts_block_date on public.order_extracts(resolved_publication_date, time_block);
+create unique index if not exists idx_order_extracts_block_slot
+  on public.order_extracts(resolved_publication_date, time_block, time_block_position)
+  where time_block is not null and time_block_position is not null;
 
 -- ============================================================================
 -- 2) TRIGGERS

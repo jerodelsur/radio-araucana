@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { T, FONTS } from "../../theme.js";
-import { Card, Field, Input, Textarea, Button, Badge, ConfirmDialog } from "../../components/ui.jsx";
+import { Card, Field, Input, Select, Textarea, Button, Badge, ConfirmDialog } from "../../components/ui.jsx";
 import { useAuth } from "../../lib/auth.jsx";
 import { getSupabaseBrowser } from "../../lib/supabase-browser.js";
 import { useSettings } from "../../lib/settings-store.js";
@@ -14,6 +14,7 @@ import {
   formatLongDate,
   formatTimestamp,
 } from "../../lib/order-helpers.js";
+import { TIME_BLOCKS, blockLabel } from "../../lib/time-blocks.js";
 
 export default function OrderDetail() {
   const { orderNumber } = useParams();
@@ -117,6 +118,34 @@ export default function OrderDetail() {
     } else {
       setActionMsg({ type: "ok", text: baseMsg });
     }
+    await reload();
+  }
+
+  // Llama al RPC que asigna horarios A/B a los extractos del bundle, en
+  // orden por fecha de pago. Se invoca al marcar la orden como pagada.
+  async function assignTimeBlocks(orderId) {
+    const supabase = getSupabaseBrowser();
+    const { error } = await supabase.rpc("assign_time_blocks_for_order", { p_order_id: orderId });
+    if (error) {
+      console.warn("[OrderDetail] no se pudieron asignar horarios:", error.message);
+    }
+  }
+
+  // Reasignación manual de un extracto a otro bloque/posición.
+  async function reassignExtractBlock(extractId, timeBlock, timeBlockPosition) {
+    setBusy(true);
+    setActionMsg(null);
+    const supabase = getSupabaseBrowser();
+    const { error } = await supabase
+      .from("order_extracts")
+      .update({ time_block: timeBlock, time_block_position: timeBlockPosition })
+      .eq("id", extractId);
+    setBusy(false);
+    if (error) {
+      setActionMsg({ type: "error", text: error.message });
+      return;
+    }
+    setActionMsg({ type: "ok", text: `Horario actualizado a ${timeBlock}${timeBlockPosition}.` });
     await reload();
   }
 
@@ -232,6 +261,7 @@ export default function OrderDetail() {
               userId={user?.id}
               settings={settings}
               patchExtract={patchExtract}
+              reassignExtractBlock={reassignExtractBlock}
             />
 
             <Section title="Facturación">
@@ -247,7 +277,14 @@ export default function OrderDetail() {
 
           {/* Sidebar de acciones */}
           <aside style={{ position: "sticky", top: 80, alignSelf: "start", display: "flex", flexDirection: "column", gap: 14 }}>
-            <ActionsCard order={order} busy={busy} patch={patch} userId={user?.id} settings={settings} />
+            <ActionsCard
+              order={order}
+              busy={busy}
+              patch={patch}
+              userId={user?.id}
+              settings={settings}
+              assignTimeBlocks={assignTimeBlocks}
+            />
             <TimelineCard order={order} />
           </aside>
         </div>
@@ -269,7 +306,7 @@ function Section({ title, children }) {
   );
 }
 
-function ExtractsSection({ extracts, busy, order, userId, settings, patchExtract }) {
+function ExtractsSection({ extracts, busy, order, userId, settings, patchExtract, reassignExtractBlock }) {
   if (!extracts || extracts.length === 0) {
     return (
       <Card>
@@ -298,6 +335,7 @@ function ExtractsSection({ extracts, busy, order, userId, settings, patchExtract
             userId={userId}
             settings={settings}
             patchExtract={patchExtract}
+            reassignExtractBlock={reassignExtractBlock}
           />
         ))}
       </div>
@@ -305,7 +343,7 @@ function ExtractsSection({ extracts, busy, order, userId, settings, patchExtract
   );
 }
 
-function ExtractItem({ extract: ex, order, busy, userId, settings, patchExtract }) {
+function ExtractItem({ extract: ex, order, busy, userId, settings, patchExtract, reassignExtractBlock }) {
   const broadcastTimes = Array.isArray(settings?.default_broadcast_times) && settings.default_broadcast_times.length >= 3
     ? settings.default_broadcast_times
     : ["10:00", "10:05", "10:10"];
@@ -378,13 +416,28 @@ function ExtractItem({ extract: ex, order, busy, userId, settings, patchExtract 
         <span>{ex.comuna}, {ex.provincia}, {ex.region}</span>
         <span style={{ color: T.inkSoft }}>Difusión</span>
         <span>{formatLongDate(ex.resolved_publication_date)}</span>
+        <span style={{ color: T.inkSoft }}>Horario</span>
+        <span>
+          {ex.time_block ? (
+            <>
+              <strong style={{ color: T.greenDark }}>{blockLabel(ex.time_block)}</strong>
+              {" "}<span style={{ color: T.inkSoft, fontSize: 11 }}>· posición {ex.time_block_position}/24 interna</span>
+            </>
+          ) : (
+            <span style={{ color: T.inkSoft, fontStyle: "italic" }}>Se asigna automáticamente al marcar la orden pagada.</span>
+          )}
+          {reassignExtractBlock && (
+            <BlockReassign
+              extract={ex}
+              busy={busy}
+              onReassign={(b, p) => reassignExtractBlock(ex.id, b, p)}
+            />
+          )}
+        </span>
         {ex.broadcast_marked_at && (
           <>
             <span style={{ color: T.inkSoft }}>Marcado difundido</span>
-            <span>
-              {formatTimestamp(ex.broadcast_marked_at)}
-              {ex.broadcast_time_1 ? ` · ${[ex.broadcast_time_1, ex.broadcast_time_2, ex.broadcast_time_3].filter(Boolean).map((t)=>String(t).slice(0,5)).join(" · ")}` : ""}
-            </span>
+            <span>{formatTimestamp(ex.broadcast_marked_at)}</span>
           </>
         )}
       </div>
@@ -440,6 +493,59 @@ function ExtractItem({ extract: ex, order, busy, userId, settings, patchExtract 
   );
 }
 
+function BlockReassign({ extract: ex, busy, onReassign }) {
+  const [open, setOpen] = useState(false);
+  const [block, setBlock] = useState(ex.time_block || "A");
+  const [position, setPosition] = useState(ex.time_block_position || 1);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          marginLeft: 8,
+          fontSize: 11,
+          color: T.inkSoft,
+          background: "transparent",
+          border: `1px solid ${T.border}`,
+          borderRadius: 4,
+          padding: "2px 8px",
+          cursor: "pointer",
+        }}
+      >
+        Reasignar
+      </button>
+    );
+  }
+  return (
+    <div style={{ marginTop: 6, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+      <Select value={block} onChange={(e) => setBlock(e.target.value)} style={{ width: 90, fontSize: 12 }}>
+        {Object.keys(TIME_BLOCKS).map((b) => (
+          <option key={b} value={b}>Horario {b}</option>
+        ))}
+      </Select>
+      <Select value={position} onChange={(e) => setPosition(Number(e.target.value))} style={{ width: 80, fontSize: 12 }}>
+        {Array.from({ length: 24 }, (_, i) => i + 1).map((p) => (
+          <option key={p} value={p}>{p}/24</option>
+        ))}
+      </Select>
+      <Button
+        type="button"
+        size="sm"
+        variant="primary"
+        disabled={busy}
+        onClick={() => { onReassign(block, position); setOpen(false); }}
+      >
+        Guardar
+      </Button>
+      <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => setOpen(false)}>
+        Cancelar
+      </Button>
+    </div>
+  );
+}
+
 function Pair({ label, value }) {
   return (
     <div
@@ -458,7 +564,7 @@ function Pair({ label, value }) {
   );
 }
 
-function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings }) {
+function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings, assignTimeBlocks }) {
   const canMarkPaid = order.status === "pending_payment";
   const canCancel = !["completed", "cancelled"].includes(order.status);
 
@@ -477,16 +583,25 @@ function ActionsCard({ order, busy, patch, userId, settings: _unusedSettings }) 
     if (!pending) return;
     const onDone = () => close();
     if (pending.kind === "pay") {
-      patch(
-        {
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          payment_method: "transferencia",
-          payment_provider: "manual",
-        },
-        "Marcada como pagada.",
-        "payment_confirmed",
-      ).finally(onDone);
+      // 1) Asignar horarios A/B a los extractos del bundle, en orden por fecha.
+      //    Lo hacemos ANTES del patch para que cuando se mande el email de
+      //    "pago confirmado" los extractos ya tengan time_block asignado.
+      //    Si el RPC falla, igual seguimos con el patch — Bertha puede asignar
+      //    manualmente desde el calendario.
+      (async () => {
+        try { await assignTimeBlocks?.(order.id); } catch (e) { console.warn(e); }
+        await patch(
+          {
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            payment_method: "transferencia",
+            payment_provider: "manual",
+          },
+          "Marcada como pagada.",
+          "payment_confirmed",
+        );
+        onDone();
+      })();
     } else if (pending.kind === "complete") {
       patch({ status: "completed" }, "Marcada como completada.").finally(onDone);
     } else if (pending.kind === "cancel") {

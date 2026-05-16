@@ -61,7 +61,7 @@ export default function AdminLogin() {
                 type="email"
                 inputMode="email"
                 autoComplete="username"
-                placeholder="administracion@araucanayfrontera.cl"
+                placeholder="extractos@araucanayfrontera.cl"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus

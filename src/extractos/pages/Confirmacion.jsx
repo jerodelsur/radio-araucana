@@ -7,8 +7,8 @@ import { useSettings } from "../lib/settings-store.js";
 export default function Confirmacion() {
   const { orderNumber } = useParams();
   const settings = useSettings();
-  const adminEmail = settings.radio_email_administration || "administracion@araucanayfrontera.cl";
-  const supportEmail = settings.radio_email_secretary || "administracion@araucanayfrontera.cl";
+  const adminEmail = settings.radio_email_administration || "extractos@araucanayfrontera.cl";
+  const supportEmail = settings.radio_email_secretary || "extractos@araucanayfrontera.cl";
   const bankName = settings.radio_bank_name || "Banco Santander";
   const accountType = settings.radio_bank_account_type || "Cuenta Corriente";
   const accountNum = settings.radio_bank_account_number || "0-000-9874438-0";

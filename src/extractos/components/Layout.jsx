@@ -97,7 +97,7 @@ function Header({ adminMode }) {
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
 function Footer() {
   const settings = useSettings();
-  const adminEmail = settings.radio_email_administration || "administracion@araucanayfrontera.cl";
+  const adminEmail = settings.radio_email_administration || "extractos@araucanayfrontera.cl";
   const mobile = settings.radio_phone_mobile || "+56 9 4239 0216";
   const legalName = settings.radio_legal_name || "";
   const legalRut = settings.radio_legal_rut || "";

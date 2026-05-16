@@ -23,15 +23,15 @@ export const DEFAULT_SETTINGS = Object.freeze({
   radio_address: "Caupolicán 110 Oficina 2003 Piso 20, Temuco, Región de La Araucanía",
   radio_phone_landline: "+56 45 2213166",
   radio_phone_mobile: "+56 9 4239 0216",
-  radio_email_administration: "administracion@araucanayfrontera.cl",
-  radio_email_secretary: "administracion@araucanayfrontera.cl",
+  radio_email_administration: "extractos@araucanayfrontera.cl",
+  radio_email_secretary: "extractos@araucanayfrontera.cl",
   radio_bank_name: "Banco Santander",
   radio_bank_account_type: "Cuenta Corriente",
   radio_bank_account_number: "0-000-9874438-0",
   radio_coverage_default: "Provincia de Cautín, IX Región de La Araucanía",
   default_broadcast_times: ["10:00", "10:05", "10:10"],
   notification_emails: [
-    "administracion@araucanayfrontera.cl",
+    "extractos@araucanayfrontera.cl",
   ],
 });
 

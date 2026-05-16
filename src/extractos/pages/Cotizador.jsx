@@ -234,7 +234,7 @@ export default function Cotizador() {
         status: "blocked",
         message:
           `Para extractos que superan las ${maxLines} líneas hay que escribir a ` +
-          "administracion@araucanayfrontera.cl — se cotiza como cápsula.",
+          "extractos@araucanayfrontera.cl — se cotiza como cápsula.",
       });
       return;
     }
@@ -271,7 +271,7 @@ export default function Cotizador() {
           status: "blocked",
           message:
             data.message ??
-            "Estamos terminando de configurar el sistema. Por ahora escríbenos a administracion@araucanayfrontera.cl con tu cotización y te respondemos.",
+            "Estamos terminando de configurar el sistema. Por ahora escríbenos a extractos@araucanayfrontera.cl con tu cotización y te respondemos.",
         });
         return;
       }
@@ -286,7 +286,7 @@ export default function Cotizador() {
         status: "error",
         message:
           data.message ||
-          "No pudimos procesar tu solicitud en este momento. Intenta de nuevo o escríbenos a administracion@araucanayfrontera.cl.",
+          "No pudimos procesar tu solicitud en este momento. Intenta de nuevo o escríbenos a extractos@araucanayfrontera.cl.",
       });
     } catch (err) {
       setSubmitState({
@@ -770,8 +770,8 @@ function ExtractCard({
           }}
         >
           <strong>Excede {maxLines} líneas.</strong> Escribe a{" "}
-          <a href="mailto:administracion@araucanayfrontera.cl" style={{ color: T.danger, textDecoration: "underline" }}>
-            administracion@araucanayfrontera.cl
+          <a href="mailto:extractos@araucanayfrontera.cl" style={{ color: T.danger, textDecoration: "underline" }}>
+            extractos@araucanayfrontera.cl
           </a>{" "}
           — extractos sobre {maxLines} líneas se cotizan como cápsula.
         </div>
@@ -936,7 +936,7 @@ function Resumen({ extracts, metrics, totalCLP, onSubmit, formValid, submitState
           </Button>
           {overLimit && (
             <p style={{ fontSize: 11.5, color: T.danger, textAlign: "center", lineHeight: 1.5 }}>
-              Hay extractos que superan {maxLines} líneas — escribir a administracion@araucanayfrontera.cl.
+              Hay extractos que superan {maxLines} líneas — escribir a extractos@araucanayfrontera.cl.
             </p>
           )}
           <p style={{ fontSize: 11.5, color: T.inkMute, lineHeight: 1.5, textAlign: "center" }}>

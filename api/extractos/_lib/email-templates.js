@@ -73,8 +73,8 @@ export function clientOrderEmail({ order, extracts, settings }) {
   const accountNum  = getStr(settings, "radio_bank_account_number", "0-000-9874438-0");
   const legalName   = getStr(settings, "radio_legal_name", "Radio La Frontera");
   const legalRut    = getStr(settings, "radio_legal_rut", "79.966.670-7");
-  const supportEmail = getStr(settings, "radio_email_secretary", "administracion@araucanayfrontera.cl");
-  const adminEmail   = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
+  const supportEmail = getStr(settings, "radio_email_secretary", "extractos@araucanayfrontera.cl");
+  const adminEmail   = getStr(settings, "radio_email_administration", "extractos@araucanayfrontera.cl");
   const phoneMobile  = getStr(settings, "radio_phone_mobile", "+56 9 4239 0216");
 
   const n = list.length;
@@ -265,7 +265,7 @@ export function adminOrderNotificationEmail({ order, extracts, settings, dashboa
 
 export function paymentConfirmedEmail({ order, extracts, settings }) {
   const list = normalizeExtracts(order, extracts);
-  const supportEmail = getStr(settings, "radio_email_secretary", "administracion@araucanayfrontera.cl");
+  const supportEmail = getStr(settings, "radio_email_secretary", "extractos@araucanayfrontera.cl");
 
   const amount = fmtCLP(order.amount_clp);
   const n = list.length;
@@ -333,7 +333,7 @@ export function paymentConfirmedEmail({ order, extracts, settings }) {
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export function orderCancelledEmail({ order, settings }) {
-  const adminEmail = getStr(settings, "radio_email_administration", "administracion@araucanayfrontera.cl");
+  const adminEmail = getStr(settings, "radio_email_administration", "extractos@araucanayfrontera.cl");
   const subject = `Orden ${order.order_number} cancelada`;
 
   const html = wrap(`

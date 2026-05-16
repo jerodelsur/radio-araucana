@@ -405,14 +405,14 @@ insert into public.settings (key, value) values
   ('radio_address', '"Caupolicán 110 Oficina 2003 Piso 20, Temuco, Región de La Araucanía"'::jsonb),
   ('radio_phone_landline', '"+56 45 2213166"'::jsonb),
   ('radio_phone_mobile', '"+56 9 4239 0216"'::jsonb),
-  ('radio_email_administration', '"administracion@araucanayfrontera.cl"'::jsonb),
-  ('radio_email_secretary', '"administracion@araucanayfrontera.cl"'::jsonb),
+  ('radio_email_administration', '"extractos@araucanayfrontera.cl"'::jsonb),
+  ('radio_email_secretary', '"extractos@araucanayfrontera.cl"'::jsonb),
   ('radio_bank_name', '"Banco Santander"'::jsonb),
   ('radio_bank_account_type', '"Cuenta Corriente"'::jsonb),
   ('radio_bank_account_number', '"0-000-9874438-0"'::jsonb),
   ('radio_coverage_default', '"Provincia de Cautín, IX Región de La Araucanía"'::jsonb),
   ('default_broadcast_times', '["10:00", "10:05", "10:10"]'::jsonb),
-  ('notification_emails', '["administracion@araucanayfrontera.cl"]'::jsonb),
+  ('notification_emails', '["extractos@araucanayfrontera.cl"]'::jsonb),
   ('tariff_table', '{"minLinesFlat": 5, "minPrice": 36000, "baseAboveMin": 26000, "perLineAboveMin": 2000, "maxLines": 20}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 

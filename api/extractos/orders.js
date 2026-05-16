@@ -25,7 +25,7 @@ import { resolveBroadcastDate } from "../../src/extractos/lib/broadcast-date.js"
 
 export const config = { runtime: "nodejs" };
 
-const SUPPORT_EMAIL = "administracion@araucanayfrontera.cl";
+const SUPPORT_EMAIL = "extractos@araucanayfrontera.cl";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
         error: "extract_too_long",
         message:
           `El extracto #${i + 1} supera las ${tariff.maxLines} líneas. Para extractos largos hay que ` +
-          "escribir directamente a administracion@araucanayfrontera.cl — se cotiza como cápsula.",
+          "escribir directamente a extractos@araucanayfrontera.cl — se cotiza como cápsula.",
       });
     }
     const amountCLP = calculatePriceCLP(lineCount, tariff);

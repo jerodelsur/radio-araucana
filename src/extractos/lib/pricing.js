@@ -6,7 +6,7 @@
 //   1–5 líneas → $36.000 (mínimo, incluye la línea de título "EXTRACTOS")
 //   N (>5)    → $26.000 + N * $2.000
 //   Equivale a $36.000 + ($2.000 por cada línea sobre 5).
-//   Tope: 20 líneas. Sobre 20 → escribir a administracion@araucanayfrontera.cl
+//   Tope: 20 líneas. Sobre 20 → escribir a extractos@araucanayfrontera.cl
 //   (se cotiza como cápsula, no como extracto).
 
 export const DEFAULT_TARIFF = Object.freeze({

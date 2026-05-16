@@ -156,14 +156,29 @@
   ],
   "whatsappOptions": [
     {
+      "label": "Cotizar publicidad",
+      "icon": "📣",
+      "msg": "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?"
+    },
+    {
+      "label": "Extracto legal",
+      "icon": "📜",
+      "msg": "Hola, necesito difundir un extracto legal (DGA, DIA u otro trámite que requiere publicación radial). ¿Me pueden orientar?"
+    },
+    {
+      "label": "Proponer una entrevista",
+      "icon": "🎙️",
+      "msg": "Hola, tengo un proyecto, libro, lanzamiento o causa que me gustaría proponer como entrevista en alguno de los programas de Radio Araucana."
+    },
+    {
+      "label": "Prensa y comunicados",
+      "icon": "📰",
+      "msg": "Hola, soy periodista o vocero y tengo un comunicado de prensa para hacer llegar al equipo editorial de Radio Araucana."
+    },
+    {
       "label": "Consulta general",
       "icon": "💬",
       "msg": "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden."
-    },
-    {
-      "label": "Cotizar publicidad",
-      "icon": "📢",
-      "msg": "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?"
     }
   ],
   "frontera": {

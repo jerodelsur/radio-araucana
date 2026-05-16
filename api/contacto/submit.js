@@ -29,7 +29,7 @@ const RUTEO_DEFAULT = {
     fromName: "Radio Araucana — Prensa",
   },
   general: {
-    to: ["administracion@araucanayfrontera.cl"],
+    to: ["contacto@araucanayfrontera.cl"],
     cc: [],
     fromName: "Radio Araucana — Consulta",
   },

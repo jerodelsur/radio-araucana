@@ -12,14 +12,23 @@ const MAX_BODY_LEN = 10_000;
 // Override sin redeploy con env CONTACTO_RUTEO_JSON (objeto JSON).
 const RUTEO_DEFAULT = {
   publicidad: {
-    to: ["avisos@araucanayfrontera.cl"],
-    cc: ["administracion@araucanayfrontera.cl"],
-    fromName: "Radio Araucana — Publicidad",
+    to: ["cotizaciones@araucanayfrontera.cl"],
+    cc: [],
+    fromName: "Radio Araucana — Cotización Publicidad",
   },
   extractos: {
+    // extractos@ es alias de comercial@ en Workspace; mantenemos la identidad
+    // visible al cliente legal para que reconozca el producto.
     to: ["extractos@araucanayfrontera.cl"],
-    cc: ["administracion@araucanayfrontera.cl"],
+    cc: [],
     fromName: "Radio La Frontera — Extractos",
+  },
+  entrevistas: {
+    // Las entrevistas son parte del catálogo comercial — mismo destino que
+    // las cotizaciones publicitarias para unificar la atención del equipo.
+    to: ["cotizaciones@araucanayfrontera.cl"],
+    cc: [],
+    fromName: "Radio Araucana — Entrevistas",
   },
   prensa: {
     // Por ahora va al cajón general. Cuando definan email dedicado de prensa,

@@ -32,15 +32,21 @@ const TEMAS = [
     },
   },
   {
+    id: "entrevistas",
+    titulo: "Proponer una entrevista",
+    descripcion: "Tengo un proyecto, libro, lanzamiento, causa o tema que podría ser entrevista en alguno de los programas.",
+    icon: "🎙️",
+  },
+  {
     id: "prensa",
     titulo: "Prensa y comunicados",
-    descripcion: "Soy periodista, tengo un comunicado para difundir o quiero proponer una nota / entrevista a la radio.",
+    descripcion: "Soy periodista, vocero o tengo un comunicado de prensa para hacer llegar al equipo editorial.",
     icon: "📰",
   },
   {
     id: "general",
     titulo: "Consulta general",
-    descripcion: "Tengo otra consulta para el equipo (institucional, programación, propuestas, etc.).",
+    descripcion: "Tengo otra consulta para el equipo (institucional, programación, etc.).",
     icon: "💬",
   },
 ];

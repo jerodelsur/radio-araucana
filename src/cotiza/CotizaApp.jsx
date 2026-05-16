@@ -78,7 +78,7 @@ function FlujoPublico() {
       setEnviado({ cliente: payload.cliente });
       navigate("/gracias");
     } catch (e) {
-      setErrorEnvio("No pudimos enviar tu solicitud. Revisa tu conexión o escríbenos a administracion@araucanayfrontera.cl.");
+      setErrorEnvio("No pudimos enviar tu solicitud. Revisa tu conexión o escríbenos a cotizaciones@araucanayfrontera.cl.");
     } finally {
       setEnviando(false);
     }

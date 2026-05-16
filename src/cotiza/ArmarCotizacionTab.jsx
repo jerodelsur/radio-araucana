@@ -416,7 +416,7 @@ function textoCotizacion({ cliente, propA, datosA, propB, datosB, dPyme, ivaRate
 
   out.push("");
   out.push("Cotización referencial. Validez 30 días.");
-  out.push("Radio Araucana · administracion@araucanayfrontera.cl · +56 9 9287 2087");
+  out.push("Radio Araucana · cotizaciones@araucanayfrontera.cl · +56 9 9287 2087");
   return out.join("\n");
 }
 

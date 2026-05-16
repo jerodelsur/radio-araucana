@@ -196,7 +196,7 @@ export default async function handler(req, res) {
     html,
     text,
     replyTo: cliente.email || undefined,
-    fromName: "Radio Araucana 95.9 FM — Publicidad",
+    fromName: "Radio Araucana — Solicitud Cotización",
   });
 
   if (!result.ok) {

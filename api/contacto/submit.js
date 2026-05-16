@@ -24,9 +24,7 @@ const RUTEO_DEFAULT = {
     fromName: "Radio La Frontera — Extractos",
   },
   entrevistas: {
-    // Las entrevistas son parte del catálogo comercial — mismo destino que
-    // las cotizaciones publicitarias para unificar la atención del equipo.
-    to: ["cotizaciones@araucanayfrontera.cl"],
+    to: ["entrevistas@araucanayfrontera.cl"],
     cc: [],
     fromName: "Radio Araucana — Entrevistas",
   },

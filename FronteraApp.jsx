@@ -562,7 +562,7 @@ function Footer() {
             <div style={{ borderTop: `1px solid ${F.bgSoft}`, paddingTop: 16 }}>
               <p style={K({ fontWeight: 600, fontSize: 13, color: F.lime, marginBottom: 12 })}>Para contratar publicidad:</p>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 {SETTINGS.adminPhone}</p>
-              <a href={`mailto:${SETTINGS.adminEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ {SETTINGS.adminEmail}</a>
+              <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 {SETTINGS.adminHours}</p>
               <a
                 href={`https://wa.me/${SETTINGS.whatsappNumber}?text=${encodeURIComponent(FOOTER_COTIZA_MSG)}`}

@@ -12,11 +12,13 @@ const MAX_BODY_LEN = 10_000;
 // Override sin redeploy con env CONTACTO_RUTEO_JSON (objeto JSON).
 const RUTEO_DEFAULT = {
   publicidad: {
-    to: ["avisos@araucanayfrontera.cl"],
+    to: ["comercial@araucanayfrontera.cl"],
     cc: ["administracion@araucanayfrontera.cl"],
     fromName: "Radio Araucana — Publicidad",
   },
   extractos: {
+    // Mantenemos extractos@ visible al cliente legal (alias de comercial@
+    // en Workspace, internamente todo cae en la misma bandeja).
     to: ["extractos@araucanayfrontera.cl"],
     cc: ["administracion@araucanayfrontera.cl"],
     fromName: "Radio La Frontera — Extractos",

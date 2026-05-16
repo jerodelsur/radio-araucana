@@ -1,10 +1,15 @@
 // Destinatarios y remitente de los emails del cotizador.
 //
 // Por default:
-//   TO   = avisos@araucanayfrontera.cl         (casilla del equipo comercial)
-//   CC   = administracion@araucanayfrontera.cl (gerencia / respaldo)
-//   FROM = avisos@araucanayfrontera.cl         (mismo que TO; los clientes ven
-//          las respuestas llegar a avisos@ — coherente con el flujo comercial)
+//   TO   = comercial@araucanayfrontera.cl       (cuenta principal del equipo)
+//   CC   = administracion@araucanayfrontera.cl  (gerencia / respaldo)
+//   FROM = comercial@araucanayfrontera.cl       (mismo que TO)
+//
+// Notas:
+//   - avisos@, publicidad@, cotizaciones@, verificaciones@ y extractos@ son
+//     alias de comercial@ en Workspace (todos caen en la misma bandeja).
+//   - Cuando se cambió el nombre principal de avisos@ a comercial@, los
+//     emails antiguos siguen llegando porque avisos@ queda como alias.
 //
 // Override sin redeploy con las envs:
 //   COTIZA_NOTIFICATION_TO (CSV de emails)
@@ -16,7 +21,7 @@ function parse(raw) {
 }
 
 export function cotizaTo() {
-  return parse(process.env.COTIZA_NOTIFICATION_TO || "avisos@araucanayfrontera.cl");
+  return parse(process.env.COTIZA_NOTIFICATION_TO || "comercial@araucanayfrontera.cl");
 }
 
 export function cotizaCc() {
@@ -24,5 +29,5 @@ export function cotizaCc() {
 }
 
 export function cotizaFromEmail() {
-  return (process.env.COTIZA_EMAIL_FROM || "avisos@araucanayfrontera.cl").trim();
+  return (process.env.COTIZA_EMAIL_FROM || "comercial@araucanayfrontera.cl").trim();
 }

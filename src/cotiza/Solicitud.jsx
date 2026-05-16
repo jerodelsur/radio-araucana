@@ -16,39 +16,68 @@ const WHATSAPP_URL =
   encodeURIComponent("Hola Radio Araucana, quiero cotizar publicidad y necesito una respuesta urgente.");
 
 /* ─── Opciones cerradas por formato ────────────────────────────────────────
-   Cada formato pide al cliente N preguntas con respuestas predefinidas, así
-   los datos que llegan a /cotiza/admin son consistentes y comparables. La
+   Cada formato pide al cliente N preguntas con respuestas predefinidas. La
    estructura de "selecciones" guarda { preguntaId: opcionId } por formato.
+
+   Cada opción puede tener una `descripcion` consultiva que aparece cuando
+   está seleccionada. La idea: ayudar al cliente a elegir según su objetivo
+   (lanzamiento, mantenimiento de marca, inauguración, evento puntual, etc.).
+   No siempre "más" es mejor.
 ─────────────────────────────────────────────────────────────────────────── */
 const PREGUNTAS_POR_FORMATO = {
   frase_comercial: [
     {
       id: "cantidad",
       label: "¿Cuántas pasadas por día?",
+      hint: "No siempre más es mejor. La cantidad ideal depende del objetivo de tu campaña.",
       opciones: [
-        { id: "1-2", label: "1 a 2" },
-        { id: "3-5", label: "3 a 5" },
-        { id: "6-10", label: "6 a 10" },
-        { id: "10+", label: "Más de 10" },
+        { id: "1", label: "1 frase al día", descripcion: "Presencia sutil. Ideal para marcas conocidas que quieren mantenerse en la mente del oyente sin sobrexponerse." },
+        { id: "2", label: "2 frases al día", descripcion: "Refuerzo medido. Buen punto de partida para sostener la presencia: el oyente promedio te escucha varias veces por semana." },
+        { id: "3", label: "3 frases al día", descripcion: "Cobertura sólida. Te posiciona en distintos momentos del día. Recomendado para mantenimiento activo de marca." },
+        { id: "4", label: "4 frases al día", descripcion: "Presencia fuerte. Ideal para construir recordación rápido: marcas nuevas o ampliación de portafolio." },
+        { id: "5", label: "5 frases al día", descripcion: "Alta exposición. Pensado para lanzamientos, inauguraciones o eventos puntuales donde necesitás impacto en poco tiempo." },
+        { id: "6-10", label: "6 a 10 frases al día", descripcion: "Campaña intensiva. Para lanzamientos importantes, fechas comerciales fuertes (Navidad, Día del Padre) o eventos masivos." },
+        { id: "10+", label: "Más de 10 frases al día", descripcion: "Saturación máxima. Solo recomendado para campañas de muy alto impacto en periodos cortos. Cuidamos juntos no agotar al oyente." },
       ],
     },
     {
       id: "duracion",
       label: "¿Por cuánto tiempo?",
+      hint: "La duración define qué tipo de campaña estás haciendo: empujar algo puntual o construir marca a largo plazo.",
       opciones: [
-        { id: "una-semana", label: "Una semana" },
-        { id: "un-mes", label: "Un mes" },
-        { id: "2-3-meses", label: "2 a 3 meses" },
-        { id: "4-mas-meses", label: "Más de 3 meses" },
+        { id: "2-semanas", label: "2 semanas", descripcion: "Empuje corto. Promociones, ofertas, fechas puntuales o eventos específicos (una feria, una inauguración con fecha)." },
+        { id: "1-mes", label: "1 mes", descripcion: "Campaña estándar. Tiempo mínimo recomendado para que tu mensaje se asiente y la mayoría de los oyentes te recuerde." },
+        { id: "2-meses", label: "2 meses", descripcion: "Construcción de recordación. Ideal para presentar productos o servicios nuevos al mercado." },
+        { id: "3-meses", label: "3 meses", descripcion: "Plan trimestral / estacional. Acompaña temporadas (verano, vuelta a clases, fin de año). Permite ajustar el mensaje a mitad de campaña." },
+        { id: "6-meses", label: "6 meses", descripcion: "Marca instalada. Construye presencia sostenida. Recomendado para marcas que entran al mercado o se consolidan en La Araucanía." },
+        { id: "1-ano", label: "1 año", descripcion: "Plan anual completo. Máxima presencia continua. Para marcas establecidas que quieren mantenerse top-of-mind todo el año." },
+        { id: "mas-de-1-ano", label: "Más de un año", descripcion: "Compromiso de largo plazo. Conversemos un plan a medida con condiciones especiales." },
       ],
     },
     {
       id: "horario",
       label: "¿En qué momento del día?",
+      hint: "Cada momento tiene un perfil de oyente distinto. Si no estás seguro, 'cualquier momento' es la opción más segura.",
       opciones: [
-        { id: "cualquier", label: "Cualquier momento" },
-        { id: "manana-mediodia", label: "Mañana / mediodía" },
-        { id: "tarde-noche", label: "Tarde / noche" },
+        { id: "cualquier", label: "Cualquier momento", descripcion: "Rotación libre durante toda la programación. Llegás al oyente promedio sin importar la hora. Mayor alcance, presupuesto eficiente." },
+        { id: "manana", label: "Mañana (6 a 12 h)", descripcion: "Prime time matinal: gente desayunando, en el auto rumbo al trabajo o al colegio. Audiencia activa, ideal para mensajes de inicio de jornada." },
+        { id: "mediodia", label: "Mediodía (12 a 15 h)", descripcion: "Hora del almuerzo, sobremesa. Buena para invitar a salir, ofrecer servicios o comercio del rubro alimentos y entretención." },
+        { id: "tarde", label: "Tarde (15 a 19 h)", descripcion: "Vuelta del trabajo, decisión de planes para la noche o el fin de semana. Excelente para retail, gastronomía y servicios." },
+        { id: "noche", label: "Noche (19 a 23 h)", descripcion: "Audiencia relajada en casa. Ideal para mensajes emocionales, marcas premium o servicios que requieren atención plena." },
+      ],
+    },
+    {
+      id: "objetivo",
+      label: "¿Cuál es tu objetivo principal?",
+      hint: "Esto nos ayuda a recomendarte el mejor mix de horarios y frecuencia.",
+      opciones: [
+        { id: "lanzamiento", label: "Lanzamiento de producto / servicio", descripcion: "Necesitás presencia fuerte en corto tiempo. Recomendamos alta frecuencia los primeros días + sostenido por al menos un mes." },
+        { id: "inauguracion", label: "Inauguración / evento puntual", descripcion: "Concentramos pasadas en las semanas previas al evento. Frecuencia alta, duración corta." },
+        { id: "marca-conocida", label: "Mantener marca conocida", descripcion: "Presencia constante de baja intensidad. Tu objetivo es que no te olviden." },
+        { id: "marca-nueva", label: "Dar a conocer marca nueva", descripcion: "Construcción de recordación. Necesitás tiempo (mínimo 2-3 meses) y frecuencia media-alta." },
+        { id: "promocion", label: "Promoción / oferta puntual", descripcion: "Empuje fuerte en corto plazo. Alta frecuencia para que el mensaje llegue antes de que termine la oferta." },
+        { id: "campaña", label: "Campaña política / electoral", descripcion: "Crescendo hasta el día de la elección. Mensaje constante con refuerzos en los días previos." },
+        { id: "otro", label: "Otro / aún no lo defino", descripcion: "Conversémoslo. El equipo comercial puede ayudarte a definirlo según tu negocio." },
       ],
     },
   ],
@@ -56,21 +85,25 @@ const PREGUNTAS_POR_FORMATO = {
     {
       id: "cantidad",
       label: "¿Cuántas pasadas por día?",
+      hint: "En campañas políticas, la repetición ayuda a instalar nombre, eslogan o propuesta.",
       opciones: [
-        { id: "1-2", label: "1 a 2" },
-        { id: "3-5", label: "3 a 5" },
-        { id: "6-10", label: "6 a 10" },
-        { id: "10+", label: "Más de 10" },
+        { id: "2", label: "2 frases al día", descripcion: "Presencia básica. Ideal en etapas tempranas para empezar a instalar nombre." },
+        { id: "4", label: "4 frases al día", descripcion: "Refuerzo activo. Buena cobertura para campaña en construcción." },
+        { id: "6", label: "6 frases al día", descripcion: "Campaña visible. El oyente promedio te escucha varias veces al día." },
+        { id: "8", label: "8 frases al día", descripcion: "Alta exposición. Recomendado para tramo final o candidaturas con bajo conocimiento previo." },
+        { id: "10+", label: "Más de 10 frases al día", descripcion: "Máxima exposición. Recta final de campaña o cierres." },
       ],
     },
     {
       id: "duracion",
       label: "¿Por cuánto tiempo?",
+      hint: "Las campañas largas instalan el candidato; las cortas refuerzan antes de votar.",
       opciones: [
-        { id: "una-semana", label: "Una semana" },
-        { id: "dos-semanas", label: "Dos semanas" },
-        { id: "un-mes", label: "Un mes" },
-        { id: "hasta-eleccion", label: "Hasta la elección" },
+        { id: "1-semana", label: "1 semana", descripcion: "Cierre de campaña. Refuerzo final del mensaje días antes de la elección." },
+        { id: "2-semanas", label: "2 semanas", descripcion: "Recta final. Repaso de propuestas y llamado al voto." },
+        { id: "1-mes", label: "1 mes", descripcion: "Campaña estándar. Tiempo para instalar candidato o propuesta." },
+        { id: "2-meses", label: "2 meses", descripcion: "Campaña extendida. Construcción de relato político." },
+        { id: "hasta-eleccion", label: "Hasta el día de la elección", descripcion: "Cobertura completa. Acompaña al candidato desde el lanzamiento hasta el comicio, con intensidad creciente." },
       ],
     },
   ],
@@ -78,18 +111,22 @@ const PREGUNTAS_POR_FORMATO = {
     {
       id: "duracion",
       label: "¿De cuánto?",
+      hint: "La duración define qué tipo de conversación tendremos al aire.",
       opciones: [
-        { id: "5min", label: "5 minutos" },
-        { id: "10min", label: "10 minutos" },
+        { id: "5min", label: "5 minutos", descripcion: "Conversación corta y enfocada. Ideal para una novedad específica: una apertura, un lanzamiento, un anuncio puntual. El oyente capta el mensaje sin que se diluya." },
+        { id: "10min", label: "10 minutos", descripcion: "Profundidad y contexto. Tiempo para contar quién sos, qué hacés y por qué tu propuesta importa. Recomendado para construir posicionamiento." },
       ],
     },
     {
       id: "cantidad",
       label: "¿Cuántas entrevistas?",
+      hint: "Una sola entrevista puede ser perfecta para un anuncio puntual; varias instalan tu voz como referente del tema.",
       opciones: [
-        { id: "1", label: "1 entrevista" },
-        { id: "2", label: "2 entrevistas" },
-        { id: "3-5", label: "Serie de 3 a 5" },
+        { id: "1", label: "1 entrevista", descripcion: "Para un hito específico: apertura, evento, anuncio importante." },
+        { id: "2", label: "2 entrevistas", descripcion: "Una para anunciar, otra para reforzar o profundizar. Da continuidad al mensaje." },
+        { id: "3", label: "3 entrevistas", descripcion: "Construcción de relato. Tres apariciones en distintos momentos instalan tu marca o causa como referente." },
+        { id: "4", label: "4 entrevistas", descripcion: "Presencia sostenida. Una entrevista por semana durante un mes." },
+        { id: "serie-mensual", label: "Serie mensual permanente", descripcion: "Cliente recurrente. Una entrevista por mes te mantiene como voz consultada del sector. Ideal para asociaciones, consultores, líderes gremiales." },
       ],
     },
   ],
@@ -97,18 +134,21 @@ const PREGUNTAS_POR_FORMATO = {
     {
       id: "duracion",
       label: "¿De cuánto?",
+      hint: "30 minutos para temas concretos; 60 para conversaciones que profundizan.",
       opciones: [
-        { id: "30min", label: "30 minutos" },
-        { id: "60min", label: "60 minutos" },
+        { id: "30min", label: "30 minutos", descripcion: "Episodio ágil. Ideal para una entrevista enfocada, una novedad o un único tema bien tratado. Más fácil de consumir." },
+        { id: "60min", label: "60 minutos", descripcion: "Conversación profunda. Para temas complejos, varias voces o relatos extensos. Audiencia más comprometida pero menor alcance." },
       ],
     },
     {
       id: "cantidad",
       label: "¿Cuántos episodios?",
+      hint: "Un piloto prueba el formato; una serie construye audiencia fiel.",
       opciones: [
-        { id: "1", label: "1 episodio" },
-        { id: "2-4", label: "2 a 4 episodios" },
-        { id: "mensual", label: "Programa mensual" },
+        { id: "1", label: "1 episodio", descripcion: "Piloto o evento único. Probar el formato o tratar un tema específico." },
+        { id: "2-3", label: "2 a 3 episodios", descripcion: "Mini-serie. Buena para temáticas con varios capítulos o construir expectativa de continuidad." },
+        { id: "4", label: "4 episodios", descripcion: "Temporada corta. Buen formato para una temática con desarrollo: entrevistas a distintos protagonistas, abordaje por etapas." },
+        { id: "mensual", label: "Programa mensual permanente", descripcion: "Programa propio. Construís audiencia fiel y te posicionás como referente del sector. Bonus: queda publicado en plataformas y se puede compartir." },
       ],
     },
   ],
@@ -295,34 +335,54 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
                       </button>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      {preguntas.map((p) => (
-                        <div key={p.id}>
-                          <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 8 })}>
-                            {p.label}
-                          </p>
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {p.opciones.map((o) => {
-                              const activa = respuestas[p.id] === o.id;
-                              return (
-                                <button key={o.id} type="button"
-                                  onClick={() => setRespuesta(f.id, p.id, o.id)}
-                                  style={K({
-                                    background: activa ? "#52b870" : "rgba(255,255,255,0.04)",
-                                    color: activa ? "#0a3d23" : "rgba(255,255,255,0.8)",
-                                    border: activa ? "1px solid #52b870" : "1px solid rgba(255,255,255,0.15)",
-                                    borderRadius: 999, padding: "8px 14px",
-                                    fontSize: 13, fontWeight: activa ? 700 : 500,
-                                    cursor: "pointer",
-                                    transition: "all 150ms ease",
-                                  })}>
-                                  {o.label}
-                                </button>
-                              );
-                            })}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                      {preguntas.map((p) => {
+                        const opcionElegida = p.opciones.find((o) => o.id === respuestas[p.id]);
+                        return (
+                          <div key={p.id}>
+                            <p style={K({ fontSize: 13, color: "rgba(255,255,255,0.75)", fontWeight: 600, marginBottom: p.hint ? 2 : 8 })}>
+                              {p.label}
+                            </p>
+                            {p.hint && (
+                              <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.45)", fontStyle: "italic", marginBottom: 8, lineHeight: 1.5 })}>
+                                {p.hint}
+                              </p>
+                            )}
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {p.opciones.map((o) => {
+                                const activa = respuestas[p.id] === o.id;
+                                return (
+                                  <button key={o.id} type="button"
+                                    onClick={() => setRespuesta(f.id, p.id, o.id)}
+                                    style={K({
+                                      background: activa ? "#52b870" : "rgba(255,255,255,0.04)",
+                                      color: activa ? "#0a3d23" : "rgba(255,255,255,0.8)",
+                                      border: activa ? "1px solid #52b870" : "1px solid rgba(255,255,255,0.15)",
+                                      borderRadius: 999, padding: "8px 14px",
+                                      fontSize: 13, fontWeight: activa ? 700 : 500,
+                                      cursor: "pointer",
+                                      transition: "all 150ms ease",
+                                    })}>
+                                    {o.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {opcionElegida?.descripcion && (
+                              <div style={{
+                                marginTop: 10, padding: "10px 12px",
+                                background: "rgba(82,184,112,0.06)",
+                                borderLeft: "2px solid #52b870",
+                                borderRadius: "0 6px 6px 0",
+                              }}>
+                                <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.55 })}>
+                                  <strong style={{ color: "#52b870" }}>{opcionElegida.label}</strong> — {opcionElegida.descripcion}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );

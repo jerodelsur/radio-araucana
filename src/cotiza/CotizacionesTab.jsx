@@ -234,49 +234,59 @@ export default function CotizacionesTab({ token }) {
 }
 
 function DetalleCotizacion({ c }) {
+  const tieneB = Boolean(c.propuesta_b);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-      <div>
-        <h4 style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 })}>Cliente</h4>
-        <p style={K({ fontSize: 13, color: "#fff", marginBottom: 4 })}>{c.cliente_nombre}</p>
-        {c.cliente_empresa && <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>{c.cliente_empresa}</p>}
-        {c.cliente_telefono && (
-          <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
-            📞 <a href={`https://wa.me/${c.cliente_telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"
-              style={{ color: "#52b870", textDecoration: "none" }}>{c.cliente_telefono}</a>
-          </p>
-        )}
-        {c.cliente_email && (
-          <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
-            ✉ <a href={`mailto:${c.cliente_email}`} style={{ color: "#52b870", textDecoration: "none" }}>{c.cliente_email}</a>
-          </p>
-        )}
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: tieneB ? 20 : 0 }}>
+        <div>
+          <h4 style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 })}>Cliente</h4>
+          <p style={K({ fontSize: 13, color: "#fff", marginBottom: 4 })}>{c.cliente_nombre}</p>
+          {c.cliente_empresa && <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>{c.cliente_empresa}</p>}
+          {c.cliente_telefono && (
+            <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
+              📞 <a href={`https://wa.me/${c.cliente_telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"
+                style={{ color: "#52b870", textDecoration: "none" }}>{c.cliente_telefono}</a>
+            </p>
+          )}
+          {c.cliente_email && (
+            <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
+              ✉ <a href={`mailto:${c.cliente_email}`} style={{ color: "#52b870", textDecoration: "none" }}>{c.cliente_email}</a>
+            </p>
+          )}
+        </div>
+
+        <PropuestaDetalle titulo={tieneB ? "Propuesta A" : "Detalle"} propuesta={c} />
+
+        {tieneB && <PropuestaDetalle titulo="Propuesta B" propuesta={c.propuesta_b} />}
       </div>
-      <div>
-        <h4 style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 })}>Detalle</h4>
-        <ul style={K({ fontSize: 12, color: "rgba(255,255,255,0.7)", listStyle: "none", padding: 0, lineHeight: 1.6 })}>
-          {(c.lineas || []).map((l, i) => (
-            <li key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <span>{l.detalle}</span>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatCLP(l.subtotal)}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4 style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 })}>Totales</h4>
-        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>Subtotal: {formatCLP(c.subtotal)}</p>
-        {c.descuento_pyme > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>PYME: -{formatCLP(c.descuento_pyme)}</p>}
-        {c.descuento_agencia > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>Agencia ({c.agencia_tramo}): -{formatCLP(c.descuento_agencia)}</p>}
-        {c.descuento_cupon > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>Cupón {c.cupon_codigo}: -{formatCLP(c.descuento_cupon)}</p>}
-        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>IVA: {formatCLP(c.iva)}</p>
-        <p style={K({ fontSize: 14, color: "#52b870", fontWeight: 700, marginTop: 6, fontVariantNumeric: "tabular-nums" })}>Total: {formatCLP(c.total)}</p>
-        {c.comentarios && (
-          <div style={{ marginTop: 10, padding: 8, background: "rgba(255,255,255,0.04)", borderRadius: 4 }}>
-            <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", fontStyle: "italic" })}>{c.comentarios}</p>
-          </div>
-        )}
-      </div>
+    </div>
+  );
+}
+
+function PropuestaDetalle({ titulo, propuesta }) {
+  if (!propuesta) return null;
+  return (
+    <div>
+      <h4 style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 })}>{titulo}</h4>
+      <ul style={K({ fontSize: 12, color: "rgba(255,255,255,0.7)", listStyle: "none", padding: 0, lineHeight: 1.6, marginBottom: 10 })}>
+        {(propuesta.lineas || []).map((l, i) => (
+          <li key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+            <span>{l.detalle}</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatCLP(l.subtotal)}</span>
+          </li>
+        ))}
+      </ul>
+      <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>Subtotal: {formatCLP(propuesta.subtotal)}</p>
+      {propuesta.descuento_pyme > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>PYME: -{formatCLP(propuesta.descuento_pyme)}</p>}
+      {propuesta.descuento_agencia > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>Agencia ({propuesta.agencia_tramo}): -{formatCLP(propuesta.descuento_agencia)}</p>}
+      {propuesta.descuento_cupon > 0 && <p style={K({ fontSize: 12, color: "#52b870" })}>Cupón {propuesta.cupon_codigo}: -{formatCLP(propuesta.descuento_cupon)}</p>}
+      <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.6)" })}>IVA: {formatCLP(propuesta.iva)}</p>
+      <p style={K({ fontSize: 14, color: "#52b870", fontWeight: 700, marginTop: 6, fontVariantNumeric: "tabular-nums" })}>Total: {formatCLP(propuesta.total)}</p>
+      {propuesta.comentarios && (
+        <div style={{ marginTop: 10, padding: 8, background: "rgba(255,255,255,0.04)", borderRadius: 4 }}>
+          <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.5)", fontStyle: "italic" })}>{propuesta.comentarios}</p>
+        </div>
+      )}
     </div>
   );
 }

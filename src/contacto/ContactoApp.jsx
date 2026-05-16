@@ -32,9 +32,15 @@ const TEMAS = [
     },
   },
   {
+    id: "prensa",
+    titulo: "Prensa y comunicados",
+    descripcion: "Soy periodista, tengo un comunicado para difundir o quiero proponer una nota / entrevista a la radio.",
+    icon: "📰",
+  },
+  {
     id: "general",
     titulo: "Consulta general",
-    descripcion: "Tengo otra consulta para el equipo (institucional, comunicacional, programación, etc.).",
+    descripcion: "Tengo otra consulta para el equipo (institucional, programación, propuestas, etc.).",
     icon: "💬",
   },
 ];

@@ -44,8 +44,8 @@ export default function Confirmacion({ cliente, onNueva }) {
           <p style={K({ fontSize: 14, color: "#fff", lineHeight: 1.8 })}>
             📞 <a href="https://wa.me/56992872087" target="_blank" rel="noreferrer"
               style={{ color: "#52b870", textDecoration: "none" }}>+56 9 9287 2087 (WhatsApp)</a><br />
-            ✉ <a href="mailto:administracion@araucanayfrontera.cl"
-              style={{ color: "#52b870", textDecoration: "none" }}>administracion@araucanayfrontera.cl</a>
+            ✉ <a href="mailto:cotizaciones@araucanayfrontera.cl"
+              style={{ color: "#52b870", textDecoration: "none" }}>cotizaciones@araucanayfrontera.cl</a>
           </p>
         </div>
 

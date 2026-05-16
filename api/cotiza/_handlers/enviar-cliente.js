@@ -122,7 +122,7 @@ function renderHtml({ cliente, propuestaA, propuestaB, fecha, iva }) {
     <div style="margin-top:32px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#666;line-height:1.7;">
       <strong style="color:#29623a;">Radio Araucana FM 95.9 — Temuco</strong><br/>
       Caupolicán 110, Of. 2003 · Temuco · La Araucanía<br/>
-      <a href="mailto:administracion@araucanayfrontera.cl" style="color:#29623a;">administracion@araucanayfrontera.cl</a> · +56 9 9287 2087<br/>
+      <a href="mailto:cotizaciones@araucanayfrontera.cl" style="color:#29623a;">cotizaciones@araucanayfrontera.cl</a> · +56 9 9287 2087<br/>
       <a href="https://radioaraucana.cl" style="color:#29623a;">radioaraucana.cl</a>
     </div>
   </div>
@@ -172,7 +172,7 @@ function renderText({ cliente, propuestaA, propuestaB, fecha, iva }) {
   }
   out.push("");
   out.push("Cotización referencial, vigencia 30 días.");
-  out.push("Radio Araucana FM 95.9 · administracion@araucanayfrontera.cl · +56 9 9287 2087");
+  out.push("Radio Araucana FM 95.9 · cotizaciones@araucanayfrontera.cl · +56 9 9287 2087");
   return out.join("\n");
 }
 

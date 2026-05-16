@@ -59,7 +59,10 @@ function fromHeader(overrideName, overrideEmail) {
 }
 
 function adminRecipients() {
-  const raw = process.env.ADMIN_NOTIFICATION_EMAILS || "administracion@araucanayfrontera.cl";
+  // Notificaciones internas del sistema de extractos. extractos@ es alias de
+  // comercial@ en Workspace pero mantenemos esa identidad para que la persona
+  // que atiende vea claro que viene del trámite legal.
+  const raw = process.env.ADMIN_NOTIFICATION_EMAILS || "extractos@araucanayfrontera.cl";
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 

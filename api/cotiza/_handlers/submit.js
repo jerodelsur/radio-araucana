@@ -181,7 +181,7 @@ export default async function handler(req, res) {
     console.warn("[/api/cotiza/submit] SMTP no configurado");
     return res.status(503).json({
       error: "mailer_not_configured",
-      message: "El sistema de email no está disponible ahora mismo. Por favor escríbenos directamente a administracion@araucanayfrontera.cl o por WhatsApp al +56 9 9287 2087.",
+      message: "El sistema de email no está disponible ahora mismo. Por favor escríbenos directamente a cotizaciones@araucanayfrontera.cl o por WhatsApp al +56 9 9287 2087.",
     });
   }
 

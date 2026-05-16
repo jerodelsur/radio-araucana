@@ -2,53 +2,112 @@
   "settings": {
     "streamAraucana": "/stream",
     "streamFrontera": "https://audio.streaminghd.cl:2000/stream/radiofrontera1110",
-    "liveStreamUrl": "",
     "whatsappNumber": "56992872087",
     "address": "Caupolicán 110, Of. 2003, Temuco, IX Región",
     "contactEmail": "contacto@araucanayfrontera.cl",
     "adminEmail": "administracion@araucanayfrontera.cl",
     "adminPhone": "+56 9 9287 2087",
-    "adminHours": "Lunes a Viernes, 9:00 a 18:00 hrs."
+    "adminHours": "Lunes a Viernes, 9:00 a 18:00 hrs.",
+    "liveStreamUrl": ""
   },
   "news": [
     {
       "cat": "DEPORTE",
-      "headline": "Seis medallas se trae la Araucanía desde los Juegos Sudamericanos de la Juventud",
-      "bajada": "Los jóvenes deportistas regionales volvieron con el pecho lleno. Te contamos quiénes son y en qué disciplinas brillaron.",
-      "time": "30 abr 2026"
+      "headline": "Deportes Temuco trae un punto desde Valparaiso",
+      "bajada": "Empate 2-2 en duelo jugado este domingo, en el Estadio Elías Figueroa de Valparaíso, ante Santiago Wanderers. ",
+      "time": ""
     },
     {
       "cat": "POLÍTICA",
       "headline": "El Presidente habló fuerte sobre salud: qué prometió y qué inquieta al sector",
       "bajada": "Dirigentes de la salud se reunieron con Kast para plantear sus dudas. Radio Araucana estuvo ahí para contarlo.",
-      "time": "30 abr 2026"
+      "time": ""
     },
     {
       "cat": "REGIÓN",
       "headline": "Millonaria inversión busca sacar el transporte público de la Araucanía del siglo pasado",
       "bajada": "Buses eléctricos y rutas modernizadas son parte del plan que el gobierno presentó esta semana para la movilidad regional.",
-      "time": "30 abr 2026"
+      "time": ""
     },
     {
       "cat": "CULTURA",
       "headline": "El Teatro Municipal vibró con más de 600 bailarines en una noche para el recuerdo",
       "bajada": "La danza tomó el centro de Temuco en un encuentro que reunió a elencos de toda la región durante una jornada única.",
-      "time": "30 abr 2026"
+      "time": ""
     }
   ],
   "videos": [
-    { "title": "Arturo Sanhueza, DT de Deportes Temuco, en La Voz Albiverde",                  "youtube": "", "dur": "24:18",   "views": "12.4K vistas", "bg": "linear-gradient(135deg, #0f2d1a, #29623a)" },
-    { "title": "El Alcalde de Temuco habla con Radio Araucana sobre los proyectos del año",     "youtube": "", "dur": "38:45",   "views": "9.7K vistas",  "bg": "linear-gradient(135deg, #1a3a1e, #4a7c59)" },
-    { "title": "Araucana y Frontera: la historia de las radios más antiguas del sur de Chile",  "youtube": "", "dur": "52:10",   "views": "31.2K vistas", "bg": "linear-gradient(135deg, #1d4a2b, #52b870)" },
-    { "title": "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",    "youtube": "", "dur": "1:04:33", "views": "7.1K vistas",  "bg": "linear-gradient(135deg, #2d4a1a, #d4a017)" }
+    {
+      "title": "Trenzando Voces | Fernanda Cid – Movimiento, Migración y Bienestar en La Araucanía",
+      "dur": "",
+      "views": "",
+      "bg": "linear-gradient(135deg, #0f2d1a, #1a3a5c)",
+      "youtube": "https://youtu.be/DMR8KsuAGEY"
+    },
+    {
+      "title": "Trenzando Voces | Camila Pérez – Ballet en Temuco y vocación transformadora",
+      "dur": "",
+      "views": "",
+      "bg": "linear-gradient(135deg, #2d1a0f, #5c4033)",
+      "youtube": "https://youtu.be/BA67hV5tEk0"
+    },
+    {
+      "title": "Trenzando Voces | Germinè Feuillé – Sanar escribiendo desde Haití a Temuco",
+      "dur": "",
+      "views": "",
+      "bg": "linear-gradient(135deg, #1d4a2b, #29623a)",
+      "youtube": "https://youtu.be/MjJRCWYT4e4"
+    },
+    {
+      "title": "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",
+      "dur": "",
+      "views": "7.1K vistas",
+      "bg": "linear-gradient(135deg, #1a1a1a, #2d2d2d)"
+    }
   ],
   "programs": [
-    { "start": "06:00", "end": "10:00", "name": "Sube que Te Llevo",         "host": "Alejandro Contreras",              "color": "#29623a" },
-    { "start": "10:00", "end": "13:00", "name": "La Gran Manada",            "host": "Miguel Ángel Contreras",           "color": "#4a7c59" },
-    { "start": "13:30", "end": "14:30", "name": "La Voz Albiverde",          "host": "Mariela González · Lun, Mié, Vie", "color": "#8B0000", "days": [1, 3, 5] },
-    { "start": "15:00", "end": "16:00", "name": "Contra el Reloj",           "host": "Cristian Neira · Lun a Vie",       "color": "#1a3a5c" },
-    { "start": "16:00", "end": "18:00", "name": "Tarde a Tarde de Clásicos", "host": "Luis Vega",                        "color": "#5c4033" },
-    { "start": "18:00", "end": "20:00", "name": "Al Fondo a la Derecha",     "host": "Rolando Gómez",                    "color": "#4a7c59" }
+    {
+      "start": "06:00",
+      "end": "10:00",
+      "name": "Sube que Te Llevo",
+      "host": "Alejandro Contreras",
+      "color": "#29623a"
+    },
+    {
+      "start": "10:00",
+      "end": "13:00",
+      "name": "La Gran Manada",
+      "host": "Miguel Ángel Contreras",
+      "color": "#4a7c59"
+    },
+    {
+      "start": "13:30",
+      "end": "14:30",
+      "name": "La Voz Albiverde",
+      "host": "Mariela González · Lun, Mié, Vie",
+      "color": "#8B0000"
+    },
+    {
+      "start": "15:00",
+      "end": "16:00",
+      "name": "Contra el Reloj",
+      "host": "Cristian Neira",
+      "color": "#1a3a5c"
+    },
+    {
+      "start": "16:00",
+      "end": "18:00",
+      "name": "Tarde a Tarde de Clásicos",
+      "host": "Luis Vega",
+      "color": "#5c4033"
+    },
+    {
+      "start": "18:00",
+      "end": "20:00",
+      "name": "Al Fondo a la Derecha",
+      "host": "Rolando Gómez",
+      "color": "#4a7c59"
+    }
   ],
   "regions": [
     {
@@ -96,8 +155,16 @@
     }
   ],
   "whatsappOptions": [
-    { "label": "Consulta general",   "icon": "💬", "msg": "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden." },
-    { "label": "Cotizar publicidad", "icon": "📢", "msg": "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?" }
+    {
+      "label": "Consulta general",
+      "icon": "💬",
+      "msg": "Hola Radio Araucana, tengo una consulta y me gustaría que me ayuden."
+    },
+    {
+      "label": "Cotizar publicidad",
+      "icon": "📢",
+      "msg": "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?"
+    }
   ],
   "frontera": {
     "tagline": "La Primera del Sur de Chile",
@@ -114,24 +181,48 @@
     ],
     "programs": [
       {
-        "start": "07:00", "end": "09:00",
+        "start": "07:00",
+        "end": "09:00",
         "name": "Despertar Campesino",
         "host": "Lunes a Sábado",
-        "days": [1, 2, 3, 4, 5, 6],
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
         "description": "Programa con música de nuestro folklore, iniciando un nuevo día con informaciones para los agricultores de la Región de la Araucanía."
       },
       {
-        "start": "09:00", "end": "13:00",
+        "start": "09:00",
+        "end": "13:00",
         "name": "Buenos Días, Mucha Música",
         "host": "Lunes a Sábado",
-        "days": [1, 2, 3, 4, 5, 6],
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
         "description": "Programación musical en español con todos los ritmos, dedicada a toda la región, con despachos desde las comunas y mucha información para auditores tanto de la costa como de la cordillera."
       },
       {
-        "start": "13:00", "end": "14:00",
+        "start": "13:00",
+        "end": "14:00",
         "name": "La Región al Día",
         "host": "Lunes a Sábado",
-        "days": [1, 2, 3, 4, 5, 6],
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
         "description": "Noticias regionales, nacionales e internacionales."
       }
     ]

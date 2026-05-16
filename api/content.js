@@ -11,25 +11,41 @@ export const config = {
   runtime: "nodejs",
 };
 
+// Cachear la URL pública del blob en memoria del lambda. Sólo el primer
+// request tras un cold start hace `list()` (advanced op); los warm hits
+// reutilizan la URL y van directo al fetch del CDN (simple op).
+let cachedBlobUrl = null;
+
 export default async function handler(req, res) {
-  // No caching: edits in /admin must show up on the next page load.
-  // The traffic is low enough that hitting this function on every page
-  // load fits comfortably in the Hobby plan's invocation quota.
-  res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
+  // CDN cache de 60s con stale-while-revalidate: la mayoría de los page
+  // loads se sirven desde el edge sin invocar esta función. Edits en /admin
+  // tardan hasta ~60s en propagarse (antes era inmediato), trade-off
+  // necesario para no quemar la cuota de "Advanced Operations" de Hobby
+  // (2k/mes — el `list()` en cada page load llegaba a 3k+).
+  res.setHeader(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=600"
+  );
 
   try {
-    const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
-    const target = blobs.find((b) => b.pathname === BLOB_KEY);
+    if (!cachedBlobUrl) {
+      const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
+      const target = blobs.find((b) => b.pathname === BLOB_KEY);
+      if (target) cachedBlobUrl = target.url;
+    }
 
-    if (target) {
-      const fetched = await fetch(target.url, { cache: "no-store" });
+    if (cachedBlobUrl) {
+      const fetched = await fetch(cachedBlobUrl, { cache: "no-store" });
       if (fetched.ok) {
         const data = await fetched.json();
         return res.status(200).json(data);
       }
+      // URL pudo haber cambiado (improbable con addRandomSuffix:false, pero
+      // por seguridad invalidamos para que el próximo request re-liste).
+      cachedBlobUrl = null;
     }
   } catch (err) {
-    // Swallow: fall back to bundled defaults so the site never goes blank
+    cachedBlobUrl = null;
     console.error("[/api/content] blob read failed:", err?.message ?? err);
   }
 

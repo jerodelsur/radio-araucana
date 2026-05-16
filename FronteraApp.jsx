@@ -548,8 +548,6 @@ function Footer() {
               ))}
             </div>
 
-            <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>{SETTINGS.address}</p>
-            <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
           </div>
 
           <div>
@@ -560,10 +558,11 @@ function Footer() {
             <a href="/" className="footer-link" style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", marginBottom: 24 })}>Radio Araucana 95.9 FM</a>
 
             <div style={{ borderTop: `1px solid ${F.bgSoft}`, paddingTop: 16 }}>
-              <p style={K({ fontWeight: 600, fontSize: 13, color: F.lime, marginBottom: 12 })}>Para contratar publicidad:</p>
+              <p style={K({ fontWeight: 600, fontSize: 13, color: F.lime, marginBottom: 12 })}>Nuestras oficinas:</p>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 {SETTINGS.adminPhone}</p>
               <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 {SETTINGS.adminHours}</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>🕘 {SETTINGS.adminHours}</p>
+              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 0 })}>📍 {SETTINGS.address}</p>
               <a
                 href={`https://wa.me/${SETTINGS.whatsappNumber}?text=${encodeURIComponent(FOOTER_COTIZA_MSG)}`}
                 target="_blank" rel="noreferrer"

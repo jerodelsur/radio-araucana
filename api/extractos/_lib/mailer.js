@@ -51,10 +51,11 @@ export function getTransporter() {
   return cachedTransporter;
 }
 
-function fromHeader(overrideName) {
+function fromHeader(overrideName, overrideEmail) {
   const c = smtpConfig();
   const name = overrideName || process.env.EMAIL_FROM_NAME || "Radio La Frontera — Extractos";
-  return `"${name}" <${c.from}>`;
+  const email = (overrideEmail || c.from || "").trim();
+  return `"${name}" <${email}>`;
 }
 
 function adminRecipients() {
@@ -66,18 +67,19 @@ function adminRecipients() {
  * Envía un email. Devuelve { ok: boolean, messageId?: string, error?: string }.
  * Nunca lanza — captura errores para no romper la creación de órdenes si SMTP falla.
  */
-export async function sendEmail({ to, subject, html, text, replyTo, cc, fromName }) {
+export async function sendEmail({ to, subject, html, text, replyTo, cc, fromName, fromEmail }) {
   if (!isMailerConfigured()) {
     return { ok: false, error: "mailer_not_configured" };
   }
   try {
     const t = getTransporter();
     const c = smtpConfig();
+    const fromAddress = (fromEmail || c.from || "").trim();
     const info = await t.sendMail({
-      from: fromHeader(fromName),
+      from: fromHeader(fromName, fromEmail),
       to: Array.isArray(to) ? to.join(", ") : to,
       cc: cc ? (Array.isArray(cc) ? cc.join(", ") : cc) : undefined,
-      replyTo: replyTo || c.from,
+      replyTo: replyTo || fromAddress,
       subject,
       html,
       text,

@@ -6,7 +6,7 @@ import { sendEmail, isMailerConfigured } from "../../extractos/_lib/mailer.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
 import { consumirCupon } from "../_lib/tarifas-store.js";
 import { authOk } from "../_lib/auth.js";
-import { cotizaTo, cotizaCc } from "../_lib/recipients.js";
+import { cotizaTo, cotizaCc, cotizaFromEmail } from "../_lib/recipients.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -265,6 +265,7 @@ export default async function handler(req, res) {
     subject, html, text,
     replyTo: undefined,
     fromName: "Radio Araucana 95.9 FM — Publicidad",
+    fromEmail: cotizaFromEmail(),
   });
 
   if (!result.ok) {

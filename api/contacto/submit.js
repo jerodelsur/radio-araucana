@@ -21,6 +21,13 @@ const RUTEO_DEFAULT = {
     cc: ["administracion@araucanayfrontera.cl"],
     fromName: "Radio La Frontera — Extractos",
   },
+  prensa: {
+    // Por ahora va al cajón general. Cuando definan email dedicado de prensa,
+    // se cambia acá (o vía env CONTACTO_RUTEO_JSON sin redeploy).
+    to: ["contacto@araucanayfrontera.cl"],
+    cc: [],
+    fromName: "Radio Araucana — Prensa",
+  },
   general: {
     to: ["administracion@araucanayfrontera.cl"],
     cc: [],

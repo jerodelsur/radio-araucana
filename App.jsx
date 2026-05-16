@@ -823,7 +823,7 @@ function SponsorStrip() {
         EMPRESAS QUE CONFÍAN EN NOSOTROS
       </p>
       <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-        {["MALLPLAZA", "COPEC", "BCI", "SALCOBRAND", "SODIMAC"].map((s) => (
+        {["COCA-COLA", "COPEC", "BCI", "SALCOBRAND", "SODIMAC"].map((s) => (
           <div key={s} className="sponsor-block" style={{ border: "1px solid rgba(41,98,58,0.4)", width: 120, height: 48, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={K({ fontWeight: 500, fontSize: 11, color: "#9ca3af", letterSpacing: "0.05em" })}>{s}</span>
           </div>

@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     let query = supabase
       .from("cotiza_cotizaciones")
-      .select("id, numero, created_at, cliente_nombre, cliente_empresa, cliente_telefono, cliente_email, lineas, subtotal, descuento_pyme, descuento_agencia, descuento_cupon, iva, total, estado, enviada_en, enviada_via, enviada_a, cambio_estado_en, cambio_estado_por, notas_internas, comentarios, pyme_aplicado, agencia_tramo, cupon_codigo, solicitud_id")
+      .select("id, numero, created_at, cliente_nombre, cliente_empresa, cliente_telefono, cliente_email, lineas, subtotal, descuento_pyme, descuento_agencia, descuento_cupon, iva, total, estado, enviada_en, enviada_via, enviada_a, cambio_estado_en, cambio_estado_por, notas_internas, comentarios, pyme_aplicado, agencia_tramo, cupon_codigo, solicitud_id, propuesta_b")
       .order("created_at", { ascending: false })
       .limit(limit);
 

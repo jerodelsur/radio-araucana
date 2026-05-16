@@ -26,6 +26,10 @@
       "destination": "/cotiza"
     },
     {
+      "source": "/contacto",
+      "destination": "/contacto"
+    },
+    {
       "source": "/frontera/extractos",
       "destination": "/extractos"
     },

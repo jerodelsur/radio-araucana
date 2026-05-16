@@ -286,24 +286,6 @@ export default function ContactoApp() {
                   </p>
                 </form>
               )}
-
-              {/* Alternativas directas */}
-              <div style={{
-                marginTop: 36, padding: 20,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 10,
-              }}>
-                <p style={K({ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 })}>
-                  ¿Prefieres otro canal?
-                </p>
-                <div style={K({ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.9 })}>
-                  📞 <a href={`https://wa.me/${SETTINGS.whatsappNumber}`} target="_blank" rel="noreferrer"
-                    style={{ color: "#52b870", textDecoration: "none" }}>{SETTINGS.adminPhone} (WhatsApp)</a><br />
-                  ✉ <a href={`mailto:${SETTINGS.contactEmail}`}
-                    style={{ color: "#52b870", textDecoration: "none" }}>{SETTINGS.contactEmail}</a><br />
-                  📍 {SETTINGS.address}
-                </div>
-              </div>
             </>
           )}
         </div>

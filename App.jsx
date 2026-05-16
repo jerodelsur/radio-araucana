@@ -897,7 +897,7 @@ function Footer() {
             <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
               <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>Para contratar publicidad, contáctanos acá:</p>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 {SETTINGS.adminPhone}</p>
-              <a href={`mailto:${SETTINGS.adminEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ {SETTINGS.adminEmail}</a>
+              <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
               <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 0 })}>🕘 {SETTINGS.adminHours}</p>
             </div>
           </div>

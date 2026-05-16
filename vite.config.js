@@ -19,6 +19,9 @@ const devRewrites = () => ({
       } else if (url === '/cotiza' || url.startsWith('/cotiza/') || url.startsWith('/cotiza?')) {
         const qIdx = url.indexOf('?')
         req.url = qIdx >= 0 ? `/cotiza.html${url.slice(qIdx)}` : '/cotiza.html'
+      } else if (url === '/contacto' || url.startsWith('/contacto?')) {
+        const qIdx = url.indexOf('?')
+        req.url = qIdx >= 0 ? `/contacto.html${url.slice(qIdx)}` : '/contacto.html'
       }
       next()
     })
@@ -144,6 +147,11 @@ const devApiStub = () => ({
       if (req.method !== 'POST') return next()
       await runHandler('/api/cotiza/_handlers/login.js', req, res)
     })
+
+    server.middlewares.use('/api/contacto/submit', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/contacto/submit.js', req, res)
+    })
   },
 })
 
@@ -165,6 +173,7 @@ export default defineConfig(({ mode }) => {
           frontera: resolve(__dirname, 'frontera.html'),
           extractos: resolve(__dirname, 'extractos.html'),
           cotiza: resolve(__dirname, 'cotiza.html'),
+          contacto: resolve(__dirname, 'contacto.html'),
         },
       },
     },

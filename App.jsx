@@ -852,7 +852,7 @@ const FOOTER_LINKS = [
   ]},
   { title: "Publicidad", links: [
     { label: "Cotiza tu publicidad", href: "/cotiza" },
-    { label: "Contacto", href: "#contacto" },
+    { label: "Contáctanos", href: "/contacto" },
   ]},
 ];
 

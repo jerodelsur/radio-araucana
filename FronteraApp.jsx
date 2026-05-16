@@ -96,7 +96,7 @@ const NAV_LINKS = [
   { label: "Programación",    href: "#programacion" },
   { label: "Historia",        href: "#historia" },
   { label: "Extractos",       href: "/frontera/extractos" },
-  { label: "Contacto",        href: "#contacto" },
+  { label: "Contacto",        href: "/contacto" },
   { label: "Radio Araucana",  href: "/" },
 ];
 
@@ -549,7 +549,7 @@ function Footer() {
             </div>
 
             <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>{SETTINGS.address}</p>
-            <a href={`mailto:${SETTINGS.contactEmail}`} style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ {SETTINGS.contactEmail}</a>
+            <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
           </div>
 
           <div>

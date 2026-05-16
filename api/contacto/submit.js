@@ -29,9 +29,7 @@ const RUTEO_DEFAULT = {
     fromName: "Radio Araucana — Entrevistas",
   },
   prensa: {
-    // Por ahora va al cajón general. Cuando definan email dedicado de prensa,
-    // se cambia acá (o vía env CONTACTO_RUTEO_JSON sin redeploy).
-    to: ["contacto@araucanayfrontera.cl"],
+    to: ["prensa@araucanayfrontera.cl"],
     cc: [],
     fromName: "Radio Araucana — Prensa",
   },

@@ -4,7 +4,7 @@
 
 import { sendEmail, isMailerConfigured } from "../../extractos/_lib/mailer.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
-import { cotizaTo, cotizaCc } from "../_lib/recipients.js";
+import { cotizaTo, cotizaCc, cotizaFromEmail } from "../_lib/recipients.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -197,6 +197,7 @@ export default async function handler(req, res) {
     text,
     replyTo: cliente.email || undefined,
     fromName: "Radio Araucana — Solicitud Cotización",
+    fromEmail: cotizaFromEmail(),
   });
 
   if (!result.ok) {

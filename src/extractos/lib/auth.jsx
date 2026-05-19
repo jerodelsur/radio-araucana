@@ -24,6 +24,7 @@ function hasStoredSession() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
   const [adminProfile, setAdminProfile] = useState(null);
   // Si no hay sesión guardada, no necesitamos "verificar" nada — loading=false
   // de entrada y RequireAdmin redirige instantáneamente a /admin/login.
@@ -89,6 +90,7 @@ export function AuthProvider({ children }) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!alive) return;
         setUser(session?.user ?? null);
+        setAccessToken(session?.access_token ?? null);
         await loadProfile(session?.user ?? null);
       } catch (err) {
         console.error("[auth] bootstrap error:", err);
@@ -102,6 +104,7 @@ export function AuthProvider({ children }) {
     const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!alive) return;
       setUser(session?.user ?? null);
+      setAccessToken(session?.access_token ?? null);
       await loadProfile(session?.user ?? null);
     });
     subscriptionRef.current = data?.subscription;
@@ -115,6 +118,7 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user,
+    accessToken,
     adminProfile,
     loading,
     authError,
@@ -155,6 +159,7 @@ export function AuthProvider({ children }) {
       const supabase = getSupabaseBrowser();
       await supabase.auth.signOut();
       setUser(null);
+      setAccessToken(null);
       setAdminProfile(null);
     },
     async requestPasswordReset(email) {
@@ -183,7 +188,7 @@ export function AuthProvider({ children }) {
         return { ok: false, error: err?.message || "Error desconocido al actualizar contraseña." };
       }
     },
-  }), [user, adminProfile, loading, authError]);
+  }), [user, accessToken, adminProfile, loading, authError]);
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

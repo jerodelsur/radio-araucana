@@ -212,7 +212,7 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  if (!authOk(req)) return res.status(401).json({ error: "Unauthorized" });
+  if (!(await authOk(req))) return res.status(401).json({ error: "Unauthorized" });
 
   if (JSON.stringify(req.body || {}).length > MAX_BODY_LEN) {
     return res.status(413).json({ error: "Body too large" });

@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  if (!authOk(req)) return res.status(401).json({ error: "Unauthorized" });
+  if (!(await authOk(req))) return res.status(401).json({ error: "Unauthorized" });
 
   const error = validar(req.body);
   if (error) return res.status(400).json({ error });

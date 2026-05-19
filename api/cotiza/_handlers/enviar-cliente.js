@@ -255,7 +255,11 @@ export default async function handler(req, res) {
   }
 
   const subject = `Cotización publicidad Radio Araucana 95.9 FM${cliente.empresa ? " — " + cliente.empresa : ""}${propuestaB ? " (Opción A + B)" : ""}`;
-  const iva = req.body.iva || propuestaA.iva / Math.max(1, propuestaA.subtotal) || 0.19;
+  // Tasa de IVA = monto / subtotal. body.iva es el MONTO (no la tasa), por eso
+  // no se usa para esto — usarlo directo daba el famoso "IVA (12825000%)".
+  const iva = propuestaA.subtotal > 0
+    ? propuestaA.iva / propuestaA.subtotal
+    : 0.19;
   const html = renderHtml({ cliente, propuestaA, propuestaB, fecha, iva });
   const text = renderText({ cliente, propuestaA, propuestaB, fecha, iva });
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate, useLocation, Link } from "react-router-dom";
 import { T } from "../../theme.js";
 import { Card, Field, Input, Button, Badge } from "../../components/ui.jsx";
-import { useAuth } from "../../lib/auth.jsx";
+import { useAuth, clearStoredSession } from "../../lib/auth.jsx";
 
 export default function AdminLogin() {
   const { isAdmin, loading: authLoading, authError, signIn } = useAuth();
@@ -108,6 +108,19 @@ export default function AdminLogin() {
             <Link to="/admin/forgot-password" style={{ fontSize: 13, color: T.greenDark }}>
               ¿Olvidaste tu contraseña?
             </Link>
+          </div>
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => { clearStoredSession(); window.location.reload(); }}
+              style={{
+                background: "none", border: "none", padding: 0,
+                color: T.inkSoft, cursor: "pointer", fontSize: 12,
+                textDecoration: "underline", fontFamily: "inherit",
+              }}
+            >
+              ¿Se queda colgado? Limpiar sesión y reintentar
+            </button>
           </div>
         </Card>
       </div>

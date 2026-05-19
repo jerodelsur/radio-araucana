@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { K } from "./Layout.jsx";
-import { useAuth } from "../extractos/lib/auth.jsx";
+import { useAuth, clearStoredSession } from "../extractos/lib/auth.jsx";
 
 export default function LoginAdmin({ titulo, descripcion }) {
   const { signIn, authError, loading: authLoading } = useAuth();
@@ -100,6 +100,21 @@ export default function LoginAdmin({ titulo, descripcion }) {
 
         <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 16, lineHeight: 1.5, textAlign: "center" })}>
           Misma cuenta que para el panel de extractos.
+        </p>
+
+        <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.5, textAlign: "center" })}>
+          ¿Se queda colgado o no entra?{" "}
+          <button
+            type="button"
+            onClick={() => { clearStoredSession(); window.location.reload(); }}
+            style={{
+              background: "none", border: "none", padding: 0,
+              color: "#7bd8a0", cursor: "pointer", fontSize: 11,
+              textDecoration: "underline", fontFamily: "inherit",
+            }}
+          >
+            limpiar sesión y reintentar
+          </button>
         </p>
       </form>
     </section>

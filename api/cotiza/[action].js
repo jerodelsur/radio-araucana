@@ -16,7 +16,6 @@ import enviarCliente from "./_handlers/enviar-cliente.js";
 import cotizaciones from "./_handlers/cotizaciones.js";
 import cotizacionEstado from "./_handlers/cotizacion-estado.js";
 import guardarCotizacion from "./_handlers/guardar-cotizacion.js";
-import login from "./_handlers/login.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -30,7 +29,6 @@ const HANDLERS = {
   cotizaciones,
   "cotizacion-estado": cotizacionEstado,
   "guardar-cotizacion": guardarCotizacion,
-  login,
 };
 
 export default async function handler(req, res) {

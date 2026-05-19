@@ -6,6 +6,7 @@ import Solicitud from "./Solicitud.jsx";
 import Confirmacion from "./Confirmacion.jsx";
 import Admin from "./Admin.jsx";
 import { TARIFAS_DEFAULT } from "./tarifas.js";
+import { AuthProvider } from "../extractos/lib/auth.jsx";
 
 const STORAGE_CLIENTE = "cotiza_cliente";
 
@@ -18,7 +19,7 @@ export default function CotizaApp() {
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<FlujoPublico />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={<AuthProvider><Admin /></AuthProvider>} />
             {/* Compatibilidad: /interno fue la URL del cotizador de equipo;
                 ahora está unificado dentro de /admin como tab "Armar cotización". */}
             <Route path="/interno" element={<Navigate to="/admin?tab=armar" replace />} />

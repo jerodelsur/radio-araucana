@@ -1,15 +1,33 @@
-// Helper compartido: valida Bearer ADMIN_PASSWORD con tolerancia a whitespace.
+// Verifica que el caller esté autenticado contra Supabase Auth y tenga fila
+// en public.admin_users. Misma base que el panel de extractos: una sola cuenta
+// habilita ambos paneles.
 //
-// Razón del trim: cuando se setea ADMIN_PASSWORD en el dashboard de Vercel a
-// veces se cuelan newlines o espacios al pegar. Eso hace que `req.token === expected`
-// nunca matchee aunque la clave sea "correcta" visualmente. Comparar trim()
-// evita ese fallo silencioso.
+// El cliente manda `Authorization: Bearer <access_token>` donde access_token
+// es el JWT de Supabase. Acá lo intercambiamos por el user y chequeamos rol.
 
-export function authOk(req) {
-  const expected = (process.env.ADMIN_PASSWORD || "").trim();
-  if (!expected) return false;
-  const header = req.headers.authorization || "";
-  const [scheme, ...rest] = header.split(" ");
+import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
+
+export async function authOk(req) {
+  if (!isSupabaseConfigured()) return false;
+  const header = req.headers.authorization || req.headers.Authorization || "";
+  const [scheme, ...rest] = String(header).split(" ");
   const token = rest.join(" ").trim();
-  return scheme === "Bearer" && token === expected;
+  if (scheme !== "Bearer" || !token) return false;
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return false;
+
+    const { data: adminRow, error: adminErr } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (adminErr || !adminRow) return false;
+    return true;
+  } catch (err) {
+    console.warn("[cotiza/auth] error verificando token:", err?.message);
+    return false;
+  }
 }

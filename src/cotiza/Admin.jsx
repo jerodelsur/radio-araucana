@@ -6,8 +6,7 @@ import ArmarCotizacionTab from "./ArmarCotizacionTab.jsx";
 import SolicitudesPanel from "./SolicitudesPanel.jsx";
 import CotizacionesTab from "./CotizacionesTab.jsx";
 import TarifasTab from "./TarifasTab.jsx";
-
-const STORAGE_KEY = "cotiza_admin_token";
+import { useAuth } from "../extractos/lib/auth.jsx";
 
 const TABS = [
   { id: "armar", label: "Armar cotización" },
@@ -17,9 +16,10 @@ const TABS = [
 ];
 
 /**
- * Panel único de administración del cotizador. Login con ADMIN_PASSWORD y
- * adentro tabs: armar cotización, solicitudes públicas pendientes, historial
- * de cotizaciones y editor de tarifas/cupones.
+ * Panel único de administración del cotizador. Login con Supabase Auth (la
+ * misma cuenta que el panel de extractos: cualquier fila en public.admin_users
+ * habilita el acceso). Adentro tabs: armar cotización, solicitudes públicas
+ * pendientes, historial de cotizaciones y editor de tarifas/cupones.
  *
  * Cuando el usuario hace click "Cotizar" en la tab Solicitudes, se cambia
  * automáticamente a la tab "Armar cotización" con los datos precargados.
@@ -27,9 +27,8 @@ const TABS = [
 export default function Admin() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAdmin, loading: authLoading, accessToken, signOut, adminProfile, authError } = useAuth();
 
-  const [token, setToken] = useState(() => sessionStorage.getItem(STORAGE_KEY) || "");
-  const [autenticado, setAutenticado] = useState(() => Boolean(sessionStorage.getItem(STORAGE_KEY)));
   const [tarifas, setTarifas] = useState(null);
   const [errorCarga, setErrorCarga] = useState("");
   const [solicitudPrecargada, setSolicitudPrecargada] = useState(null);
@@ -47,37 +46,40 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (!autenticado) return;
+    if (!isAdmin) return;
     fetch("/api/cotiza/tarifas", { cache: "no-store" })
       .then((r) => r.json())
       .then(setTarifas)
       .catch((e) => setErrorCarga(e?.message || String(e)));
-  }, [autenticado]);
-
-  const onLogin = (t) => {
-    sessionStorage.setItem(STORAGE_KEY, t);
-    setToken(t);
-    setAutenticado(true);
-  };
-  const logout = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
-    setToken("");
-    setAutenticado(false);
-    setTarifas(null);
-    setSolicitudPrecargada(null);
-  };
+  }, [isAdmin]);
 
   const handlePrecargarSolicitud = (sol) => {
     setSolicitudPrecargada(sol);
     setTab("armar");
   };
 
-  if (!autenticado) {
+  const logout = async () => {
+    await signOut();
+    setTarifas(null);
+    setSolicitudPrecargada(null);
+  };
+
+  if (authLoading) {
+    return (
+      <p style={{ padding: 80, textAlign: "center", color: "rgba(255,255,255,0.5)" }}>
+        Verificando sesión…
+      </p>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <LoginAdmin
         titulo="Administración del cotizador"
-        descripcion="Cotizaciones, solicitudes, tarifas y cupones. Requiere clave de administración."
-        onLogin={onLogin}
+        descripcion={
+          authError ||
+          "Ingresa con tu cuenta de administración (misma del panel de extractos)."
+        }
       />
     );
   }
@@ -98,6 +100,7 @@ export default function Admin() {
             <h1 style={K({ fontSize: 24, fontWeight: 700, marginBottom: 4 })}>Administración del cotizador</h1>
             <p style={K({ fontSize: 13, color: "rgba(255,255,255,0.5)" })}>
               Radio Araucana 95.9 FM · Publicidad
+              {adminProfile?.full_name ? ` · ${adminProfile.full_name}` : ""}
             </p>
           </div>
           <button type="button" onClick={logout}
@@ -126,7 +129,7 @@ export default function Admin() {
         {tab === "armar" && (
           <ArmarCotizacionTab
             tarifas={tarifas}
-            token={token}
+            token={accessToken}
             onLogout={logout}
             solicitudPrecargada={solicitudPrecargada}
             onSolicitudAtendida={() => {
@@ -138,7 +141,7 @@ export default function Admin() {
 
         {tab === "solicitudes" && (
           <SolicitudesPanel
-            token={token}
+            token={accessToken}
             onLogout={logout}
             onPrecargar={handlePrecargarSolicitud}
             refreshKey={refreshKey}
@@ -146,9 +149,9 @@ export default function Admin() {
           />
         )}
 
-        {tab === "cotizaciones" && <CotizacionesTab token={token} />}
+        {tab === "cotizaciones" && <CotizacionesTab token={accessToken} />}
 
-        {tab === "tarifas" && <TarifasTab tarifas={tarifas} token={token} onLogout={logout} />}
+        {tab === "tarifas" && <TarifasTab tarifas={tarifas} token={accessToken} onLogout={logout} />}
       </div>
     </section>
   );

@@ -37,8 +37,9 @@ export default async function handler(req, res) {
   try {
     const supabase = getSupabaseAdmin();
 
-    // Marcar vencidas (lazy): cotizaciones enviada hace más de 30 días sin
-    // respuesta. La función está definida en la migración 0011.
+    // Marcar vencidas (lazy): cotizaciones enviada hace más de 14 días sin
+    // respuesta. La función está definida en la migración 0011 y actualizada
+    // en 0013 para reflejar la vigencia comunicada al cliente.
     try {
       await supabase.rpc("mark_cotizaciones_vencidas");
     } catch (err) {

@@ -115,8 +115,10 @@ function renderHtml({ cliente, propuestaA, propuestaB, fecha, iva }) {
     ${tieneB ? renderPropuestaBloque({ titulo: "Opción B", propuesta: propuestaB, iva }) : ""}
 
     <p style="margin-top:24px;font-size:13px;color:#444;line-height:1.6;">
-      Esta cotización es referencial y válida por 30 días. La programación final se confirma al cerrar el contrato.
-      Cualquier duda quedamos atentos.
+      Cotización referencial, vigente por <strong>14 días</strong> desde la fecha de emisión.
+      Los valores están sujetos a corrección por errores involuntarios; en caso de discrepancia,
+      prevalecen las tarifas vigentes al cerrar el contrato. La programación definitiva se
+      confirma con el acuerdo final. Cualquier duda, escríbenos.
     </p>
 
     <div style="margin-top:32px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#666;line-height:1.7;">
@@ -171,7 +173,9 @@ function renderText({ cliente, propuestaA, propuestaB, fecha, iva }) {
     out.push(...renderPropuestaTexto({ titulo: "Opción B", propuesta: propuestaB, iva }));
   }
   out.push("");
-  out.push("Cotización referencial, vigencia 30 días.");
+  out.push("Cotización referencial, vigente por 14 días desde la fecha de emisión.");
+  out.push("Los valores están sujetos a corrección por errores involuntarios; en caso de");
+  out.push("discrepancia, prevalecen las tarifas vigentes al cerrar el contrato.");
   out.push("Radio Araucana FM 95.9 · cotizaciones@araucanayfrontera.cl · +56 9 9287 2087");
   return out.join("\n");
 }

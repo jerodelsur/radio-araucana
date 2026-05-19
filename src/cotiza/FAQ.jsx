@@ -24,14 +24,14 @@ const PREGUNTAS = [
     ),
   },
   {
-    q: "¿Cuál es la diferencia entre Horario Repartido (BASE) y Horario Seleccionado (PRIME)?",
+    q: "¿Cuál es la diferencia entre Horario Repartido y Horario Seleccionado?",
     a: (
       <>
-        <strong>BASE</strong> (Horario Repartido) rota durante toda la programación, así tu frase pasa
-        en distintos momentos del día y llega a audiencias variadas.{" "}
-        <strong>PRIME</strong> (Horario Seleccionado) sale dentro de bloques específicos de mayor
-        audiencia —como los matinales o los informativos centrales— y por eso tiene mayor costo por
-        frase. Muchas campañas combinan ambos: PRIME para impacto y BASE para frecuencia.
+        <strong>Horario Repartido</strong> rota de forma aleatoria durante toda la programación, así tu
+        frase pasa en distintos momentos del día y llega a audiencias variadas.{" "}
+        <strong>Horario Seleccionado</strong> es el que tú eliges: bloques específicos de mayor audiencia
+        —como los matinales o los informativos centrales— y por eso tiene mayor costo por frase. Muchas
+        campañas combinan ambos: seleccionado para impacto y repartido para frecuencia.
       </>
     ),
   },

@@ -12,7 +12,7 @@
       "horarios": [
         {
           "id": "base",
-          "label": "Horario Repartido (BASE)",
+          "label": "Horario Repartido (aleatorio durante el día)",
           "hint": "Rotativo durante toda la programación",
           "packs": [
             { "id": "suelta", "label": "Tarifa suelta", "frases": 1, "precioUnitario": 9000 },
@@ -24,7 +24,7 @@
         },
         {
           "id": "prime",
-          "label": "Horario Seleccionado (PRIME)",
+          "label": "Horario Seleccionado (lo elige el cliente)",
           "hint": "En bloques específicos de alta audiencia",
           "packs": [
             { "id": "suelta", "label": "Tarifa suelta", "frases": 1, "precioUnitario": 12000 },

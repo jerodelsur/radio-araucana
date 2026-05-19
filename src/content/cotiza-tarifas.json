@@ -60,14 +60,19 @@
     {
       "id": "entrevista",
       "titulo": "Entrevista",
-      "duracion": "5 o 10 min",
+      "duracion": "5, 10 o 15 min",
       "icon": "🎙️",
-      "descripcion": "Entrevista en estudio o por teléfono dentro de los bloques periodísticos. Pensada para autoridades, candidatos, voceros y lanzamientos.",
+      "descripcion": "Entrevista en estudio o por teléfono dentro de los bloques periodísticos. Pensada para autoridades, candidatos, voceros y lanzamientos. Opción de despacho en terreno (+50% sobre el valor base).",
       "unidades": [
         { "id": "5min", "label": "Entrevista de 5 minutos", "precio": 50000 },
-        { "id": "10min", "label": "Entrevista de 10 minutos", "precio": 100000 }
+        { "id": "10min", "label": "Entrevista de 10 minutos", "precio": 100000 },
+        { "id": "15min", "label": "Entrevista de 15 minutos", "precio": 130000 }
       ],
-      "unidadNombre": "entrevistas"
+      "unidadNombre": "entrevistas",
+      "permiteDespacho": true,
+      "recargoDespacho": 0.5,
+      "despachoLabel": "Despacho en terreno (+50%)",
+      "despachoDescripcion": "Entrevista realizada desde un lugar fuera de los estudios. Se cobra un 50% adicional sobre el valor base."
     },
     {
       "id": "podcast",

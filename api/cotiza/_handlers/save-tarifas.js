@@ -51,6 +51,9 @@ function validar(body) {
           return `formatos[${i}].unidades[${j}].precio inválido`;
         }
       }
+      if (f.permiteDespacho && (!isFiniteNumber(f.recargoDespacho) || f.recargoDespacho < 0 || f.recargoDespacho > 5)) {
+        return `formatos[${i}].recargoDespacho debe ser un número entre 0 y 5`;
+      }
     } else {
       return `formatos[${i}]: debe tener horarios o unidades`;
     }

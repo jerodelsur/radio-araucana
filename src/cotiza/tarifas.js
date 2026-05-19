@@ -79,11 +79,20 @@ export function precioLineaUnidad(formato, seleccion) {
   if (!unidad) return null;
   const cantidad = Math.max(0, Number(seleccion.cantidad) || 0);
   if (cantidad === 0) return null;
+
+  const aplicaDespacho = Boolean(seleccion.despacho && formato.permiteDespacho);
+  const recargoPct = aplicaDespacho ? Number(formato.recargoDespacho) || 0 : 0;
+  const precioConRecargo = Math.round(unidad.precio * (1 + recargoPct));
+  const sufijoDespacho = aplicaDespacho
+    ? ` · despacho en terreno (+${Math.round(recargoPct * 100)}%)`
+    : "";
+
   return {
-    detalle: `${unidad.label} × ${cantidad}`,
+    detalle: `${unidad.label}${sufijoDespacho} × ${cantidad}`,
     cantidad,
-    subtotal: unidad.precio * cantidad,
-    precioUnitario: unidad.precio,
+    subtotal: precioConRecargo * cantidad,
+    precioUnitario: precioConRecargo,
+    despacho: aplicaDespacho,
   };
 }
 

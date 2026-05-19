@@ -95,7 +95,7 @@ export default function ArmarCotizacionTab({
           meses: 1,
         };
       } else {
-        nuevasSel[f.id] = { unidadId: f.unidades[0].id, cantidad: 1 };
+        nuevasSel[f.id] = { unidadId: f.unidades[0].id, cantidad: 1, despacho: false };
       }
     });
     const necesidades = (sol.pedido || [])

@@ -84,7 +84,7 @@ export default function BloqueCotizacion({
     const f = formatos.find((x) => x.id === id);
     const nueva = f.horarios
       ? { horarioId: f.horarios[0].id, packId: f.horarios[0].packs[1]?.id || f.horarios[0].packs[0].id, meses: 1 }
-      : { unidadId: f.unidades[0].id, cantidad: 1 };
+      : { unidadId: f.unidades[0].id, cantidad: 1, despacho: false };
     onChange({ selecciones: { ...s, [id]: nueva } });
   };
   const updateSeleccion = (id, patch) => {
@@ -365,13 +365,42 @@ function FraseConfig({ formato, seleccion, onUpdate }) {
 }
 function UnidadConfig({ formato, seleccion, onUpdate }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-      <Select label="Duración" value={seleccion.unidadId}
-        options={formato.unidades.map((u) => ({ value: u.id, label: `${u.label} · ${formatCLP(u.precio)}` }))}
-        onChange={(v) => onUpdate({ unidadId: v })} />
-      <NumField label="Cantidad" value={seleccion.cantidad} min={1}
-        onChange={(v) => onUpdate({ cantidad: v })} />
+    <div style={{ display: "grid", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <Select label="Duración" value={seleccion.unidadId}
+          options={formato.unidades.map((u) => ({ value: u.id, label: `${u.label} · ${formatCLP(u.precio)}` }))}
+          onChange={(v) => onUpdate({ unidadId: v })} />
+        <NumField label="Cantidad" value={seleccion.cantidad} min={1}
+          onChange={(v) => onUpdate({ cantidad: v })} />
+      </div>
+      {formato.permiteDespacho && (
+        <CheckOption
+          checked={Boolean(seleccion.despacho)}
+          onChange={(v) => onUpdate({ despacho: v })}
+          label={formato.despachoLabel || "Despacho en terreno (+50%)"}
+          hint={formato.despachoDescripcion || "Realizada fuera de los estudios. Se aplica el recargo sobre el valor base."}
+        />
+      )}
     </div>
+  );
+}
+
+function CheckOption({ checked, onChange, label, hint }) {
+  return (
+    <label style={K({
+      display: "flex", alignItems: "flex-start", gap: 10,
+      padding: "10px 12px",
+      background: checked ? "rgba(82,184,112,0.08)" : "rgba(255,255,255,0.02)",
+      border: `1px solid ${checked ? "rgba(82,184,112,0.35)" : "rgba(255,255,255,0.08)"}`,
+      borderRadius: 6, cursor: "pointer", fontSize: 12,
+    })}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+        style={{ marginTop: 2, accentColor: "#52b870", cursor: "pointer" }} />
+      <span style={{ flex: 1 }}>
+        <span style={K({ display: "block", color: "rgba(255,255,255,0.85)", fontWeight: 600, marginBottom: 2 })}>{label}</span>
+        {hint && <span style={K({ display: "block", color: "rgba(255,255,255,0.5)", fontSize: 11, lineHeight: 1.4 })}>{hint}</span>}
+      </span>
+    </label>
   );
 }
 function Select({ label, value, options, onChange }) {

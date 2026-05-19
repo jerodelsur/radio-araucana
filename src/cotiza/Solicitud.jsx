@@ -115,6 +115,16 @@ const PREGUNTAS_POR_FORMATO = {
       opciones: [
         { id: "5min", label: "5 minutos", descripcion: "Conversación corta y enfocada. Ideal para una novedad específica: una apertura, un lanzamiento, un anuncio puntual. El oyente capta el mensaje sin que se diluya." },
         { id: "10min", label: "10 minutos", descripcion: "Profundidad y contexto. Tiempo para contar quién sos, qué hacés y por qué tu propuesta importa. Recomendado para construir posicionamiento." },
+        { id: "15min", label: "15 minutos", descripcion: "Conversación extendida. Para temas con varias aristas o cuando hay más de un invitado. Permite explorar el tema sin apuro." },
+      ],
+    },
+    {
+      id: "modalidad",
+      label: "¿Desde dónde?",
+      hint: "El despacho en terreno tiene un recargo de 50% sobre el valor base.",
+      opciones: [
+        { id: "estudio", label: "Desde el estudio", descripcion: "Entrevista en nuestros estudios de Temuco o por teléfono, dentro de los bloques periodísticos. Valor base." },
+        { id: "despacho", label: "Despacho en terreno", descripcion: "Móvil al lugar del evento, lanzamiento o actividad. Suma un 50% sobre el valor base por el desplazamiento." },
       ],
     },
     {

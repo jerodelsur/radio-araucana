@@ -13,13 +13,39 @@ const AuthCtx = createContext(null);
 // Storage key DEBE coincidir con el de supabase-browser.js
 const STORAGE_KEY = "extractos-admin-session";
 
-function hasStoredSession() {
-  if (typeof window === "undefined") return false;
+// Lee la sesión de localStorage y valida que el access_token no esté expirado.
+// Si está corrupta o expirada, la borra y devuelve null. Sin esto, getSession()
+// puede quedarse colgado intentando "validar" un token zombie y la UI queda en
+// "Verificando sesión..." indefinidamente.
+function readValidStoredSession() {
+  if (typeof window === "undefined") return null;
   try {
-    return Boolean(window.localStorage?.getItem(STORAGE_KEY));
+    const raw = window.localStorage?.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const expiresAt = Number(parsed?.expires_at || parsed?.currentSession?.expires_at || 0);
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Margen de 30s — si está al borde de expirar tampoco vale la pena intentar.
+    if (!expiresAt || expiresAt < nowSec + 30) {
+      try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* no-op */ }
+      return null;
+    }
+    return parsed;
   } catch {
-    return false;
+    try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* no-op */ }
+    return null;
   }
+}
+
+function hasStoredSession() {
+  return Boolean(readValidStoredSession());
+}
+
+// Borra cualquier sesión guardada. Botón de pánico para cuando el browser
+// quedó con estado raro y Bertha/Jerónimo tienen que entrar de cero.
+export function clearStoredSession() {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* no-op */ }
 }
 
 export function AuthProvider({ children }) {
@@ -43,13 +69,15 @@ export function AuthProvider({ children }) {
     let alive = true;
     let bootstrapDone = false;
 
-    // Timeout duro: si algo se cuelga >8s, desbloqueamos la UI mostrando login.
-    // Solo dispara si el bootstrap NO terminó — no es ruido si todo va bien.
+    // Timeout duro: si algo se cuelga >3s, desbloqueamos la UI mostrando login.
+    // El bootstrap normal toma <500ms; 3s ya es señal clara de que algo (extensión,
+    // red, supabase-js) está bloqueando. Mejor mostrar login y dejar al user
+    // hacer login fresh que dejarlo viendo "Verificando sesión..." 8 segundos.
     const safetyTimer = setTimeout(() => {
       if (!alive || bootstrapDone) return;
       console.warn("[auth] safety timeout — desbloqueando loading state");
       setLoading(false);
-    }, 8000);
+    }, 3000);
 
     async function loadProfile(currentUser) {
       if (!currentUser) {
@@ -84,17 +112,32 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // Bootstrap inicial — try/finally garantiza que loading=false siempre se llame
+    // Bootstrap inicial.
+    // - Si no hay sesión válida en localStorage, no llamamos a getSession() para
+    //   nada — login se muestra al instante.
+    // - Si hay sesión, race con timeout de 2s: si supabase-js o una extensión
+    //   bloquean el call, caemos al login en lugar de quedar colgados.
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        if (!readValidStoredSession()) {
+          // Sin sesión guardada (o expirada) → no hace falta validar nada.
+          return;
+        }
+        const sessionPromise = supabase.auth.getSession().then((r) => r.data.session);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("getSession timeout")), 2000)
+        );
+        const session = await Promise.race([sessionPromise, timeoutPromise]);
         if (!alive) return;
         setUser(session?.user ?? null);
         setAccessToken(session?.access_token ?? null);
         await loadProfile(session?.user ?? null);
       } catch (err) {
-        console.error("[auth] bootstrap error:", err);
-        if (alive) setAuthError(err?.message || "Error al inicializar sesión.");
+        // En timeout o error, asumimos sesión inválida y mostramos login.
+        // No bloqueamos al user con un error rojo: si las credenciales son válidas
+        // y vuelve a entrar fresh, todo funciona.
+        console.warn("[auth] bootstrap fallback (mostrando login):", err?.message);
+        clearStoredSession();
       } finally {
         bootstrapDone = true;
         if (alive) setLoading(false);
@@ -126,15 +169,11 @@ export function AuthProvider({ children }) {
     async signIn(email, password) {
       const supabase = getSupabaseBrowser();
       setAuthError(null);
-      // Limpiamos cualquier sesión vieja en localStorage. Sesiones corruptas o
-      // con token expirado pueden hacer que signInWithPassword se cuelgue intentando
-      // refresh interno antes de procesar el nuevo login.
-      try {
-        await Promise.race([
-          supabase.auth.signOut({ scope: "local" }),
-          new Promise((res) => setTimeout(res, 1500)),
-        ]);
-      } catch { /* no-op */ }
+      // Limpiamos cualquier sesión vieja en localStorage de forma síncrona —
+      // supabase.auth.signOut() es async y puede colgarse intentando contactar
+      // al servidor con un token zombie. Nukear directo elimina la causa raíz
+      // ("ya tengo sesión, refrescala primero" antes de procesar el nuevo login).
+      clearStoredSession();
       try {
         const signInPromise = supabase.auth.signInWithPassword({ email, password });
         const timeoutPromise = new Promise((_, reject) =>

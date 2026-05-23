@@ -195,12 +195,19 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
       <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;color:#444;line-height:1.5;">${escapeHtml(p.necesidad) || "<em style='color:#999'>sin detalle</em>"}</td>
     </tr>`).join("");
 
+  // Layout label/precio con TABLA (no flex): Gmail y la mayoría de los
+  // clientes de email no soportan flexbox, por eso el precio aparecía
+  // pegado al label en vez de alineado a la derecha.
   const ejemplosCards = ejemplos.map((e) => `
     <div style="border:1px solid #eee;border-radius:8px;padding:18px 20px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
-        <strong style="font-size:15px;color:#191919;">${escapeHtml(e.label)}</strong>
-        <span style="font-size:16px;font-weight:700;color:#29623a;font-variant-numeric:tabular-nums;">${fmtCLP(e.total)}/mes</span>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+        <tbody>
+          <tr>
+            <td style="font-size:15px;font-weight:700;color:#191919;text-align:left;vertical-align:baseline;padding-right:12px;">${escapeHtml(e.label)}</td>
+            <td style="font-size:16px;font-weight:700;color:#29623a;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;">${fmtCLP(e.total)}/mes</td>
+          </tr>
+        </tbody>
+      </table>
       <p style="margin:0 0 4px;font-size:11px;color:#999;font-variant-numeric:tabular-nums;">
         ${e.frases} frases × ${fmtCLP(e.precioUnitario)} = ${fmtCLP(e.subtotal)} neto · IVA ${fmtCLP(e.iva)} · Total ${fmtCLP(e.total)} (con IVA)
       </p>

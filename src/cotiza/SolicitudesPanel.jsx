@@ -17,6 +17,23 @@ function fechaCorta(iso) {
   return d.toLocaleDateString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+const TIPOS_PROMOCION_LABEL = {
+  negocio: "Negocio o tienda local",
+  servicio: "Servicio profesional",
+  evento: "Evento puntual",
+  oferta: "Oferta o promoción",
+  campana: "Campaña institucional/política",
+  otro: "Otro",
+};
+
+function tipoPromocionTexto(s) {
+  if (!s?.tipo_promocion) return null;
+  if (s.tipo_promocion === "otro" && s.tipo_promocion_otro) {
+    return `Otro: ${s.tipo_promocion_otro}`;
+  }
+  return TIPOS_PROMOCION_LABEL[s.tipo_promocion] || s.tipo_promocion;
+}
+
 /**
  * Panel arriba del CotizadorInterno con las solicitudes públicas pendientes.
  * Cada solicitud se puede precargar (callback) o descartar.
@@ -140,6 +157,11 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
                 </div>
                 {s.cliente_empresa && (
                   <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.55)" })}>{s.cliente_empresa}</p>
+                )}
+                {tipoPromocionTexto(s) && (
+                  <p style={K({ fontSize: 11, color: "rgba(82,184,112,0.85)", fontWeight: 600 })}>
+                    Promociona: {tipoPromocionTexto(s)}
+                  </p>
                 )}
 
                 {/* Detalle por formato: título + lo que pidió */}

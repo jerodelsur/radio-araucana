@@ -87,6 +87,7 @@ const PREGUNTAS_POR_FORMATO = {
       label: "¿Cuántas pasadas por día?",
       hint: "En campañas políticas, la repetición ayuda a instalar nombre, eslogan o propuesta.",
       opciones: [
+        { id: "1", label: "1 frase al día", descripcion: "Presencia mínima. Útil al inicio de campaña o como complemento a otros medios cuando el presupuesto de radio es acotado." },
         { id: "2", label: "2 frases al día", descripcion: "Presencia básica. Ideal en etapas tempranas para empezar a instalar nombre." },
         { id: "4", label: "4 frases al día", descripcion: "Refuerzo activo. Buena cobertura para campaña en construcción." },
         { id: "6", label: "6 frases al día", descripcion: "Campaña visible. El oyente promedio te escucha varias veces al día." },

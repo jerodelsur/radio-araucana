@@ -29,7 +29,7 @@ const PREGUNTAS_POR_FORMATO = {
     {
       id: "cantidad",
       label: "¿Cuántas pasadas por día?",
-      hint: "No siempre más es mejor. La cantidad ideal depende del objetivo de tu campaña.",
+      hint: "La cantidad ideal depende del objetivo de tu campaña.",
       opciones: [
         { id: "1", label: "1 frase al día", descripcion: "Presencia sutil. Ideal para marcas conocidas que quieren mantenerse en la mente del oyente sin sobrexponerse." },
         { id: "2", label: "2 frases al día", descripcion: "Refuerzo medido. Buen punto de partida para sostener la presencia: el oyente promedio te escucha varias veces por semana." },

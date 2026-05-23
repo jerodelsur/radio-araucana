@@ -17,9 +17,9 @@ const PREGUNTAS = [
       <>
         Una frase es un <strong>spot publicitario grabado de hasta 30 segundos</strong>. Es la unidad
         básica de pauta en la radio: cada vez que tu frase sale al aire, cuenta como una pasada.
-        Si tu mensaje dura <strong>más de 30 segundos, se cobra como dos frases</strong> (cada bloque
-        adicional de hasta 30 segundos suma una frase más). Por eso conviene cuidar la duración del
-        guion al escribirlo.
+        Si tu mensaje dura más de 30 segundos, <strong>se cobra como dos frases</strong> porque
+        estaría ocupando el espacio completo de otro spot en una tanda publicitaria. Por eso conviene
+        cuidar la duración del guion al escribirlo.
       </>
     ),
   },
@@ -29,7 +29,7 @@ const PREGUNTAS = [
       <>
         <strong>Horario Repartido</strong> rota de forma aleatoria durante toda la programación, así tu
         frase pasa en distintos momentos del día y llega a audiencias variadas.{" "}
-        <strong>Horario Seleccionado</strong> es el que tú eliges: bloques específicos de mayor audiencia
+        <strong>Horario Seleccionado</strong> es el que tú eliges: bloques específicos de audiencia
         —como los matinales o los informativos centrales— y por eso tiene mayor costo por frase. Muchas
         campañas combinan ambos: seleccionado para impacto y repartido para frecuencia.
       </>
@@ -83,7 +83,14 @@ const PREGUNTAS = [
       <>
         Al enviar el formulario, el equipo comercial recibe tu pedido y te contacta en horario
         hábil (lunes a viernes) por el medio que indicaste —email o teléfono— con la propuesta
-        formal. Si necesitas algo urgente, escríbenos directo al WhatsApp del botón superior.
+        formal. Si necesitas algo urgente, escríbenos a{" "}
+        <a href="mailto:cotizaciones@araucanayfrontera.cl" style={{ color: "#52b870", textDecoration: "none" }}>
+          cotizaciones@araucanayfrontera.cl
+        </a>{" "}
+        o por WhatsApp al{" "}
+        <a href="https://wa.me/56992872087" target="_blank" rel="noreferrer" style={{ color: "#52b870", textDecoration: "none" }}>
+          +56 9 9287 2087
+        </a>.
       </>
     ),
   },
@@ -101,10 +108,12 @@ const PREGUNTAS = [
     q: "¿Qué es una “frase política”?",
     a: (
       <>
-        Es una cuña de campaña electoral de 30 segundos. La <strong>ley chilena de propaganda
-        política</strong> regula este tipo de avisos, por eso tienen tarifa diferenciada y
-        condiciones específicas (períodos electorales, identificación del candidato/a, etc.). Te
-        guiamos en lo que pide la normativa.
+        Durante los periodos de campaña, es una cuña electoral de 30 segundos. La{" "}
+        <strong>ley chilena de propaganda política</strong> regula este tipo de avisos, por eso tienen
+        tarifa diferenciada y condiciones específicas (períodos electorales, identificación del
+        candidato/a, etc.). Te guiamos según lo que pide la normativa. En tiempos en que no hay
+        campaña, también son frases que nos piden autoridades para que sus mensajes lleguen a la
+        región.
       </>
     ),
   },
@@ -112,10 +121,12 @@ const PREGUNTAS = [
     q: "¿Y la entrevista y el podcast?",
     a: (
       <>
-        La <strong>entrevista</strong> es una aparición de 5 o 10 minutos dentro de un bloque
-        periodístico —ideal para autoridades, voceros, lanzamientos—.{" "}
+        La <strong>entrevista</strong> es una aparición de <strong>5, 10 o 15 minutos</strong> dentro
+        de un bloque periodístico —ideal para autoridades, voceros, lanzamientos—.{" "}
         El <strong>podcast</strong> es un programa de larga duración (30 o 60 min) producido en
-        nuestros estudios, que sale al aire y queda publicado en el sitio y plataformas.
+        nuestros estudios, que sale al aire y queda publicado en el sitio y plataformas. También
+        existe la posibilidad de hacer entrevistas fuera de los estudios (<strong>despachos en
+        terreno</strong>).
       </>
     ),
   },

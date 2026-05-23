@@ -11,10 +11,6 @@ const SectionTitle = {
   marginBottom: 20,
 };
 
-const WHATSAPP_URL =
-  "https://wa.me/56992872087?text=" +
-  encodeURIComponent("Hola Radio Araucana, quiero cotizar publicidad y necesito una respuesta urgente.");
-
 /* ─── Opciones cerradas por formato ────────────────────────────────────────
    Cada formato pide al cliente N preguntas con respuestas predefinidas. La
    estructura de "selecciones" guarda { preguntaId: opcionId } por formato.
@@ -444,15 +440,6 @@ export default function Solicitud({ tarifas, cliente, onVolver, onEnviar, envian
               </p>
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <a href={WHATSAPP_URL} target="_blank" rel="noreferrer"
-                style={K({
-                  background: "transparent", color: "#fff",
-                  border: "1px solid rgba(255,255,255,0.4)", borderRadius: 6,
-                  padding: "14px 22px", fontWeight: 600, fontSize: 14,
-                  textDecoration: "none", display: "inline-block",
-                })}>
-                WhatsApp urgente
-              </a>
               <button type="button" onClick={enviar} disabled={!canSubmit} className="cot-btn-primary"
                 style={K({
                   background: canSubmit ? "#fff" : "rgba(255,255,255,0.3)",

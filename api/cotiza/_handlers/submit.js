@@ -236,8 +236,8 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
   return `<!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;margin:0;padding:24px;color:#191919;">
   <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:8px;padding:36px;">
-    <div style="border-bottom:2px solid #29623a;padding-bottom:16px;margin-bottom:24px;">
-      <p style="font-size:11px;font-weight:700;color:#29623a;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 4px;">Radio Araucana 95.9 FM</p>
+    <div style="border-bottom:2px solid #29623a;padding-bottom:18px;margin-bottom:24px;">
+      <img src="https://radioaraucana.cl/araucana-logo.png" alt="Radio Araucana 95.9 FM" width="220" style="display:block;max-width:100%;height:auto;border:0;margin:0 0 10px;">
       <p style="font-size:12px;color:#666;margin:0;">Temuco · La Araucanía · Desde 1960</p>
     </div>
 

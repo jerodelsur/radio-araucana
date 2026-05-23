@@ -189,11 +189,20 @@ function renderTeamText({ cliente, pedido, comentarios, fecha }) {
 function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
   const nombrePila = (cliente.nombre || "").split(" ")[0] || cliente.nombre || "";
 
-  const pedidoFilas = pedido.map((p) => `
+  // Cada item del pedido se renderiza con la "necesidad" partida en líneas
+  // (separador " · " del frontend). Una línea por respuesta es más fácil
+  // de escanear que un párrafo continuo, sobre todo en mobile.
+  const pedidoFilas = pedido.map((p) => {
+    const items = (p.necesidad || "").split(" · ").map((s) => s.trim()).filter(Boolean);
+    const necesidadHtml = items.length > 0
+      ? `<ul style="margin:0;padding:0;list-style:none;">${items.map((it) => `<li style="margin:0 0 4px;padding:0 0 0 12px;position:relative;font-size:13px;color:#444;line-height:1.5;"><span style="position:absolute;left:0;top:0;color:#52b870;font-weight:700;">·</span>${escapeHtml(it)}</li>`).join("")}</ul>`
+      : "<em style='color:#999'>sin detalle</em>";
+    return `
     <tr>
-      <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:14px;width:38%;"><strong>${escapeHtml(p.titulo)}</strong><br/><span style="font-size:12px;color:#999;">${escapeHtml(p.duracion)}</span></td>
-      <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;color:#444;line-height:1.5;">${escapeHtml(p.necesidad) || "<em style='color:#999'>sin detalle</em>"}</td>
-    </tr>`).join("");
+      <td style="padding:12px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;width:38%;vertical-align:top;"><strong>${escapeHtml(p.titulo)}</strong><br/><span style="font-size:12px;color:#999;">${escapeHtml(p.duracion)}</span></td>
+      <td style="padding:12px 14px;border-bottom:1px solid #f0f0f0;vertical-align:top;">${necesidadHtml}</td>
+    </tr>`;
+  }).join("");
 
   // Layout label/precio con TABLA (no flex): Gmail y la mayoría de los
   // clientes de email no soportan flexbox, por eso el precio aparecía
@@ -203,20 +212,25 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
   // como frases × precioUnitario en múltiplos de mil — los netos son
   // visualmente "redondos" ($255.000, $480.000…) y la suma con IVA queda
   // explícita en la línea chica de math (que igual muestra el total).
+  //
+  // Tipografía del precio: $monto en grande/bold como ancla visual; el
+  // sufijo "+ IVA / mes" un punto más chico y peso normal para que la
+  // cifra no se pierda al lado del texto. Card con acento verde izquierdo
+  // sutil que ancla cada bloque a la identidad de Radio Araucana.
   const ejemplosCards = ejemplos.map((e) => `
-    <div style="border:1px solid #eee;border-radius:8px;padding:18px 20px;margin-bottom:12px;">
+    <div style="background:#fafafa;border:1px solid #f0f0f0;border-left:3px solid #52b870;border-radius:6px;padding:18px 20px;margin-bottom:12px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:6px;">
         <tbody>
           <tr>
             <td style="font-size:15px;font-weight:700;color:#191919;text-align:left;vertical-align:baseline;padding-right:12px;">${escapeHtml(e.label)}</td>
-            <td style="font-size:16px;font-weight:700;color:#29623a;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;">${fmtCLP(e.subtotal)} + IVA / mes</td>
+            <td style="text-align:right;vertical-align:baseline;white-space:nowrap;font-variant-numeric:tabular-nums;"><span style="font-size:18px;font-weight:700;color:#29623a;">${fmtCLP(e.subtotal)}</span><span style="font-size:13px;font-weight:400;color:#666;"> + IVA / mes</span></td>
           </tr>
         </tbody>
       </table>
-      <p style="margin:0 0 4px;font-size:11px;color:#999;font-variant-numeric:tabular-nums;">
+      <p style="margin:0 0 6px;font-size:11px;color:#999;font-variant-numeric:tabular-nums;">
         ${e.frases} frases × ${fmtCLP(e.precioUnitario)} = ${fmtCLP(e.subtotal)} neto · Total con IVA ${fmtCLP(e.total)}
       </p>
-      <p style="margin:6px 0 0;font-size:13px;color:#444;line-height:1.55;">${escapeHtml(e.descripcion)}</p>
+      <p style="margin:0;font-size:13px;color:#444;line-height:1.55;">${escapeHtml(e.descripcion)}</p>
     </div>`).join("");
 
   return `<!DOCTYPE html>

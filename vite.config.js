@@ -128,6 +128,11 @@ const devApiStub = () => ({
       await runHandler('/api/cotiza/_handlers/atender-solicitud.js', req, res)
     })
 
+    server.middlewares.use('/api/cotiza/eliminar-solicitud', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/_handlers/eliminar-solicitud.js', req, res)
+    })
+
     server.middlewares.use('/api/cotiza/guardar-cotizacion', async (req, res, next) => {
       if (req.method !== 'POST') return next()
       await runHandler('/api/cotiza/_handlers/guardar-cotizacion.js', req, res)
@@ -141,6 +146,11 @@ const devApiStub = () => ({
     server.middlewares.use('/api/cotiza/cotizacion-estado', async (req, res, next) => {
       if (req.method !== 'POST') return next()
       await runHandler('/api/cotiza/_handlers/cotizacion-estado.js', req, res)
+    })
+
+    server.middlewares.use('/api/cotiza/eliminar-cotizacion', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      await runHandler('/api/cotiza/_handlers/eliminar-cotizacion.js', req, res)
     })
 
     server.middlewares.use('/api/cotiza/login', async (req, res, next) => {

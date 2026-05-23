@@ -103,6 +103,29 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
     }
   };
 
+  const eliminar = async (s) => {
+    const ok = confirm(
+      `¿Eliminar definitivamente la solicitud de ${s.cliente_nombre}${s.cliente_empresa ? ` (${s.cliente_empresa})` : ""}?\n\n` +
+      `Esta acción no se puede deshacer. Para descartarla sin perder el registro usa "Descartar" en su lugar.`
+    );
+    if (!ok) return;
+    try {
+      const r = await fetch("/api/cotiza/eliminar-solicitud", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: s.id }),
+      });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        alert("No se pudo eliminar: " + (data.error || r.status));
+        return;
+      }
+      cargar(verHistorial ? "atendida" : "pendiente");
+    } catch (e) {
+      alert("Error de red: " + (e?.message || "?"));
+    }
+  };
+
   return (
     <section style={{ padding: "20px 24px 0" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -214,7 +237,7 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
                     Cotizada: ${s.cotizacion_total.toLocaleString("es-CL")}
                   </p>
                 )}
-                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                   {verHistorial ? (
                     <button type="button" onClick={() => reabrir(s.id)}
                       style={K({ background: "rgba(255,255,255,0.06)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "6px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flex: 1 })}>
@@ -232,6 +255,10 @@ export default function SolicitudesPanel({ token, onPrecargar, onLogout, refresh
                       </button>
                     </>
                   )}
+                  <button type="button" onClick={() => eliminar(s)}
+                    style={K({ background: "transparent", color: "rgba(232,113,113,0.7)", border: "1px solid rgba(232,113,113,0.3)", borderRadius: 6, padding: "6px 10px", fontSize: 11, cursor: "pointer" })}>
+                    Eliminar
+                  </button>
                 </div>
               </div>
             );

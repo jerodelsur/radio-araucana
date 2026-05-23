@@ -192,10 +192,13 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
   // Cada item del pedido se renderiza con la "necesidad" partida en líneas
   // (separador " · " del frontend). Una línea por respuesta es más fácil
   // de escanear que un párrafo continuo, sobre todo en mobile.
+  // Bullets de la lista "Lo que pediste": Gmail descarta el position:absolute
+  // y el padding del <li>, lo que dejaba el bullet pegado al texto. Solución
+  // robusta: bullet como <span> inline con margin-right — universal en email.
   const pedidoFilas = pedido.map((p) => {
     const items = (p.necesidad || "").split(" · ").map((s) => s.trim()).filter(Boolean);
     const necesidadHtml = items.length > 0
-      ? `<ul style="margin:0;padding:0;list-style:none;">${items.map((it) => `<li style="margin:0 0 4px;padding:0 0 0 12px;position:relative;font-size:13px;color:#444;line-height:1.5;"><span style="position:absolute;left:0;top:0;color:#52b870;font-weight:700;">·</span>${escapeHtml(it)}</li>`).join("")}</ul>`
+      ? `<ul style="margin:0;padding:0;list-style:none;">${items.map((it) => `<li style="margin:0 0 6px;font-size:13px;color:#444;line-height:1.5;list-style:none;"><span style="color:#52b870;font-weight:700;margin-right:8px;">·</span>${escapeHtml(it)}</li>`).join("")}</ul>`
       : "<em style='color:#999'>sin detalle</em>";
     return `
     <tr>

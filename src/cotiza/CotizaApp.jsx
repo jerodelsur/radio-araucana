@@ -9,6 +9,7 @@ import { TARIFAS_DEFAULT } from "./tarifas.js";
 import { AuthProvider } from "../extractos/lib/auth.jsx";
 
 const STORAGE_CLIENTE = "cotiza_cliente";
+const SESSION_ENVIADO = "cotiza_enviado";
 
 export default function CotizaApp() {
   return (
@@ -18,12 +19,14 @@ export default function CotizaApp() {
         <Header />
         <div style={{ flex: 1 }}>
           <Routes>
-            <Route path="/" element={<FlujoPublico />} />
             <Route path="/admin" element={<AuthProvider><Admin /></AuthProvider>} />
             {/* Compatibilidad: /interno fue la URL del cotizador de equipo;
                 ahora está unificado dentro de /admin como tab "Armar cotización". */}
             <Route path="/interno" element={<Navigate to="/admin?tab=armar" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Splat (/*) para que las rutas anidadas de FlujoPublico
+                (/, /gracias) sean alcanzables. Sin esto, /gracias caía
+                en un catch-all y volvía a / sin mostrar la confirmación. */}
+            <Route path="/*" element={<FlujoPublico />} />
           </Routes>
         </div>
         <FooterMini />
@@ -39,7 +42,12 @@ function FlujoPublico() {
     try { return JSON.parse(localStorage.getItem(STORAGE_CLIENTE) || "null"); } catch { return null; }
   });
   const [tarifas, setTarifas] = useState(null);
-  const [enviado, setEnviado] = useState(null);
+  // Persistimos `enviado` en sessionStorage para que si la persona refresca
+  // estando en /gracias, la confirmación siga visible. Se borra al cerrar
+  // la pestaña (a diferencia de localStorage).
+  const [enviado, setEnviado] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_ENVIADO) || "null"); } catch { return null; }
+  });
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
 
@@ -76,7 +84,9 @@ function FlujoPublico() {
         setEnviando(false);
         return;
       }
-      setEnviado({ cliente: payload.cliente });
+      const datosEnviado = { cliente: payload.cliente };
+      setEnviado(datosEnviado);
+      try { sessionStorage.setItem(SESSION_ENVIADO, JSON.stringify(datosEnviado)); } catch { /* ignore */ }
       navigate("/gracias");
     } catch (e) {
       setErrorEnvio("No pudimos enviar tu solicitud. Revisa tu conexión o escríbenos a cotizaciones@araucanayfrontera.cl.");
@@ -89,6 +99,15 @@ function FlujoPublico() {
     return <div style={{ padding: 80, textAlign: "center", color: "rgba(255,255,255,0.5)" }}>Cargando…</div>;
   }
 
+  const nuevaCotizacion = () => {
+    // Limpiar el "enviado" en memoria y sessionStorage al iniciar una nueva
+    // cotización, así no queda colgando la confirmación anterior si el usuario
+    // vuelve a /gracias.
+    setEnviado(null);
+    try { sessionStorage.removeItem(SESSION_ENVIADO); } catch { /* ignore */ }
+    navigate("/");
+  };
+
   return (
     <Routes>
       <Route path="/" element={
@@ -100,9 +119,10 @@ function FlujoPublico() {
       } />
       <Route path="/gracias" element={
         enviado
-          ? <Confirmacion cliente={enviado.cliente} onNueva={() => { navigate("/"); }} />
+          ? <Confirmacion cliente={enviado.cliente} onNueva={nuevaCotizacion} />
           : <Navigate to="/" replace />
       } />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

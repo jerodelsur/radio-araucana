@@ -84,6 +84,33 @@ export default function CotizacionesTab({ token }) {
     }
   };
 
+  const eliminar = async (c) => {
+    const ok = confirm(
+      `¿Eliminar definitivamente la cotización ${c.numero} de ${c.cliente_nombre}?\n\n` +
+      `Esta acción no se puede deshacer. Para registros formales considera "Rechazar" en su lugar.`
+    );
+    if (!ok) return;
+    setAccionEnCurso(c.id);
+    try {
+      const r = await fetch("/api/cotiza/eliminar-cotizacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: c.id }),
+      });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        alert("No se pudo eliminar: " + (data.error || r.status));
+      } else {
+        if (detalleAbierto === c.id) setDetalleAbierto(null);
+        cargar();
+      }
+    } catch (e) {
+      alert("Error de red: " + (e?.message || "?"));
+    } finally {
+      setAccionEnCurso(null);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}>
@@ -196,7 +223,7 @@ export default function CotizacionesTab({ token }) {
                         })}>{ESTADO_LABEL[c.estado]}</span>
                       </Td>
                       <Td>
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                           {c.estado === "enviada" && (
                             <>
                               <BtnMini onClick={() => cambiarEstado(c.id, "aceptada")} disabled={accionEnCurso === c.id} color="#52b870">
@@ -212,6 +239,9 @@ export default function CotizacionesTab({ token }) {
                               Reabrir
                             </BtnMini>
                           )}
+                          <BtnMini onClick={() => eliminar(c)} disabled={accionEnCurso === c.id} color="rgba(232,113,113,0.7)">
+                            Eliminar
+                          </BtnMini>
                         </div>
                       </Td>
                     </tr>

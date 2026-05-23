@@ -5,14 +5,29 @@ function esEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
 }
 
+export const OPCIONES_TIPO_PROMOCION = [
+  { id: "negocio", label: "Mi negocio o tienda local (restaurante, retail, ferretería, salón…)" },
+  { id: "servicio", label: "Un servicio profesional (abogado, dentista, inmobiliaria, taller…)" },
+  { id: "evento", label: "Un evento puntual (show, concierto, feria, lanzamiento)" },
+  { id: "oferta", label: "Una oferta o promoción específica" },
+  { id: "campana", label: "Campaña institucional, municipal o política" },
+  { id: "otro", label: "Otro" },
+];
+
 export default function Identificacion({ valorInicial, onContinuar }) {
-  const [c, setC] = useState(valorInicial || { nombre: "", empresa: "", telefono: "", email: "" });
+  const [c, setC] = useState(valorInicial || {
+    nombre: "", empresa: "", telefono: "", email: "",
+    tipoPromocion: "", tipoPromocionOtro: "",
+  });
   const [touched, setTouched] = useState(false);
 
   const nombreOk = c.nombre.trim().length >= 2;
+  const empresaOk = c.empresa.trim().length >= 2;
   const contactoOk = c.telefono.trim() || esEmail(c.email);
   const emailFormatoOk = !c.email.trim() || esEmail(c.email);
-  const valido = nombreOk && contactoOk && emailFormatoOk;
+  const tipoOk = Boolean(c.tipoPromocion);
+  const tipoOtroOk = c.tipoPromocion !== "otro" || c.tipoPromocionOtro.trim().length >= 2;
+  const valido = nombreOk && empresaOk && tipoOk && tipoOtroOk && contactoOk && emailFormatoOk;
 
   const submit = (e) => {
     e.preventDefault();
@@ -23,6 +38,8 @@ export default function Identificacion({ valorInicial, onContinuar }) {
       empresa: c.empresa.trim(),
       telefono: c.telefono.trim(),
       email: c.email.trim(),
+      tipoPromocion: c.tipoPromocion,
+      tipoPromocionOtro: c.tipoPromocion === "otro" ? c.tipoPromocionOtro.trim() : "",
     });
   };
 
@@ -65,11 +82,32 @@ export default function Identificacion({ valorInicial, onContinuar }) {
             error={touched && !nombreOk ? "Ingresa tu nombre" : null}
           />
           <Campo
-            label="Empresa, agrupación o partido"
+            label="Empresa, marca, agrupación o partido"
+            required
             value={c.empresa}
             onChange={(v) => setC((s) => ({ ...s, empresa: v }))}
-            placeholder="Opcional"
+            placeholder="Quién está detrás de la campaña"
+            error={touched && !empresaOk ? "Ingresa la empresa o marca" : null}
           />
+          <Select
+            label="¿Qué quieres promocionar?"
+            required
+            value={c.tipoPromocion}
+            onChange={(v) => setC((s) => ({ ...s, tipoPromocion: v, tipoPromocionOtro: v === "otro" ? s.tipoPromocionOtro : "" }))}
+            options={OPCIONES_TIPO_PROMOCION}
+            placeholder="Selecciona una opción"
+            error={touched && !tipoOk ? "Elige una opción" : null}
+          />
+          {c.tipoPromocion === "otro" && (
+            <Campo
+              label="¿Qué exactamente?"
+              required
+              value={c.tipoPromocionOtro}
+              onChange={(v) => setC((s) => ({ ...s, tipoPromocionOtro: v }))}
+              placeholder="Cuéntanos brevemente"
+              error={touched && !tipoOtroOk ? "Describe brevemente qué quieres promocionar" : null}
+            />
+          )}
           <Campo
             label="Teléfono / WhatsApp"
             type="tel"
@@ -138,6 +176,42 @@ function Campo({ label, required, value, onChange, placeholder, type = "text", e
           fontSize: 14, fontWeight: 400, outline: "none",
         }}
       />
+      {error && <span style={K({ fontSize: 11, color: "#e87171" })}>{error}</span>}
+    </label>
+  );
+}
+
+function Select({ label, required, value, onChange, options, placeholder, error }) {
+  return (
+    <label style={K({ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: "rgba(255,255,255,0.6)" })}>
+      {label}{required ? <span style={{ color: "#52b870" }}> *</span> : null}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          background: "rgba(255,255,255,0.04)",
+          border: `1px solid ${error ? "#e87171" : "rgba(255,255,255,0.12)"}`,
+          borderRadius: 6, padding: "12px 14px",
+          color: value ? "#fff" : "rgba(255,255,255,0.4)",
+          fontFamily: "'Open Sans', sans-serif",
+          fontSize: 14, fontWeight: 400, outline: "none",
+          appearance: "none",
+          backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2352b870' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 14px center",
+          paddingRight: 36,
+        }}
+      >
+        <option value="" style={{ color: "#191919", background: "#fff" }} disabled>
+          {placeholder || "Selecciona"}
+        </option>
+        {options.map((o) => (
+          <option key={o.id} value={o.id} style={{ color: "#191919", background: "#fff" }}>
+            {o.label}
+          </option>
+        ))}
+      </select>
       {error && <span style={K({ fontSize: 11, color: "#e87171" })}>{error}</span>}
     </label>
   );

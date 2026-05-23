@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
     let query = supabase
       .from("cotiza_solicitudes")
-      .select("id, created_at, cliente_nombre, cliente_empresa, cliente_telefono, cliente_email, pedido, comentarios, estado, atendida_en, atendida_por, cotizacion_total")
+      .select("id, created_at, cliente_nombre, cliente_empresa, cliente_telefono, cliente_email, tipo_promocion, tipo_promocion_otro, pedido, comentarios, estado, atendida_en, atendida_por, cotizacion_total")
       .order("created_at", { ascending: false })
       .limit(100);
     if (estado !== "todas") query = query.eq("estado", estado);

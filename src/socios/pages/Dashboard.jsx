@@ -47,7 +47,7 @@ function CardDocumentos({ documentos, isAdmin }) {
         <div className="flex items-center justify-between mb-6">
           <Eyebrow>Documentos</Eyebrow>
           {isAdmin && (
-            <Link to="/socios/admin?tab=documentos"
+            <Link to="/socios-rds/admin?tab=documentos"
               className="text-xs text-[#B91C1C] font-500 hover:underline">
               Gestionar
             </Link>
@@ -376,7 +376,7 @@ function Header({ reportes, mesSel, onMes, isAdmin, onSignOut, perfil }) {
                 style={{ boxShadow: "0 8px 32px rgba(26,15,10,0.12)" }}>
                 {isAdmin && (
                   <Link
-                    to="/socios/admin"
+                    to="/socios-rds/admin"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#4A3F38] hover:bg-[#F6F3EE] transition-colors"
                   >
@@ -496,7 +496,7 @@ export default function Dashboard() {
               </p>
             </div>
             {isAdmin && (
-              <Link to="/socios/admin"
+              <Link to="/socios-rds/admin"
                 className="mt-2 rounded-full bg-[#18110C] text-white text-sm px-5 py-2.5 font-medium active:scale-95"
                 style={{ transition: "transform 150ms" }}
               >

@@ -16,8 +16,8 @@ export default function RequireSocio({ children, adminOnly = false }) {
     );
   }
 
-  if (!isSocio) return <Navigate to="/socios/login" replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/socios" replace />;
+  if (!isSocio) return <Navigate to="/socios-rds/login" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/socios-rds" replace />;
 
   return children;
 }

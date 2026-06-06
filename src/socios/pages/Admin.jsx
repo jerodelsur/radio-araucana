@@ -360,7 +360,7 @@ export default function Admin() {
         style={{ backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
         <div className="max-w-3xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/socios" className="text-sm text-[#9C8E85] hover:text-[#4A3F38] transition-colors flex items-center gap-1.5">
+            <Link to="/socios-rds" className="text-sm text-[#9C8E85] hover:text-[#4A3F38] transition-colors flex items-center gap-1.5">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
                 <path d="M10 12L6 8l4-4" strokeLinecap="round" />
               </svg>

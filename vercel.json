@@ -42,11 +42,11 @@
       "destination": "/frontera.html"
     },
     {
-      "source": "/socios",
+      "source": "/socios-rds",
       "destination": "/socios"
     },
     {
-      "source": "/socios/:path*",
+      "source": "/socios-rds/:path*",
       "destination": "/socios"
     }
   ]

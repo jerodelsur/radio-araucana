@@ -13,7 +13,7 @@ export default function Login() {
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    if (!loading && isSocio) navigate("/socios", { replace: true });
+    if (!loading && isSocio) navigate("/socios-rds", { replace: true });
   }, [loading, isSocio, navigate]);
 
   async function handleSubmit(e) {
@@ -25,7 +25,7 @@ export default function Login() {
     if (!result.ok) {
       setError(result.error);
     } else {
-      navigate("/socios", { replace: true });
+      navigate("/socios-rds", { replace: true });
     }
   }
 

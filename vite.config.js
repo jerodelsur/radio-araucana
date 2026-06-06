@@ -22,7 +22,7 @@ const devRewrites = () => ({
       } else if (url === '/contacto' || url.startsWith('/contacto?')) {
         const qIdx = url.indexOf('?')
         req.url = qIdx >= 0 ? `/contacto.html${url.slice(qIdx)}` : '/contacto.html'
-      } else if (url === '/socios' || url.startsWith('/socios/') || url.startsWith('/socios?')) {
+      } else if (url === '/socios-rds' || url.startsWith('/socios-rds/') || url.startsWith('/socios-rds?')) {
         const qIdx = url.indexOf('?')
         req.url = qIdx >= 0 ? `/socios.html${url.slice(qIdx)}` : '/socios.html'
       }

@@ -21,9 +21,9 @@ export default function SociosApp() {
       <BrowserRouter>
         <Suspense fallback={<Loader />}>
           <Routes>
-            <Route path="/socios/login" element={<Login />} />
+            <Route path="/socios-rds/login" element={<Login />} />
             <Route
-              path="/socios"
+              path="/socios-rds"
               element={
                 <RequireSocio>
                   <Dashboard />
@@ -31,14 +31,14 @@ export default function SociosApp() {
               }
             />
             <Route
-              path="/socios/admin"
+              path="/socios-rds/admin"
               element={
                 <RequireSocio adminOnly>
                   <Admin />
                 </RequireSocio>
               }
             />
-            <Route path="*" element={<Navigate to="/socios/login" replace />} />
+            <Route path="*" element={<Navigate to="/socios-rds/login" replace />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

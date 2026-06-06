@@ -6,7 +6,6 @@ import RequireSocio from "./components/RequireSocio.jsx";
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const Admin = lazy(() => import("./pages/Admin.jsx"));
-const DashboardPreview = lazy(() => import("./pages/DashboardPreview.jsx"));
 
 function Loader() {
   return (
@@ -39,7 +38,6 @@ export default function SociosApp() {
                 </RequireSocio>
               }
             />
-            <Route path="/socios/preview" element={<DashboardPreview />} />
             <Route path="*" element={<Navigate to="/socios/login" replace />} />
           </Routes>
         </Suspense>

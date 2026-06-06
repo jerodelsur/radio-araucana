@@ -161,7 +161,9 @@ function parsearRemuneraciones(texto) {
 
   const liquido = parseCLP(numeros[numeros.length - 1]);
   // El Total Haber suele ser el 5° número de la fila
-  const totalHaber = numeros.length >= 5 ? parseCLP(numeros[4]) : liquido;
+  // Fila Funcionarios (sin ceros): [213.354, 200.000, 1.111.354, 1.311.354, 77.795, 202.044, 1.109.310]
+  // Tot Haber está en índice 3 (antes de cotizaciones), Líquido es el último.
+  const totalHaber = numeros.length >= 4 ? parseCLP(numeros[3]) : liquido;
 
   return {
     tipo: "remuneraciones",
@@ -195,7 +197,9 @@ function parsearHonorarios(texto) {
  */
 function parsearF29(texto) {
   // Extrae Total a pagar (línea 147) y PPM (línea 69)
-  const matchPagar = texto.match(/TOTAL A PAGAR DENTRO DEL PLAZO LEGAL[^\d]+([\d\.]+)/i);
+  // Línea 147: "147 TOTAL A PAGAR DENTRO DEL PLAZO LEGAL ... 91 2.599.990 ="
+  // Necesitamos el último número grande antes del "=" — no el código de campo (91)
+  const matchPagar = texto.match(/TOTAL A PAGAR DENTRO DEL PLAZO LEGAL[\s\S]{0,80}?([\d\.]{6,})\s*[=\n]/i);
   const matchPPM = texto.match(/PPM Neto Determinado[\s\S]{0,50}?([\d\.]{4,})/i);
 
   return {

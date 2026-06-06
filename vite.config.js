@@ -22,6 +22,9 @@ const devRewrites = () => ({
       } else if (url === '/contacto' || url.startsWith('/contacto?')) {
         const qIdx = url.indexOf('?')
         req.url = qIdx >= 0 ? `/contacto.html${url.slice(qIdx)}` : '/contacto.html'
+      } else if (url === '/socios' || url.startsWith('/socios/') || url.startsWith('/socios?')) {
+        const qIdx = url.indexOf('?')
+        req.url = qIdx >= 0 ? `/socios.html${url.slice(qIdx)}` : '/socios.html'
       }
       next()
     })
@@ -184,6 +187,7 @@ export default defineConfig(({ mode }) => {
           extractos: resolve(__dirname, 'extractos.html'),
           cotiza: resolve(__dirname, 'cotiza.html'),
           contacto: resolve(__dirname, 'contacto.html'),
+          socios: resolve(__dirname, 'socios.html'),
         },
       },
     },

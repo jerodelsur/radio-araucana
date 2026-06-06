@@ -40,6 +40,14 @@
     {
       "source": "/frontera",
       "destination": "/frontera.html"
+    },
+    {
+      "source": "/socios",
+      "destination": "/socios"
+    },
+    {
+      "source": "/socios/:path*",
+      "destination": "/socios"
     }
   ]
 }

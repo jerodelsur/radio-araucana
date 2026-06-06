@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/auth.jsx";
 import { getSupabase } from "../lib/supabase.js";
@@ -101,9 +101,10 @@ function CardDocumentos({ documentos, isAdmin }) {
 
 // ─── Componentes de tarjeta ──────────────────────────────────────────────────
 
-function Shell({ children, className = "" }) {
+// Shell usa forwardRef para que useFadeIn pueda acceder al DOM y agregar la clase "visible"
+const Shell = forwardRef(function Shell({ children, className = "" }, ref) {
   return (
-    <div className={`rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5 ${className}`}>
+    <div ref={ref} className={`rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5 ${className}`}>
       <div
         className="h-full rounded-[calc(2rem-0.375rem)] bg-white overflow-hidden"
         style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}
@@ -112,7 +113,7 @@ function Shell({ children, className = "" }) {
       </div>
     </div>
   );
-}
+});
 
 function Eyebrow({ children }) {
   return (

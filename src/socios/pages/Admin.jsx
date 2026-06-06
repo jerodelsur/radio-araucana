@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase.js";
 import { currentMes, mesLabel } from "../lib/format.js";
 
@@ -61,6 +61,177 @@ function Textarea({ value, onChange, placeholder, rows = 4 }) {
   );
 }
 
+// ─── Sección Documentos ───────────────────────────────────────────────────────
+
+const DOC_EMPTY = { titulo: "", descripcion: "", categoria: "Financiero", url: "", orden: 0, publicado: true };
+const CATEGORIAS = ["Financiero", "Audiencia", "Legal", "Directorio", "Otro"];
+
+function SeccionDocumentos() {
+  const [docs, setDocs] = useState([]);
+  const [form, setForm] = useState(DOC_EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const sb = getSupabase();
+      const { data } = await sb.from("socios_documentos")
+        .select("*").order("categoria").order("orden");
+      setDocs(data || []);
+    }
+    load();
+  }, []);
+
+  function setF(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    if (!form.titulo.trim() || !form.url.trim()) { setError("Título y URL son obligatorios."); return; }
+    setError(""); setSaving(true);
+    const sb = getSupabase();
+    const { data, error: err } = await sb.from("socios_documentos")
+      .insert({ ...form, orden: Number(form.orden) || 0 })
+      .select().single();
+    setSaving(false);
+    if (err) { setError(err.message); return; }
+    setDocs(d => [...d, data]);
+    setForm(DOC_EMPTY);
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function handleDelete(id) {
+    if (!confirm("¿Eliminar este documento?")) return;
+    setDeleting(id);
+    const sb = getSupabase();
+    await sb.from("socios_documentos").delete().eq("id", id);
+    setDocs(d => d.filter(x => x.id !== id));
+    setDeleting(null);
+  }
+
+  async function togglePublicado(doc) {
+    const sb = getSupabase();
+    await sb.from("socios_documentos").update({ publicado: !doc.publicado }).eq("id", doc.id);
+    setDocs(d => d.map(x => x.id === doc.id ? { ...x, publicado: !x.publicado } : x));
+  }
+
+  const grupos = docs.reduce((acc, d) => {
+    const c = d.categoria || "General";
+    if (!acc[c]) acc[c] = [];
+    acc[c].push(d); return acc;
+  }, {});
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Lista existente */}
+      {docs.length > 0 && (
+        <div className="rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5">
+          <div className="rounded-[calc(2rem-0.375rem)] bg-white p-6 md:p-8"
+            style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}>
+            <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85] mb-5">Documentos publicados</h2>
+            <div className="flex flex-col gap-6">
+              {Object.entries(grupos).map(([cat, items]) => (
+                <div key={cat}>
+                  <p className="text-[11px] font-700 uppercase tracking-[0.18em] text-[#BDB5AD] mb-2">{cat}</p>
+                  <div className="flex flex-col gap-2">
+                    {items.map(doc => (
+                      <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#F6F3EE]">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-500 text-[#18110C] truncate">{doc.titulo}</p>
+                          {doc.descripcion && <p className="text-xs text-[#9C8E85] truncate">{doc.descripcion}</p>}
+                        </div>
+                        <button
+                          onClick={() => togglePublicado(doc)}
+                          className={`text-xs rounded-full px-2.5 py-1 font-medium transition-colors ${doc.publicado ? "bg-emerald-50 text-emerald-700" : "bg-[#EDE9E2] text-[#9C8E85]"}`}
+                        >
+                          {doc.publicado ? "Visible" : "Oculto"}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(doc.id)}
+                          disabled={deleting === doc.id}
+                          className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#9C8E85] hover:text-red-600 hover:bg-red-50 ring-1 ring-black/5 transition-colors"
+                        >
+                          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                            <path d="M2 2l10 10M12 2L2 12" strokeLinecap="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Agregar nuevo */}
+      <div className="rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5">
+        <form onSubmit={handleAdd} className="rounded-[calc(2rem-0.375rem)] bg-white p-6 md:p-8"
+          style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}>
+          <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85] mb-5">Agregar documento</h2>
+          {error && <div className="mb-4 rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Título</label>
+              <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3">
+                <input value={form.titulo} onChange={setF("titulo")} placeholder="Ej: Balance 2025"
+                  className="w-full bg-transparent text-sm text-[#18110C] placeholder:text-[#BDB5AD] outline-none" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Descripción <span className="normal-case font-400 text-[#9C8E85]">(opcional)</span></label>
+              <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3">
+                <input value={form.descripcion} onChange={setF("descripcion")} placeholder="Ej: Balance general auditado del ejercicio 2025"
+                  className="w-full bg-transparent text-sm text-[#18110C] placeholder:text-[#BDB5AD] outline-none" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">URL del documento</label>
+              <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3">
+                <input value={form.url} onChange={setF("url")} placeholder="https://drive.google.com/file/d/..."
+                  type="url" className="w-full bg-transparent text-sm text-[#18110C] placeholder:text-[#BDB5AD] outline-none" />
+              </div>
+              <p className="text-xs text-[#9C8E85]">Pega el enlace de Google Drive (asegúrate de que tenga acceso "Cualquier persona con el enlace").</p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Categoría</label>
+              <div className="relative">
+                <select value={form.categoria} onChange={setF("categoria")}
+                  className="w-full appearance-none rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 pr-8 py-3 text-sm text-[#18110C] outline-none">
+                  {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
+                </select>
+                <svg viewBox="0 0 16 16" fill="none" stroke="#9C8E85" strokeWidth="1.5"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5">
+                  <path d="M4 6l4 4 4-4" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Orden <span className="normal-case font-400 text-[#9C8E85]">(menor = primero)</span></label>
+              <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3">
+                <input value={form.orden} onChange={setF("orden")} type="number" min="0"
+                  className="w-full bg-transparent text-sm text-[#18110C] outline-none tabular-nums" />
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 flex items-center gap-3">
+            <button type="submit" disabled={saving}
+              className="group flex items-center gap-3 rounded-full bg-[#18110C] px-5 py-3 text-white text-sm font-500 active:scale-[0.98] disabled:opacity-50"
+              style={{ transition: "transform 150ms" }}>
+              <span>{saving ? "Guardando…" : "Agregar documento"}</span>
+              {saved && <svg viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M2 7l3.5 3.5L12 3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Form de reporte mensual ──────────────────────────────────────────────────
+
 const EMPTY = {
   mes: currentMes(),
   ingresos: "",
@@ -76,6 +247,8 @@ const EMPTY = {
 
 export default function Admin() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") === "documentos" ? "documentos" : "reporte");
   const [form, setForm] = useState(EMPTY);
   const [nuevoLogro, setNuevoLogro] = useState("");
   const [saving, setSaving] = useState(false);
@@ -194,7 +367,15 @@ export default function Admin() {
               Dashboard
             </Link>
             <span className="text-[#DDD8CF]">/</span>
-            <span className="text-sm font-600 text-[#18110C]">Ingresar reporte</span>
+            <div className="flex items-center gap-1 rounded-full bg-[#F6F3EE] ring-1 ring-[#DDD8CF] p-1">
+              {[["reporte", "Reporte"], ["documentos", "Documentos"]].map(([key, label]) => (
+                <button key={key} onClick={() => setTab(key)}
+                  className={`rounded-full px-3 py-1 text-xs font-600 transition-all ${tab === key ? "bg-white text-[#18110C] shadow-sm ring-1 ring-black/5" : "text-[#9C8E85] hover:text-[#4A3F38]"}`}
+                  style={{ transition: "background 200ms, color 200ms" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           {saved && (
             <span className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
@@ -210,9 +391,18 @@ export default function Admin() {
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-10 md:py-16 flex flex-col gap-6">
 
         <div>
-          <h1 className="text-2xl font-700 text-[#18110C] tracking-tight">Reporte mensual</h1>
-          <p className="text-sm text-[#9C8E85] mt-1">Completa los datos del período y publica cuando estés listo.</p>
+          <h1 className="text-2xl font-700 text-[#18110C] tracking-tight">
+            {tab === "reporte" ? "Reporte mensual" : "Documentos"}
+          </h1>
+          <p className="text-sm text-[#9C8E85] mt-1">
+            {tab === "reporte"
+              ? "Completa los datos del período y publica cuando estés listo."
+              : "Agrega documentos que los socios podrán descargar desde el dashboard."}
+          </p>
         </div>
+
+        {tab === "documentos" && <SeccionDocumentos />}
+        {tab === "reporte" && <>
 
         {error && (
           <div className="rounded-2xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -391,6 +581,7 @@ export default function Admin() {
             </span>
           </button>
         </div>
+        </>}
 
       </main>
     </div>

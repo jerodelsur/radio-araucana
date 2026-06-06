@@ -5,6 +5,100 @@ import { getSupabase } from "../lib/supabase.js";
 import { formatPesos, mesLabel } from "../lib/format.js";
 import { useFadeIn } from "../lib/hooks.js";
 
+// ─── Icono por extensión de archivo ─────────────────────────────────────────
+function FileIcon({ url }) {
+  const ext = (url || "").split(".").pop().toLowerCase().split("?")[0];
+  const isPdf = ext === "pdf" || url.includes("drive.google.com");
+  const isXls = ["xlsx", "xls", "csv"].includes(ext);
+  if (isPdf) return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+  if (isXls) return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <path d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75.125v-13.5A1.125 1.125 0 0 1 3.375 4.875h13.5A1.125 1.125 0 0 1 18 6v.75m0 0H6M18 6.75v11.625c0 .621-.504 1.125-1.125 1.125H6m12-12.75H6m0 0v12.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <path d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// ─── Tarjeta de documentos ────────────────────────────────────────────────────
+function CardDocumentos({ documentos, isAdmin }) {
+  const ref = useFadeIn(400);
+
+  // Agrupar por categoría
+  const grupos = documentos.reduce((acc, doc) => {
+    const cat = doc.categoria || "General";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(doc);
+    return acc;
+  }, {});
+
+  const categorias = Object.keys(grupos).sort();
+
+  return (
+    <Shell className="fade-up col-span-12 mt-2" ref={ref}>
+      <div className="p-7 md:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <Eyebrow>Documentos</Eyebrow>
+          {isAdmin && (
+            <Link to="/socios/admin?tab=documentos"
+              className="text-xs text-[#B91C1C] font-500 hover:underline">
+              Gestionar
+            </Link>
+          )}
+        </div>
+
+        {documentos.length === 0 && (
+          <p className="text-sm text-[#BDB5AD] italic">No hay documentos publicados aún.</p>
+        )}
+
+        <div className="flex flex-col gap-8">
+          {categorias.map(cat => (
+            <div key={cat}>
+              <p className="text-[11px] font-700 uppercase tracking-[0.18em] text-[#9C8E85] mb-3">{cat}</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                {grupos[cat].map(doc => (
+                  <a
+                    key={doc.id}
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-start gap-4 p-4 rounded-2xl bg-[#F6F3EE] hover:bg-[#EDE9E2] active:scale-[0.99]"
+                    style={{ transition: "background 200ms cubic-bezier(0.32,0.72,0,1), transform 150ms" }}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#B91C1C] flex-shrink-0 shadow-sm ring-1 ring-black/5">
+                      <FileIcon url={doc.url} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-600 text-[#18110C] leading-snug truncate">{doc.titulo}</p>
+                      {doc.descripcion && (
+                        <p className="text-xs text-[#9C8E85] mt-0.5 leading-snug line-clamp-2">{doc.descripcion}</p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#9C8E85] group-hover:text-[#B91C1C] group-hover:bg-[#B91C1C]/5 shadow-sm ring-1 ring-black/5"
+                      style={{ transition: "color 200ms, background 200ms, transform 250ms cubic-bezier(0.32,0.72,0,1)" }}>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 group-hover:translate-y-px"
+                        style={{ transition: "transform 250ms cubic-bezier(0.32,0.72,0,1)" }}>
+                        <path d="M8 3v7M5 7l3 3 3-3M3 13h10" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
 // ─── Componentes de tarjeta ──────────────────────────────────────────────────
 
 function Shell({ children, className = "" }) {
@@ -320,22 +414,27 @@ export default function Dashboard() {
   const [prevReporte, setPrevReporte] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
   const [errorData, setErrorData] = useState(null);
+  const [documentos, setDocumentos] = useState([]);
 
   useEffect(() => {
-    async function fetchReportes() {
+    async function fetchAll() {
       const sb = getSupabase();
-      const query = sb
-        .from("socios_reportes")
-        .select("mes, ingresos, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, publicado")
-        .order("mes", { ascending: false });
-
-      const { data, error } = await query;
-      if (error) { setErrorData(error.message); setLoadingData(false); return; }
-      setReportes(data || []);
-      if (data?.length) setMesSel(data[0].mes);
+      const [reportesRes, docsRes] = await Promise.all([
+        sb.from("socios_reportes")
+          .select("mes, ingresos, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, publicado")
+          .order("mes", { ascending: false }),
+        sb.from("socios_documentos")
+          .select("id, titulo, descripcion, url, categoria, orden")
+          .eq("publicado", true)
+          .order("orden", { ascending: true }),
+      ]);
+      if (reportesRes.error) { setErrorData(reportesRes.error.message); setLoadingData(false); return; }
+      setReportes(reportesRes.data || []);
+      if (reportesRes.data?.length) setMesSel(reportesRes.data[0].mes);
+      setDocumentos(docsRes.data || []);
       setLoadingData(false);
     }
-    fetchReportes();
+    fetchAll();
   }, []);
 
   useEffect(() => {
@@ -433,6 +532,13 @@ export default function Dashboard() {
               <CardNota reporte={reporte} />
             </div>
           </>
+        )}
+
+        {/* Documentos — siempre visible si hay docs o es admin */}
+        {!loadingData && (documentos.length > 0 || isAdmin) && (
+          <div className="mt-6 md:mt-8 grid grid-cols-12">
+            <CardDocumentos documentos={documentos} isAdmin={isAdmin} />
+          </div>
         )}
       </main>
 

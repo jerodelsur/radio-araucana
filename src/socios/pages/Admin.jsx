@@ -64,7 +64,7 @@ function Textarea({ value, onChange, placeholder, rows = 4 }) {
 
 // ─── Sección Documentos ───────────────────────────────────────────────────────
 
-const DOC_EMPTY = { titulo: "", descripcion: "", categoria: "Financiero", orden: 0, publicado: true };
+const DOC_EMPTY = { titulo: "", descripcion: "", categoria: "Financiero", mes: "", orden: 0, publicado: true };
 const CATEGORIAS = ["Financiero", "Audiencia", "Legal", "Directorio", "Otro"];
 
 function SeccionDocumentos() {
@@ -257,6 +257,19 @@ function SeccionDocumentos() {
                 <input value={form.descripcion} onChange={setF("descripcion")} placeholder="Ej: Balance general auditado del ejercicio 2025"
                   className="w-full bg-transparent text-sm text-[#18110C] placeholder:text-[#BDB5AD] outline-none" />
               </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">
+                Mes <span className="normal-case font-400 text-[#9C8E85]">(opcional — vacío = aparece siempre)</span>
+              </label>
+              <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3">
+                <input type="month" value={form.mes} onChange={setF("mes")}
+                  className="w-full bg-transparent text-sm text-[#18110C] outline-none" />
+              </div>
+              <p className="text-xs text-[#9C8E85]">
+                Si seleccionas un mes, el documento solo aparece en ese período (ej: cartola de enero).
+                Si lo dejas vacío, aparece en todos los meses (ej: Balance anual).
+              </p>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Categoría</label>

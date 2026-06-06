@@ -425,7 +425,7 @@ export default function Dashboard() {
           .select("mes, ingresos, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, publicado")
           .order("mes", { ascending: false }),
         sb.from("socios_documentos")
-          .select("id, titulo, descripcion, url, categoria, orden")
+          .select("id, titulo, descripcion, url, categoria, orden, mes")
           .eq("publicado", true)
           .order("orden", { ascending: true }),
       ]);
@@ -535,12 +535,15 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Documentos — siempre visible si hay docs o es admin */}
-        {!loadingData && (documentos.length > 0 || isAdmin) && (
-          <div className="mt-6 md:mt-8 grid grid-cols-12">
-            <CardDocumentos documentos={documentos} isAdmin={isAdmin} />
-          </div>
-        )}
+        {/* Documentos — filtra globales + los del mes seleccionado */}
+        {!loadingData && (documentos.length > 0 || isAdmin) && (() => {
+          const docsFiltrados = documentos.filter(d => !d.mes || d.mes === mesSel);
+          return (docsFiltrados.length > 0 || isAdmin) ? (
+            <div className="mt-6 md:mt-8 grid grid-cols-12">
+              <CardDocumentos documentos={docsFiltrados} isAdmin={isAdmin} />
+            </div>
+          ) : null;
+        })()}
       </main>
 
       {/* Footer */}

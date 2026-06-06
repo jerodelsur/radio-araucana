@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase.js";
 import { currentMes, mesLabel } from "../lib/format.js";
+import { procesarPDF, calcularValoresFormulario, TIPO_LABELS, TIPO_ICONOS } from "../lib/pdf-parser.js";
 
 function Field({ label, children, hint }) {
   return (
@@ -230,6 +231,208 @@ function SeccionDocumentos() {
   );
 }
 
+// ─── Importador de PDFs del SII ──────────────────────────────────────────────
+
+const clpFmt = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const fmt = (n) => (n == null ? "—" : clpFmt.format(n));
+
+function ImportadorPDF({ onAplicar }) {
+  const inputRef = useRef(null);
+  const [archivos, setArchivos] = useState([]);
+  const [resultados, setResultados] = useState([]);
+  const [procesando, setProcesando] = useState(false);
+  const [drag, setDrag] = useState(false);
+
+  async function procesarArchivos(files) {
+    const lista = Array.from(files).filter((f) => f.type === "application/pdf");
+    if (!lista.length) return;
+    setArchivos(lista.map((f) => f.name));
+    setProcesando(true);
+    setResultados([]);
+    const res = await Promise.all(lista.map((f) => procesarPDF(f)));
+    setResultados(res);
+    setProcesando(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setDrag(false);
+    procesarArchivos(e.dataTransfer.files);
+  }
+
+  const valoresCalculados = calcularValoresFormulario(resultados);
+  const hayValores = Object.keys(valoresCalculados).length > 0;
+
+  return (
+    <div className="rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5">
+      <div className="rounded-[calc(2rem-0.375rem)] bg-white p-6 md:p-8"
+        style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}>
+
+        <div className="flex items-center gap-2 mb-5">
+          <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85]">
+            Importar desde PDFs del SII
+          </h2>
+          <span className="rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-600 px-2 py-0.5 uppercase tracking-wide">
+            Nuevo
+          </span>
+        </div>
+
+        {/* Drop zone */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`rounded-2xl border-2 border-dashed cursor-pointer text-center px-6 py-8 transition-all
+            ${drag ? "border-[#B91C1C] bg-red-50" : "border-[#DDD8CF] hover:border-[#B91C1C]/40 hover:bg-[#F6F3EE]"}`}
+          style={{ transition: "all 200ms cubic-bezier(0.32,0.72,0,1)" }}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf"
+            multiple
+            className="hidden"
+            onChange={(e) => procesarArchivos(e.target.files)}
+          />
+          <div className="text-2xl mb-2">📂</div>
+          <p className="text-sm font-500 text-[#4A3F38]">
+            Arrastra los PDFs del SII aquí, o haz clic para seleccionar
+          </p>
+          <p className="text-xs text-[#9C8E85] mt-1">
+            Libro de Ventas · Libro de Compras · Remuneraciones · Honorarios
+          </p>
+        </div>
+
+        {/* Procesando */}
+        {procesando && (
+          <div className="mt-4 flex items-center gap-3 text-sm text-[#9C8E85]">
+            <div className="w-4 h-4 rounded-full border-2 border-[#B91C1C]/20 border-t-[#B91C1C] animate-spin flex-shrink-0" />
+            Analizando {archivos.length} archivo{archivos.length !== 1 ? "s" : ""}…
+          </div>
+        )}
+
+        {/* Resultados */}
+        {resultados.length > 0 && (
+          <div className="mt-5 flex flex-col gap-3">
+            <p className="text-xs font-600 uppercase tracking-[0.15em] text-[#9C8E85]">Resultados</p>
+
+            {resultados.map((r, i) => (
+              <div key={i} className={`rounded-2xl p-4 ${r.ok ? "bg-[#F6F3EE]" : "bg-red-50"}`}>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-base mt-0.5">{TIPO_ICONOS[r.tipo] || "📄"}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-600 text-[#18110C]">
+                        {archivos[i] ? archivos[i].replace(".pdf", "") : TIPO_LABELS[r.tipo]}
+                      </p>
+                      {r.ok
+                        ? <span className="text-[10px] rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 font-600">OK</span>
+                        : <span className="text-[10px] rounded-full bg-red-100 text-red-700 px-2 py-0.5 font-600">Error</span>
+                      }
+                      {r.soloReferencia && (
+                        <span className="text-[10px] rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 font-600">Solo referencia</span>
+                      )}
+                    </div>
+
+                    {/* Detalle por tipo */}
+                    {r.tipo === "ventas" && r.ok && (
+                      <p className="text-sm text-[#4A3F38] mt-1">
+                        Ingresos netos: <strong className="text-[#18110C]">{fmt(r.neto)}</strong>
+                      </p>
+                    )}
+                    {r.tipo === "compras" && r.ok && (
+                      <div className="mt-1 flex flex-col gap-0.5">
+                        {r.items.map((item, j) => (
+                          <p key={j} className="text-sm text-[#4A3F38]">
+                            {item.signo < 0 ? "−" : "+"} {item.label}:{" "}
+                            <strong className={item.signo < 0 ? "text-red-600" : "text-[#18110C]"}>
+                              {fmt(item.monto)}
+                            </strong>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {r.tipo === "remuneraciones" && r.ok && (
+                      <p className="text-sm text-[#4A3F38] mt-1">
+                        Líquido a pagar: <strong className="text-[#18110C]">{fmt(r.liquido)}</strong>
+                        {r.totalHaber && r.totalHaber !== r.liquido && (
+                          <span className="text-[#9C8E85] ml-2">(Total haber: {fmt(r.totalHaber)})</span>
+                        )}
+                      </p>
+                    )}
+                    {r.tipo === "honorarios" && r.ok && (
+                      <p className="text-sm text-[#4A3F38] mt-1">
+                        Total honorarios: <strong className="text-[#18110C]">{fmt(r.total)}</strong>
+                      </p>
+                    )}
+                    {r.tipo === "f29" && r.ok && (
+                      <div className="text-sm text-[#4A3F38] mt-1">
+                        {r.totalPagar && <p>Total a pagar: <strong>{fmt(r.totalPagar)}</strong></p>}
+                        {r.ppm && <p>PPM: <strong>{fmt(r.ppm)}</strong></p>}
+                        <p className="text-xs text-[#9C8E85] mt-0.5">No se aplica al formulario, solo para tu referencia.</p>
+                      </div>
+                    )}
+                    {!r.ok && (
+                      <p className="text-sm text-red-600 mt-1">{r.error}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Resumen de lo que se va a aplicar */}
+            {hayValores && (
+              <div className="mt-2 rounded-2xl bg-[#18110C] p-5">
+                <p className="text-xs font-700 uppercase tracking-[0.15em] text-white/60 mb-3">
+                  Se aplicará al formulario
+                </p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                  {valoresCalculados.ingresos != null && (
+                    <div>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wide">Ingresos</p>
+                      <p className="text-sm font-600 text-white tabular-nums">{fmt(valoresCalculados.ingresos)}</p>
+                    </div>
+                  )}
+                  {valoresCalculados.gastos_sueldos != null && (
+                    <div>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wide">Sueldos</p>
+                      <p className="text-sm font-600 text-white tabular-nums">{fmt(valoresCalculados.gastos_sueldos)}</p>
+                    </div>
+                  )}
+                  {valoresCalculados.gastos_honorarios != null && (
+                    <div>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wide">Honorarios</p>
+                      <p className="text-sm font-600 text-white tabular-nums">{fmt(valoresCalculados.gastos_honorarios)}</p>
+                    </div>
+                  )}
+                  {valoresCalculados.gastos_proveedores != null && (
+                    <div>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wide">Proveedores</p>
+                      <p className="text-sm font-600 text-white tabular-nums">{fmt(valoresCalculados.gastos_proveedores)}</p>
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAplicar(valoresCalculados)}
+                  className="group mt-4 flex items-center gap-2 rounded-full bg-white text-[#18110C] text-sm font-600 px-5 py-2.5 active:scale-[0.98]"
+                  style={{ transition: "transform 150ms" }}
+                >
+                  Aplicar al formulario
+                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 group-hover:translate-x-0.5" style={{ transition: "transform 200ms" }}>
+                    <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Form de reporte mensual ──────────────────────────────────────────────────
 
 const EMPTY = {
@@ -403,6 +606,15 @@ export default function Admin() {
 
         {tab === "documentos" && <SeccionDocumentos />}
         {tab === "reporte" && <>
+        <ImportadorPDF onAplicar={(valores) => {
+          setForm(f => ({
+            ...f,
+            ...(valores.ingresos != null ? { ingresos: valores.ingresos } : {}),
+            ...(valores.gastos_sueldos != null ? { gastos_sueldos: valores.gastos_sueldos } : {}),
+            ...(valores.gastos_honorarios != null ? { gastos_honorarios: valores.gastos_honorarios } : {}),
+            ...(valores.gastos_proveedores != null ? { gastos_proveedores: valores.gastos_proveedores } : {}),
+          }));
+        }} />
 
         {error && (
           <div className="rounded-2xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>

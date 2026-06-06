@@ -68,16 +68,12 @@ const DOC_EMPTY = { titulo: "", descripcion: "", categoria: "Financiero", mes: "
 const CATEGORIAS = ["Financiero", "Audiencia", "Legal", "Directorio", "Otro"];
 
 function SeccionDocumentos() {
-  const fileRef = useRef(null);
   const [docs, setDocs] = useState([]);
   const [form, setForm] = useState(DOC_EMPTY);
-  const [archivo, setArchivo] = useState(null);       // File seleccionado
-  const [subiendo, setSubiendo] = useState(false);    // Progreso de upload
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [drag, setDrag] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -91,49 +87,19 @@ function SeccionDocumentos() {
 
   function setF(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
 
-  function handleFileSelect(files) {
-    const f = files?.[0];
-    if (!f) return;
-    setArchivo(f);
-    // Auto-llenar título si está vacío
-    if (!form.titulo.trim()) {
-      const nombre = f.name.replace(/\.[^.]+$/, "").replace(/_/g, " ");
-      setForm(prev => ({ ...prev, titulo: nombre }));
-    }
-  }
-
   async function handleAdd(e) {
     e.preventDefault();
     if (!form.titulo.trim()) { setError("El título es obligatorio."); return; }
-    if (!archivo) { setError("Selecciona un archivo para subir."); return; }
+    if (!form.url.trim()) { setError("El link de Google Drive es obligatorio."); return; }
     setError(""); setSaving(true);
-
     const sb = getSupabase();
-
-    // 1. Subir archivo a Supabase Storage
-    setSubiendo(true);
-    const ext = archivo.name.split(".").pop();
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error: uploadErr } = await sb.storage
-      .from("socios-docs")
-      .upload(path, archivo, { contentType: archivo.type, upsert: false });
-    setSubiendo(false);
-
-    if (uploadErr) { setError(`Error al subir: ${uploadErr.message}`); setSaving(false); return; }
-
-    // 2. Guardar el path (no la URL pública) — el bucket es privado, se usan signed URLs
-    const storagePath = `socios-docs/${path}`;
-
-    // 3. Guardar en tabla
     const { data, error: dbErr } = await sb.from("socios_documentos")
-      .insert({ ...form, url: storagePath, orden: Number(form.orden) || 0 })
+      .insert({ ...form, orden: Number(form.orden) || 0 })
       .select().single();
     setSaving(false);
     if (dbErr) { setError(dbErr.message); return; }
-
     setDocs(d => [...d, data]);
     setForm(DOC_EMPTY);
-    setArchivo(null);
     setSaved(true); setTimeout(() => setSaved(false), 2500);
   }
 
@@ -215,32 +181,21 @@ function SeccionDocumentos() {
           <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85] mb-5">Subir documento</h2>
           {error && <div className="mb-4 rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-          {/* Drop zone */}
-          <div
-            onDragOver={e => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={e => { e.preventDefault(); setDrag(false); handleFileSelect(e.dataTransfer.files); }}
-            onClick={() => fileRef.current?.click()}
-            className={`mb-5 rounded-2xl border-2 border-dashed cursor-pointer text-center px-6 py-7 transition-all
-              ${drag ? "border-[#B91C1C] bg-red-50" : archivo ? "border-emerald-400 bg-emerald-50" : "border-[#DDD8CF] hover:border-[#B91C1C]/40 hover:bg-[#F6F3EE]"}`}
-            style={{ transition: "all 200ms cubic-bezier(0.32,0.72,0,1)" }}
-          >
-            <input ref={fileRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.doc" className="hidden"
-              onChange={e => handleFileSelect(e.target.files)} />
-            {archivo ? (
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-lg">📄</span>
-                <span className="text-sm font-500 text-emerald-700 truncate max-w-[280px]">{archivo.name}</span>
-                <button type="button" onClick={e => { e.stopPropagation(); setArchivo(null); }}
-                  className="text-xs text-emerald-600 hover:text-red-600 underline ml-1">cambiar</button>
-              </div>
-            ) : (
-              <>
-                <div className="text-2xl mb-2">📁</div>
-                <p className="text-sm font-500 text-[#4A3F38]">Arrastra el archivo aquí o haz clic</p>
-                <p className="text-xs text-[#9C8E85] mt-1">PDF, Excel, Word</p>
-              </>
-            )}
+          {/* Link de Google Drive */}
+          <div className="mb-5 flex flex-col gap-1.5">
+            <label className="text-xs font-600 text-[#4A3F38] tracking-wide uppercase">Link de Google Drive</label>
+            <div className="rounded-xl bg-[#F6F3EE] ring-1 ring-[#DDD8CF] px-4 py-3 focus-within:ring-[#B91C1C]/40">
+              <input
+                type="url"
+                value={form.url}
+                onChange={setF("url")}
+                placeholder="https://drive.google.com/file/d/... o carpeta de Drive"
+                className="w-full bg-transparent text-sm text-[#18110C] placeholder:text-[#BDB5AD] outline-none"
+              />
+            </div>
+            <p className="text-xs text-[#9C8E85]">
+              Pega el link del archivo o carpeta en Drive. El acceso lo controlas tú desde Google Drive — solo verán el documento los socios que ya tengan permiso.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -293,19 +248,13 @@ function SeccionDocumentos() {
             </div>
           </div>
           <div className="mt-5 flex items-center gap-3">
-            <button type="submit" disabled={saving || subiendo}
+            <button type="submit" disabled={saving}
               className="group flex items-center gap-3 rounded-full bg-[#18110C] px-5 py-3 text-white text-sm font-500 active:scale-[0.98] disabled:opacity-50"
               style={{ transition: "transform 150ms" }}>
-              {subiendo
-                ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-white/20 border-t-white animate-spin" />Subiendo…</>
-                : saving
-                  ? "Guardando…"
-                  : <><span>Subir documento</span>
-                    {saved && <svg viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M2 7l3.5 3.5L12 3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                  </>
-              }
+              <span>{saving ? "Guardando…" : "Agregar documento"}</span>
+              {saved && <svg viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M2 7l3.5 3.5L12 3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
             </button>
-            {saved && <span className="text-sm text-emerald-600 font-500">¡Documento guardado!</span>}
+            {saved && <span className="text-sm text-emerald-600 font-500">¡Agregado!</span>}
           </div>
         </form>
       </div>

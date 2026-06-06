@@ -139,9 +139,6 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-[#BDB5AD] mt-6">
-          Información confidencial — solo socios autorizados
-        </p>
       </div>
     </div>
   );

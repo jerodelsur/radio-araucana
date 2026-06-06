@@ -121,12 +121,12 @@ function SeccionDocumentos() {
 
     if (uploadErr) { setError(`Error al subir: ${uploadErr.message}`); setSaving(false); return; }
 
-    // 2. Obtener URL pública
-    const { data: { publicUrl } } = sb.storage.from("socios-docs").getPublicUrl(path);
+    // 2. Guardar el path (no la URL pública) — el bucket es privado, se usan signed URLs
+    const storagePath = `socios-docs/${path}`;
 
     // 3. Guardar en tabla
     const { data, error: dbErr } = await sb.from("socios_documentos")
-      .insert({ ...form, url: publicUrl, orden: Number(form.orden) || 0 })
+      .insert({ ...form, url: storagePath, orden: Number(form.orden) || 0 })
       .select().single();
     setSaving(false);
     if (dbErr) { setError(dbErr.message); return; }

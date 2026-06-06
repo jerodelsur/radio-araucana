@@ -28,10 +28,25 @@ function FileIcon({ url }) {
 }
 
 // ─── Tarjeta de documentos ────────────────────────────────────────────────────
+
+/** Extrae el path del archivo para createSignedUrl.
+ *  Soporta: URL completa antigua (https://…/socios-docs/file.pdf)
+ *           y path nuevo (socios-docs/file.pdf) */
+function extraerPath(url) {
+  try {
+    if (!url) return null;
+    // Formato nuevo: "socios-docs/filename.pdf"
+    if (url.startsWith("socios-docs/")) return url.slice("socios-docs/".length);
+    // Formato antiguo: URL completa de Supabase
+    const match = url.match(/\/socios-docs\/(.+)$/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch { return null; }
+}
+
 function CardDocumentos({ documentos, isAdmin }) {
   const ref = useFadeIn(400);
+  const [descargando, setDescargando] = useState(null);
 
-  // Agrupar por categoría
   const grupos = documentos.reduce((acc, doc) => {
     const cat = doc.categoria || "General";
     if (!acc[cat]) acc[cat] = [];
@@ -40,6 +55,27 @@ function CardDocumentos({ documentos, isAdmin }) {
   }, {});
 
   const categorias = Object.keys(grupos).sort();
+
+  async function handleDescargar(e, doc) {
+    e.preventDefault();
+    const path = extraerPath(doc.url);
+    if (!path) { window.open(doc.url, "_blank"); return; }
+
+    setDescargando(doc.id);
+    try {
+      const sb = getSupabase();
+      const { data, error } = await sb.storage
+        .from("socios-docs")
+        .createSignedUrl(path, 120); // expira en 2 minutos
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank");
+      } else {
+        alert("No se pudo generar el link de descarga. " + (error?.message || ""));
+      }
+    } finally {
+      setDescargando(null);
+    }
+  }
 
   return (
     <Shell className="fade-up col-span-12 mt-2" ref={ref}>
@@ -64,12 +100,11 @@ function CardDocumentos({ documentos, isAdmin }) {
               <p className="text-[11px] font-700 uppercase tracking-[0.18em] text-[#9C8E85] mb-3">{cat}</p>
               <div className="grid md:grid-cols-2 gap-3">
                 {grupos[cat].map(doc => (
-                  <a
+                  <button
                     key={doc.id}
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-start gap-4 p-4 rounded-2xl bg-[#F6F3EE] hover:bg-[#EDE9E2] active:scale-[0.99]"
+                    onClick={e => handleDescargar(e, doc)}
+                    disabled={descargando === doc.id}
+                    className="group flex items-start gap-4 p-4 rounded-2xl bg-[#F6F3EE] hover:bg-[#EDE9E2] active:scale-[0.99] text-left w-full disabled:opacity-60"
                     style={{ transition: "background 200ms cubic-bezier(0.32,0.72,0,1), transform 150ms" }}
                   >
                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#B91C1C] flex-shrink-0 shadow-sm ring-1 ring-black/5">
@@ -82,13 +117,15 @@ function CardDocumentos({ documentos, isAdmin }) {
                       )}
                     </div>
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#9C8E85] group-hover:text-[#B91C1C] group-hover:bg-[#B91C1C]/5 shadow-sm ring-1 ring-black/5"
-                      style={{ transition: "color 200ms, background 200ms, transform 250ms cubic-bezier(0.32,0.72,0,1)" }}>
-                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 group-hover:translate-y-px"
-                        style={{ transition: "transform 250ms cubic-bezier(0.32,0.72,0,1)" }}>
-                        <path d="M8 3v7M5 7l3 3 3-3M3 13h10" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      style={{ transition: "color 200ms, background 200ms" }}>
+                      {descargando === doc.id
+                        ? <div className="w-3 h-3 rounded-full border-2 border-[#B91C1C]/20 border-t-[#B91C1C] animate-spin" />
+                        : <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+                            <path d="M8 3v7M5 7l3 3 3-3M3 13h10" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                      }
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>

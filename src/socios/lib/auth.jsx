@@ -126,7 +126,7 @@ export function AuthProvider({ children }) {
         return { ok: true, user: data.user };
       } catch (e) {
         const msg = e?.message === "timeout"
-          ? "El login tardó demasiado. Prueba en una ventana incógnita."
+          ? "El login tardó demasiado. Prueba en una ventana incógnita (Cmd+Shift+N) o espera 5 minutos e intenta de nuevo."
           : e?.message || "Error al iniciar sesión.";
         setError(msg);
         return { ok: false, error: msg };

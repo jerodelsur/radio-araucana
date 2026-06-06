@@ -113,8 +113,18 @@ export default function Login() {
               </div>
 
               {error && (
-                <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">
-                  {error}
+                <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700 flex flex-col gap-2">
+                  <span>{error}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try { localStorage.clear(); sessionStorage.clear(); } catch {}
+                      window.location.reload();
+                    }}
+                    className="text-xs text-red-600 underline underline-offset-2 text-left hover:text-red-800"
+                  >
+                    Limpiar caché y reintentar
+                  </button>
                 </div>
               )}
 

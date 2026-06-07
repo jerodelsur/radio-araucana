@@ -302,7 +302,9 @@ function CardFacturacion({ reporte, prevReporte }) {
 function CardCaja({ reporte }) {
   const ref = useFadeIn(80);
   const caja = reporte.ingresos_caja || 0;
+  const iva = reporte.facturacion_iva || 0;
   const diff = caja > 0 ? caja - reporte.ingresos : null;
+  const cajaDisponible = caja > 0 && iva > 0 ? caja - iva : null;
 
   return (
     <Shell className="fade-up col-span-12 md:col-span-5" ref={ref}>
@@ -326,13 +328,34 @@ function CardCaja({ reporte }) {
                   : "Coincide con la facturación del período."}
               </div>
             )}
+            {cajaDisponible !== null && (
+              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-snug text-amber-800 flex flex-col gap-1">
+                <div className="flex justify-between">
+                  <span>IVA a declarar (débito fiscal)</span>
+                  <span className="font-600 tabular-nums">−{formatPesos(iva)}</span>
+                </div>
+                <div className="flex justify-between border-t border-amber-200/60 pt-1 mt-0.5">
+                  <span className="font-600">Caja disponible real</span>
+                  <span className="font-600 tabular-nums">{formatPesos(cajaDisponible)}</span>
+                </div>
+              </div>
+            )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col justify-center">
-            <p className="text-sm text-[#BDB5AD] italic">Sin registrar este mes.</p>
-            <p className="text-xs text-[#BDB5AD] mt-1.5">
-              Ingresa el monto desde el panel admin → Reporte → Ingresos efectivos (caja).
-            </p>
+          <div className="flex-1 flex flex-col justify-center gap-3">
+            <div>
+              <p className="text-sm text-[#BDB5AD] italic">Sin registrar este mes.</p>
+              <p className="text-xs text-[#BDB5AD] mt-1.5">
+                Ingresa el monto desde el panel admin → Reporte → Ingresos efectivos (caja).
+              </p>
+            </div>
+            {iva > 0 && (
+              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                <span className="font-600">IVA a declarar estimado: </span>
+                <span className="tabular-nums">{formatPesos(iva)}</span>
+                <span className="text-amber-600 block mt-0.5">Registra la caja para ver la disponibilidad real.</span>
+              </div>
+            )}
           </div>
         )}
       </div>

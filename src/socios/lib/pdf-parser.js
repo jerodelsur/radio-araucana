@@ -54,18 +54,95 @@ function detectarTipo(texto) {
  * Estructura: "Totales 0 16.049.966 3.049.491 0 19.099.457"
  *              Exento  Neto        IVA         Imp  Total
  */
+// ─── Extracción de filas individuales ────────────────────────────────────────
+
+/**
+ * Extrae filas individuales del Libro de Ventas.
+ * Formato de cada fila: N° Fecha RUT RazónSocial Exento Neto IVA Imp. Total
+ * Ej: "3208 02/01/2026 76166681-9 HS CHILE SPA 0 2.153.000 409.070 0 2.562.070"
+ */
+function extraerFilasVentas(texto) {
+  const rows = [];
+  // Después del RUT viene la razón social (texto), luego 5 números: exento neto iva imp total
+  const re = /(\d{3,})\s+(\d{2}\/\d{2}\/\d{4})\s+[\d]+-[\dkK]\s+(.+?)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+[\d\.]+\s+([\d\.]+)(?=\s+\d{3,}\s+\d{2}\/|\s*Totales|\s*TOTALES|\s*$)/g;
+  let m;
+  while ((m = re.exec(texto)) !== null) {
+    const neto = parseCLP(m[5]);
+    if (neto < 1000) continue; // Filtrar filas de encabezado o valores residuales
+    rows.push({
+      folio: m[1],
+      fecha: m[2],
+      razon: m[3].replace(/\s+/g, " ").trim(),
+      neto,
+      iva: parseCLP(m[6]),
+      total: parseCLP(m[7]),
+    });
+  }
+  return rows;
+}
+
+/**
+ * Extrae filas individuales del Libro de Compras agrupadas por tipo de documento.
+ * Formato: N° Fecha RUT RazónSocial Exento Neto IVA_recup IVA_no_recup Uso_común Imp. Total (7 números)
+ */
+function extraerFilasCompras(texto) {
+  const rows = [];
+
+  // Regex para cada fila: folio fecha rut razon + 7 números
+  function parseSec(seccion, tipo, signo) {
+    const re = /(\d{3,})\s+(\d{2}\/\d{2}\/\d{4})\s+[\d]+-[\dkK]\s+(.+?)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+[\d\.]+\s+[\d\.]+\s+[\d\.]+\s+([\d\.]+)(?=\s+\d{3,}\s+\d{2}\/|\s*Total\s+\d|\s*$)/g;
+    let m;
+    while ((m = re.exec(seccion)) !== null) {
+      const exento = parseCLP(m[4]);
+      const neto   = parseCLP(m[5]);
+      const monto  = neto > 0 ? neto : exento; // F34 usa exento
+      if (monto < 1000) continue;
+      rows.push({
+        folio: m[1],
+        fecha: m[2],
+        razon: m[3].replace(/\s+/g, " ").trim(),
+        exento,
+        neto,
+        iva: parseCLP(m[6]),
+        total: parseCLP(m[7]),
+        tipo,
+        signo,
+      });
+    }
+  }
+
+  // Dividir texto por sección
+  const sec33 = texto.match(/33-Factura Electr[oó]nica([\s\S]+?)(?=34-|61-|RESUMEN|$)/i)?.[1] || "";
+  const sec34 = texto.match(/34-Factura no Afecta([\s\S]+?)(?=61-|RESUMEN|$)/i)?.[1] || "";
+  const sec61 = texto.match(/61-Nota de Cr[eé]dito([\s\S]+?)(?=\d{2}-|RESUMEN|$)/i)?.[1] || "";
+
+  parseSec(sec33, "F33", 1);
+  parseSec(sec34, "F34", 1);
+  parseSec(sec61, "NC61", -1);
+
+  return rows;
+}
+
+// ─── Parsers de totales ───────────────────────────────────────────────────────
+
 function parsearVentas(texto) {
   // La página 2 tiene: "Totales 0 16.049.966 ..."
   const match = texto.match(/Totales\s+0\s+([\d\.]+)\s+[\d\.]+\s+0\s+[\d\.]+/);
+  const filas = extraerFilasVentas(texto);
   if (!match) {
-    // Fallback: toma el neto del último "Total N Factura Electrónica"
     const m2 = texto.match(/Total\s+\d+\s+Factura\s+Electr[oó]nica\s+0\s+([\d\.]+)/);
-    if (m2) {
-      return { tipo: "ventas", neto: parseCLP(m2[1]), ok: true };
-    }
+    if (m2) return { tipo: "ventas", neto: parseCLP(m2[1]), filas, ok: true };
     return { tipo: "ventas", ok: false, error: "No se encontró la fila de Totales" };
   }
-  return { tipo: "ventas", neto: parseCLP(match[1]), ok: true };
+  // match: Totales 0 [neto] [iva] 0 [total]
+  return {
+    tipo: "ventas",
+    neto: parseCLP(match[1]),
+    iva_total: parseCLP(match[2]),
+    total_iva: parseCLP(match[3] || "0"),
+    filas,
+    ok: true,
+  };
 }
 
 /**
@@ -133,6 +210,7 @@ function parsearCompras(texto) {
   return {
     tipo: "compras",
     items,
+    filas: extraerFilasCompras(texto),
     ok: items.length > 0,
     error: items.length === 0 ? "No se encontraron totales en el RESUMEN" : null,
   };
@@ -250,31 +328,27 @@ export async function procesarPDF(file) {
  * Suma ítems del mismo campo (ej: varias fuentes de gastos_proveedores).
  */
 export function calcularValoresFormulario(resultados) {
-  const valores = {};
+  const valores = { detalle_ventas: [], detalle_compras: [] };
 
   for (const r of resultados) {
     if (!r?.ok || r.soloReferencia) continue;
 
     if (r.tipo === "ventas") {
       valores.ingresos = r.neto;
+      if (r.iva_total) valores.facturacion_iva = r.iva_total;
+      if (r.filas?.length) valores.detalle_ventas = r.filas;
     }
 
     if (r.tipo === "compras" && Array.isArray(r.items)) {
       for (const item of r.items) {
         const actual = valores[item.campo] || 0;
-        valores[item.campo] = actual + item.monto * item.signo;
-        // Nunca negativo
-        if (valores[item.campo] < 0) valores[item.campo] = 0;
+        valores[item.campo] = Math.max(0, actual + item.monto * item.signo);
       }
+      if (r.filas?.length) valores.detalle_compras = r.filas;
     }
 
-    if (r.tipo === "remuneraciones") {
-      valores.gastos_sueldos = r.liquido;
-    }
-
-    if (r.tipo === "honorarios") {
-      valores.gastos_honorarios = (valores.gastos_honorarios || 0) + r.total;
-    }
+    if (r.tipo === "remuneraciones") valores.gastos_sueldos = r.liquido;
+    if (r.tipo === "honorarios") valores.gastos_honorarios = (valores.gastos_honorarios || 0) + r.total;
   }
 
   return valores;

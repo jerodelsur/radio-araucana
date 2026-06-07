@@ -476,6 +476,10 @@ const EMPTY = {
   sintonia: "",
   logros: [],
   nota_gerente: "",
+  facturacion_iva: 0,
+  ingresos_caja: "",
+  detalle_ventas: [],
+  detalle_compras: [],
   publicado: false,
 };
 
@@ -524,6 +528,10 @@ export default function Admin() {
         sintonia: data.sintonia ?? "",
         logros: Array.isArray(data.logros) ? data.logros : [],
         nota_gerente: data.nota_gerente ?? "",
+        facturacion_iva: data.facturacion_iva ?? 0,
+        ingresos_caja: data.ingresos_caja ?? "",
+        detalle_ventas: Array.isArray(data.detalle_ventas) ? data.detalle_ventas : [],
+        detalle_compras: Array.isArray(data.detalle_compras) ? data.detalle_compras : [],
         publicado: data.publicado ?? false,
       });
     }
@@ -562,6 +570,10 @@ export default function Admin() {
       sintonia: form.sintonia,
       logros: form.logros,
       nota_gerente: form.nota_gerente,
+      facturacion_iva: Number(form.facturacion_iva) || 0,
+      ingresos_caja: Number(form.ingresos_caja) || 0,
+      detalle_ventas: form.detalle_ventas || [],
+      detalle_compras: form.detalle_compras || [],
       publicado: publicar ?? form.publicado,
       updated_at: new Date().toISOString(),
     };
@@ -644,6 +656,9 @@ export default function Admin() {
             ...(valores.gastos_sueldos != null ? { gastos_sueldos: valores.gastos_sueldos } : {}),
             ...(valores.gastos_honorarios != null ? { gastos_honorarios: valores.gastos_honorarios } : {}),
             ...(valores.gastos_proveedores != null ? { gastos_proveedores: valores.gastos_proveedores } : {}),
+            ...(valores.facturacion_iva != null ? { facturacion_iva: valores.facturacion_iva } : {}),
+            ...(valores.detalle_ventas?.length ? { detalle_ventas: valores.detalle_ventas } : {}),
+            ...(valores.detalle_compras?.length ? { detalle_compras: valores.detalle_compras } : {}),
           }));
         }} />
 
@@ -677,8 +692,14 @@ export default function Admin() {
             style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}>
             <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85] mb-5">Financiero</h2>
             <div className="grid md:grid-cols-2 gap-4">
-              <Field label="Ingresos (publicidad)">
-                <MoneyInput value={form.ingresos} onChange={setNum("ingresos")} placeholder="12000000" />
+              <Field label="Facturación neta (s/IVA)" hint="Total neto del Libro de Ventas">
+                <MoneyInput value={form.ingresos} onChange={setNum("ingresos")} placeholder="16000000" />
+              </Field>
+              <Field label="IVA facturado" hint="Se completa automático al importar el Libro de Ventas">
+                <MoneyInput value={form.facturacion_iva} onChange={setNum("facturacion_iva")} placeholder="3049491" />
+              </Field>
+              <Field label="Ingresos efectivos (caja)" hint="Abonos reales en cuenta corriente según cartola bancaria">
+                <MoneyInput value={form.ingresos_caja} onChange={setNum("ingresos_caja")} placeholder="0" />
               </Field>
               <Field label="Gastos sueldos">
                 <MoneyInput value={form.gastos_sueldos} onChange={setNum("gastos_sueldos")} />

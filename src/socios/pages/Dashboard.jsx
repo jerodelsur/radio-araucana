@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/auth.jsx";
 import { getSupabase } from "../lib/supabase.js";
@@ -123,6 +123,107 @@ function Eyebrow({ children }) {
   );
 }
 
+// ─── Tabla de detalle expandible ─────────────────────────────────────────────
+
+const clpFmt2 = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const fmt2 = (n) => clpFmt2.format(n || 0);
+
+const TIPO_LABEL = { F33: "Factura con IVA", F34: "Factura exenta", "NC61": "Nota de crédito" };
+const TIPO_COLOR = { F33: "text-[#4A3F38]", F34: "text-amber-700", "NC61": "text-red-600" };
+
+function TablaVentas({ filas }) {
+  if (!filas?.length) return <p className="text-sm text-[#BDB5AD] italic px-1">Sin detalle disponible. Sube el Libro de Ventas para verlo.</p>;
+  return (
+    <div className="overflow-x-auto -mx-1">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-[#EDE9E2]">
+            <th className="text-left py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Fecha</th>
+            <th className="text-left py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Cliente</th>
+            <th className="text-right py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Neto</th>
+            <th className="text-right py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide hidden sm:table-cell">IVA</th>
+            <th className="text-right py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((f, i) => (
+            <tr key={i} className={i % 2 === 0 ? "" : "bg-[#F6F3EE]/60"}>
+              <td className="py-2 px-1 text-[#9C8E85] whitespace-nowrap">{f.fecha}</td>
+              <td className="py-2 px-1 text-[#4A3F38] max-w-[180px] truncate">{f.razon}</td>
+              <td className="py-2 px-1 text-right tabular-nums text-[#18110C]">{fmt2(f.neto)}</td>
+              <td className="py-2 px-1 text-right tabular-nums text-[#9C8E85] hidden sm:table-cell">{fmt2(f.iva)}</td>
+              <td className="py-2 px-1 text-right tabular-nums font-500 text-[#18110C]">{fmt2(f.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-[#DDD8CF]">
+            <td colSpan={2} className="py-2 px-1 font-600 text-[#4A3F38]">Total ({filas.length} facturas)</td>
+            <td className="py-2 px-1 text-right tabular-nums font-700 text-[#18110C]">
+              {fmt2(filas.reduce((s, f) => s + f.neto, 0))}
+            </td>
+            <td className="hidden sm:table-cell" />
+            <td className="py-2 px-1 text-right tabular-nums font-700 text-[#18110C]">
+              {fmt2(filas.reduce((s, f) => s + f.total, 0))}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+function TablaCompras({ filas }) {
+  if (!filas?.length) return <p className="text-sm text-[#BDB5AD] italic px-1">Sin detalle disponible. Sube el Libro de Compras para verlo.</p>;
+  return (
+    <div className="overflow-x-auto -mx-1">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-[#EDE9E2]">
+            <th className="text-left py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Fecha</th>
+            <th className="text-left py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Proveedor</th>
+            <th className="text-left py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide hidden sm:table-cell">Tipo</th>
+            <th className="text-right py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Monto</th>
+            <th className="text-right py-2 px-1 font-600 text-[#9C8E85] uppercase tracking-wide">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((f, i) => {
+            const monto = f.neto > 0 ? f.neto : f.exento;
+            const isNC = f.tipo === "NC61";
+            return (
+              <tr key={i} className={i % 2 === 0 ? "" : "bg-[#F6F3EE]/60"}>
+                <td className="py-2 px-1 text-[#9C8E85] whitespace-nowrap">{f.fecha}</td>
+                <td className="py-2 px-1 text-[#4A3F38] max-w-[160px] truncate">{f.razon}</td>
+                <td className={`py-2 px-1 hidden sm:table-cell ${TIPO_COLOR[f.tipo] || "text-[#4A3F38]"}`}>
+                  {TIPO_LABEL[f.tipo] || f.tipo}
+                </td>
+                <td className={`py-2 px-1 text-right tabular-nums ${isNC ? "text-red-600" : "text-[#18110C]"}`}>
+                  {isNC ? `−${fmt2(monto)}` : fmt2(monto)}
+                </td>
+                <td className={`py-2 px-1 text-right tabular-nums font-500 ${isNC ? "text-red-600" : "text-[#18110C]"}`}>
+                  {isNC ? `−${fmt2(f.total)}` : fmt2(f.total)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-[#DDD8CF]">
+            <td colSpan={3} className="py-2 px-1 font-600 text-[#4A3F38]">Total ({filas.length} documentos)</td>
+            <td colSpan={2} className="py-2 px-1 text-right tabular-nums font-700 text-[#18110C]">
+              {fmt2(filas.reduce((s, f) => {
+                const m = f.neto > 0 ? f.neto : f.exento;
+                return s + m * f.signo;
+              }, 0))}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
 function BigNumber({ value, positive, size = "xl" }) {
   const color = positive === undefined
     ? "text-[#18110C]"
@@ -151,43 +252,119 @@ function DeltaBadge({ delta }) {
 
 // ─── Tarjetas individuales ───────────────────────────────────────────────────
 
-function CardIngresos({ reporte, prevReporte }) {
+function CardFacturacion({ reporte, prevReporte }) {
   const ref = useFadeIn(0);
+  const [detalle, setDetalle] = useState(false);
   const delta = prevReporte?.ingresos
     ? ((reporte.ingresos - prevReporte.ingresos) / prevReporte.ingresos) * 100
     : null;
+  const totalConIVA = reporte.ingresos + (reporte.facturacion_iva || 0);
+
   return (
-    <Shell className="fade-up col-span-12 md:col-span-7 row-span-1" ref={ref}>
-      <div className="p-7 md:p-8 h-full flex flex-col justify-between min-h-[200px]">
-        <div className="flex items-start justify-between">
-          <Eyebrow>Ingresos del mes</Eyebrow>
+    <Shell className="fade-up col-span-12 md:col-span-7" ref={ref}>
+      <div className="p-7 md:p-8 flex flex-col gap-4 min-h-[200px]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <Eyebrow>Facturación del mes (neto)</Eyebrow>
+            <p className="text-[10px] text-[#BDB5AD] mt-1 uppercase tracking-[0.14em]">Ventas devengadas s/IVA · Libro de ventas</p>
+          </div>
           {delta != null && <DeltaBadge delta={delta} />}
         </div>
-        <div className="mt-6">
+        <div>
           <BigNumber value={formatPesos(reporte.ingresos)} size="2xl" />
-          <p className="text-sm text-[#9C8E85] mt-2">Facturación publicidad · {mesLabel(reporte.mes)}</p>
+          {reporte.facturacion_iva > 0 && (
+            <p className="text-sm text-[#9C8E85] mt-2">
+              Total c/IVA:{" "}
+              <span className="font-600 text-[#4A3F38] tabular-nums">{formatPesos(totalConIVA)}</span>
+              <span className="ml-2 text-xs text-[#BDB5AD]">(incl. IVA {formatPesos(reporte.facturacion_iva)})</span>
+            </p>
+          )}
         </div>
+        <button onClick={() => setDetalle(v => !v)}
+          className="self-start flex items-center gap-1.5 text-xs font-500 text-[#B91C1C] hover:text-[#7F1D1D] transition-colors">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"
+            className={`w-3.5 h-3.5 transition-transform duration-200 ${detalle ? "rotate-180" : ""}`}>
+            <path d="M2 4l5 5 5-5" strokeLinecap="round" />
+          </svg>
+          {detalle ? "Ocultar detalle" : "Ver detalle por cliente"}
+          {reporte.detalle_ventas?.length ? ` (${reporte.detalle_ventas.length} facturas)` : ""}
+        </button>
+        {detalle && (
+          <div className="border-t border-[#EDE9E2] pt-4">
+            <TablaVentas filas={reporte.detalle_ventas} />
+          </div>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
+function CardCaja({ reporte }) {
+  const ref = useFadeIn(80);
+  const caja = reporte.ingresos_caja || 0;
+  const diff = caja > 0 ? caja - reporte.ingresos : null;
+
+  return (
+    <Shell className="fade-up col-span-12 md:col-span-5" ref={ref}>
+      <div className="p-7 md:p-8 min-h-[180px] flex flex-col gap-4">
+        <div>
+          <Eyebrow>Ingresos efectivos (caja)</Eyebrow>
+          <p className="text-[10px] text-[#BDB5AD] mt-1 uppercase tracking-[0.14em]">Abonos reales · Cartola bancaria</p>
+        </div>
+        {caja > 0 ? (
+          <>
+            <BigNumber value={formatPesos(caja)} />
+            {diff !== null && (
+              <div className={`rounded-2xl px-4 py-3 text-xs leading-snug
+                ${Math.abs(diff) < 500000 ? "bg-emerald-50 text-emerald-700"
+                  : diff < 0 ? "bg-amber-50 text-amber-700"
+                  : "bg-sky-50 text-sky-700"}`}>
+                {diff > 0
+                  ? `+${formatPesos(diff)} sobre facturación — incluye cobros de períodos anteriores.`
+                  : diff < 0
+                  ? `${formatPesos(diff)} bajo facturación — hay facturas pendientes de cobro.`
+                  : "Coincide con la facturación del período."}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="text-sm text-[#BDB5AD] italic">Sin registrar este mes.</p>
+            <p className="text-xs text-[#BDB5AD] mt-1.5">
+              Ingresa el monto desde el panel admin → Reporte → Ingresos efectivos (caja).
+            </p>
+          </div>
+        )}
       </div>
     </Shell>
   );
 }
 
 function CardResultado({ reporte }) {
-  const ref = useFadeIn(80);
-  const neto = reporte.ingresos - reporte.gastos_sueldos - reporte.gastos_honorarios - reporte.gastos_proveedores - reporte.gastos_otros;
-  const positive = neto >= 0;
+  const ref = useFadeIn(160);
+  const egresos = reporte.gastos_sueldos + reporte.gastos_honorarios + reporte.gastos_proveedores + reporte.gastos_otros;
+  const resultado = reporte.ingresos - egresos;
+  const positive = resultado >= 0;
   return (
-    <Shell className="fade-up col-span-12 md:col-span-5 row-span-1" ref={ref}>
-      <div className={`p-7 md:p-8 h-full flex flex-col justify-between min-h-[200px]
-        ${positive ? "bg-gradient-to-br from-white to-emerald-50/40" : "bg-gradient-to-br from-white to-red-50/40"}`}>
-        <Eyebrow>Resultado neto</Eyebrow>
-        <div className="mt-6">
-          <BigNumber value={formatPesos(neto)} positive={positive} />
-          <div className={`inline-flex items-center gap-1.5 mt-3 text-xs font-medium
-            ${positive ? "text-emerald-600" : "text-red-600"}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${positive ? "bg-emerald-500" : "bg-red-500"}`} />
-            {positive ? "Resultado positivo" : "Resultado negativo"}
-          </div>
+    <Shell className="fade-up col-span-12 md:col-span-7" ref={ref}>
+      <div className={`p-7 md:p-8 flex flex-col gap-4 min-h-[200px]
+        ${positive ? "bg-gradient-to-br from-white to-emerald-50/30" : "bg-gradient-to-br from-white to-red-50/30"}`}>
+        <div>
+          <Eyebrow>Resultado operacional</Eyebrow>
+          <p className="text-[10px] text-[#BDB5AD] mt-1 uppercase tracking-[0.14em]">Devengado · Facturación neta − Egresos</p>
+        </div>
+        <BigNumber value={formatPesos(resultado)} positive={positive} />
+        {/* Fórmula explícita */}
+        <div className="rounded-2xl bg-[#F6F3EE] px-4 py-3 text-xs font-mono leading-relaxed text-[#9C8E85]">
+          <span className="text-[#4A3F38]">{formatPesos(reporte.ingresos)}</span>
+          <span className="mx-2 text-[#BDB5AD]">−</span>
+          <span className="text-[#4A3F38]">{formatPesos(egresos)}</span>
+          <span className="mx-2 text-[#BDB5AD]">=</span>
+          <span className={`font-700 ${positive ? "text-emerald-700" : "text-red-700"}`}>{formatPesos(resultado)}</span>
+        </div>
+        <div className={`inline-flex items-center gap-1.5 text-xs font-medium ${positive ? "text-emerald-600" : "text-red-600"}`}>
+          <div className={`w-1.5 h-1.5 rounded-full ${positive ? "bg-emerald-500" : "bg-red-500"}`} />
+          {positive ? "Resultado positivo" : "Resultado negativo"}
         </div>
       </div>
     </Shell>
@@ -195,7 +372,8 @@ function CardResultado({ reporte }) {
 }
 
 function CardGastos({ reporte }) {
-  const ref = useFadeIn(160);
+  const ref = useFadeIn(240);
+  const [detalle, setDetalle] = useState(false);
   const total = reporte.gastos_sueldos + reporte.gastos_honorarios + reporte.gastos_proveedores + reporte.gastos_otros;
   const items = [
     { label: "Sueldos", value: reporte.gastos_sueldos },
@@ -206,9 +384,12 @@ function CardGastos({ reporte }) {
 
   return (
     <Shell className="fade-up col-span-12 md:col-span-5" ref={ref}>
-      <div className="p-7 md:p-8 h-full flex flex-col min-h-[240px]">
-        <Eyebrow>Gastos operacionales</Eyebrow>
-        <div className="flex-1 mt-5 flex flex-col justify-between">
+      <div className="p-7 md:p-8 flex flex-col gap-4 min-h-[240px]">
+        <div>
+          <Eyebrow>Egresos operacionales</Eyebrow>
+          <p className="text-[10px] text-[#BDB5AD] mt-1 uppercase tracking-[0.14em]">Gastos pagados en el período</p>
+        </div>
+        <div className="flex-1 flex flex-col justify-between">
           <div className="space-y-3">
             {items.map(item => (
               <div key={item.label} className="flex items-center justify-between">
@@ -216,17 +397,51 @@ function CardGastos({ reporte }) {
                 <span className="text-sm font-500 text-[#18110C] tabular-nums">{formatPesos(item.value)}</span>
               </div>
             ))}
-            {items.length === 0 && (
-              <p className="text-sm text-[#BDB5AD]">Sin gastos registrados</p>
-            )}
+            {items.length === 0 && <p className="text-sm text-[#BDB5AD]">Sin gastos registrados</p>}
           </div>
           <div className="mt-4 pt-4 border-t border-[#EDE9E2] flex items-center justify-between">
             <span className="text-sm font-600 text-[#4A3F38]">Total egresos</span>
             <span className="text-base font-700 text-[#18110C] tabular-nums">{formatPesos(total)}</span>
           </div>
         </div>
+        <button onClick={() => setDetalle(v => !v)}
+          className="self-start flex items-center gap-1.5 text-xs font-500 text-[#B91C1C] hover:text-[#7F1D1D] transition-colors">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"
+            className={`w-3.5 h-3.5 transition-transform duration-200 ${detalle ? "rotate-180" : ""}`}>
+            <path d="M2 4l5 5 5-5" strokeLinecap="round" />
+          </svg>
+          {detalle ? "Ocultar detalle" : "Ver libro de compras"}
+          {reporte.detalle_compras?.length ? ` (${reporte.detalle_compras.length} documentos)` : ""}
+        </button>
+        {detalle && (
+          <div className="border-t border-[#EDE9E2] pt-4">
+            <TablaCompras filas={reporte.detalle_compras} />
+          </div>
+        )}
       </div>
     </Shell>
+  );
+}
+
+function NotaMetodologica() {
+  return (
+    <div className="col-span-12 mt-1">
+      <div className="flex items-start gap-2.5 rounded-2xl bg-[#F6F3EE] px-5 py-4">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#9C8E85" strokeWidth="1.5" className="w-4 h-4 flex-shrink-0 mt-0.5">
+          <circle cx="8" cy="8" r="6.5" />
+          <path d="M8 7v4M8 5.5v.5" strokeLinecap="round" />
+        </svg>
+        <p className="text-[11px] text-[#9C8E85] leading-relaxed">
+          <strong className="font-600 text-[#7D6E63]">Base contable de este informe:</strong>{" "}
+          <strong className="font-500">Facturación</strong> = base devengada (Libro de Ventas SII, monto neto s/IVA) —
+          refleja lo que se cobró en el período, con o sin pago recibido.{" "}
+          <strong className="font-500">Caja</strong> = base efectiva (abonos reales en cuenta corriente según cartola bancaria) —
+          incluye cobros de facturas de meses anteriores y excluye facturas impagas.{" "}
+          <strong className="font-500">Resultado operacional</strong> = base devengada
+          (Facturación neta − Egresos operacionales).
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -422,7 +637,7 @@ export default function Dashboard() {
       const sb = getSupabase();
       const [reportesRes, docsRes] = await Promise.all([
         sb.from("socios_reportes")
-          .select("mes, ingresos, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, publicado")
+          .select("mes, ingresos, facturacion_iva, ingresos_caja, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, detalle_ventas, detalle_compras, publicado")
           .order("mes", { ascending: false }),
         sb.from("socios_documentos")
           .select("id, titulo, descripcion, url, categoria, orden, mes")
@@ -525,12 +740,14 @@ export default function Dashboard() {
 
             {/* Bento grid */}
             <div className="grid grid-cols-12 gap-4 md:gap-5">
-              <CardIngresos reporte={reporte} prevReporte={prevReporte} />
+              <CardFacturacion reporte={reporte} prevReporte={prevReporte} />
               <CardResultado reporte={reporte} />
               <CardGastos reporte={reporte} />
+              <CardCaja reporte={reporte} />
               <CardSintonia reporte={reporte} />
               <CardLogros reporte={reporte} />
               <CardNota reporte={reporte} />
+              <NotaMetodologica />
             </div>
           </>
         )}

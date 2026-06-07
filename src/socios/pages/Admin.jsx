@@ -466,6 +466,8 @@ function ImportadorPDF({ onAplicar }) {
 
 // ─── Form de reporte mensual ──────────────────────────────────────────────────
 
+const MIX_EMPTY = { arriendo: "", agencias: "", no_agencias: "", extractos_am: "", otros: "" };
+
 const EMPTY = {
   mes: currentMes(),
   ingresos: "",
@@ -478,6 +480,7 @@ const EMPTY = {
   nota_gerente: "",
   facturacion_iva: 0,
   ingresos_caja: "",
+  mix_ingresos: { ...MIX_EMPTY },
   detalle_ventas: [],
   detalle_compras: [],
   publicado: false,
@@ -530,6 +533,7 @@ export default function Admin() {
         nota_gerente: data.nota_gerente ?? "",
         facturacion_iva: data.facturacion_iva ?? 0,
         ingresos_caja: data.ingresos_caja ?? "",
+        mix_ingresos: data.mix_ingresos ?? { ...MIX_EMPTY },
         detalle_ventas: Array.isArray(data.detalle_ventas) ? data.detalle_ventas : [],
         detalle_compras: Array.isArray(data.detalle_compras) ? data.detalle_compras : [],
         publicado: data.publicado ?? false,
@@ -572,6 +576,13 @@ export default function Admin() {
       nota_gerente: form.nota_gerente,
       facturacion_iva: Number(form.facturacion_iva) || 0,
       ingresos_caja: Number(form.ingresos_caja) || 0,
+      mix_ingresos: {
+        arriendo: Number(form.mix_ingresos?.arriendo) || 0,
+        agencias: Number(form.mix_ingresos?.agencias) || 0,
+        no_agencias: Number(form.mix_ingresos?.no_agencias) || 0,
+        extractos_am: Number(form.mix_ingresos?.extractos_am) || 0,
+        otros: Number(form.mix_ingresos?.otros) || 0,
+      },
       detalle_ventas: form.detalle_ventas || [],
       detalle_compras: form.detalle_compras || [],
       publicado: publicar ?? form.publicado,
@@ -728,6 +739,34 @@ export default function Admin() {
                 </div>
               );
             })()}
+          </div>
+        </div>
+
+        {/* Mix de ingresos */}
+        <div className="rounded-[2rem] bg-[#EDE9E2] p-1.5 ring-1 ring-black/5">
+          <div className="rounded-[calc(2rem-0.375rem)] bg-white p-6 md:p-8"
+            style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.9)" }}>
+            <h2 className="text-xs font-700 uppercase tracking-[0.15em] text-[#9C8E85] mb-1">Mix de ingresos</h2>
+            <p className="text-xs text-[#BDB5AD] mb-5">Desglose por rubro (montos netos s/IVA). No tiene que sumar exactamente a la facturación total.</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                { key: "arriendo", label: "Arriendo programas" },
+                { key: "agencias", label: "Publicidad agencias" },
+                { key: "no_agencias", label: "Publicidad no agencias" },
+                { key: "extractos_am", label: "Extractos AM" },
+                { key: "otros", label: "Otros" },
+              ].map(({ key, label }) => (
+                <Field key={key} label={label}>
+                  <MoneyInput
+                    value={form.mix_ingresos?.[key] ?? ""}
+                    onChange={e => setForm(f => ({
+                      ...f,
+                      mix_ingresos: { ...f.mix_ingresos, [key]: e.target.value === "" ? "" : Number(e.target.value) }
+                    }))}
+                  />
+                </Field>
+              ))}
+            </div>
           </div>
         </div>
 

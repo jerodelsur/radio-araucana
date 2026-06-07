@@ -250,6 +250,56 @@ function DeltaBadge({ delta }) {
   );
 }
 
+const MIX_RUBROS = [
+  { key: "arriendo",    label: "Arriendo programas",      color: "#B91C1C" },
+  { key: "agencias",    label: "Publicidad agencias",     color: "#D97706" },
+  { key: "no_agencias", label: "Publicidad no agencias",  color: "#0284C7" },
+  { key: "extractos_am",label: "Extractos AM",            color: "#7C3AED" },
+  { key: "otros",       label: "Otros",                   color: "#9C8E85" },
+];
+
+function CardMixIngresos({ reporte }) {
+  const ref = useFadeIn(40);
+  const mix = reporte.mix_ingresos;
+  if (!mix) return null;
+
+  const total = MIX_RUBROS.reduce((s, r) => s + (mix[r.key] || 0), 0);
+  if (total === 0) return null;
+
+  return (
+    <Shell className="fade-up col-span-12 md:col-span-5" ref={ref}>
+      <div className="p-7 md:p-8 flex flex-col gap-5">
+        <div>
+          <Eyebrow>Mix de ingresos</Eyebrow>
+          <p className="text-[10px] text-[#BDB5AD] mt-1 uppercase tracking-[0.14em]">Composición por rubro · % del total</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {MIX_RUBROS.map(({ key, label, color }) => {
+            const val = mix[key] || 0;
+            if (val === 0) return null;
+            const pct = (val / total) * 100;
+            return (
+              <div key={key} className="flex flex-col gap-1">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs text-[#4A3F38]">{label}</span>
+                  <span className="text-xs font-600 tabular-nums text-[#18110C]">{pct.toFixed(1)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#EDE9E2] overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: color }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-[#BDB5AD] -mt-1">{formatPesos(total)} distribuidos</p>
+      </div>
+    </Shell>
+  );
+}
+
 // ─── Tarjetas individuales ───────────────────────────────────────────────────
 
 function CardFacturacion({ reporte, prevReporte }) {
@@ -660,7 +710,7 @@ export default function Dashboard() {
       const sb = getSupabase();
       const [reportesRes, docsRes] = await Promise.all([
         sb.from("socios_reportes")
-          .select("mes, ingresos, facturacion_iva, ingresos_caja, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, detalle_ventas, detalle_compras, publicado")
+          .select("mes, ingresos, facturacion_iva, ingresos_caja, gastos_sueldos, gastos_honorarios, gastos_proveedores, gastos_otros, sintonia, logros, nota_gerente, detalle_ventas, detalle_compras, publicado, mix_ingresos")
           .order("mes", { ascending: false }),
         sb.from("socios_documentos")
           .select("id, titulo, descripcion, url, categoria, orden, mes")
@@ -764,6 +814,7 @@ export default function Dashboard() {
             {/* Bento grid */}
             <div className="grid grid-cols-12 gap-4 md:gap-5">
               <CardFacturacion reporte={reporte} prevReporte={prevReporte} />
+              <CardMixIngresos reporte={reporte} />
               <CardResultado reporte={reporte} />
               <CardGastos reporte={reporte} />
               <CardCaja reporte={reporte} />

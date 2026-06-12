@@ -109,6 +109,13 @@ const GlobalStyles = () => (
     .fiu-3 { animation: fadeInUp 0.6s ease forwards 0.45s; opacity: 0; }
     .fiu-4 { animation: fadeInUp 0.6s ease forwards 0.6s;  opacity: 0; }
 
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .live-dot, .wave-bar, .marquee-track { animation: none; }
+      .fiu-0, .fiu-1, .fiu-2, .fiu-3, .fiu-4 { animation: none; opacity: 1; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
     .news-card { transition: transform 200ms ease, box-shadow 200ms ease; cursor: pointer; }
     .news-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
     .news-img { filter: contrast(1.08) saturate(0.82) brightness(0.96); transition: filter 300ms ease; }
@@ -280,6 +287,7 @@ function Navbar() {
             <span style={K({ fontWeight: 700, fontSize: 13, color: "#cc0000", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
           </div>
           <button onClick={() => setOpen(!open)} className="md:hidden"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open}
             style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}>
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -400,7 +408,7 @@ const WMO = {
 };
 
 function NewsTicker() {
-  const [weather, setWeather] = React.useState([]);
+  const [weather, setWeather] = React.useState(null); // null = cargando, [] = sin datos
 
   React.useEffect(() => {
     Promise.all(
@@ -418,9 +426,13 @@ function NewsTicker() {
     ).then(results => setWeather(results.filter(Boolean)));
   }, []);
 
-  const tickerText = weather.length > 0
-    ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("     ·     ") + "     ·     "
-    : "CARGANDO DATOS METEOROLÓGICOS DE LA ARAUCANÍA...";
+  // Tres estados: cargando, con datos, y "todos los fetch fallaron" — antes
+  // este último quedaba pegado en "CARGANDO..." para siempre.
+  const tickerText = weather === null
+    ? "CARGANDO DATOS METEOROLÓGICOS DE LA ARAUCANÍA..."
+    : weather.length > 0
+      ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("     ·     ") + "     ·     "
+      : "METEO ARAUCANÍA  ·  TEMUCO  ·  PUCÓN  ·  VILLARRICA  ·  ANGOL  ·  VICTORIA  ·  LAUTARO     ·     ";
 
   return (
     <div style={{ background: "#29623a", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
@@ -431,7 +443,7 @@ function NewsTicker() {
       <div style={{ overflow: "hidden", flex: 1, padding: "10px 0" }}>
         <div className="marquee-track">
           <span style={K({ fontWeight: 500, fontSize: 13, color: "#fff", letterSpacing: "0.04em" })}>
-            {tickerText}{tickerText}
+            {tickerText}<span aria-hidden="true">{tickerText}</span>
           </span>
         </div>
       </div>
@@ -448,6 +460,9 @@ const CAT_PHOTOS = {
   POLÍTICA: "/news/politica.jpg",
   ECONOMÍA: "/news/economia.jpg",
 };
+// Categorías sin foto propia (p.ej. SUCESOS, seleccionable en el admin)
+// degradan a una foto genérica en vez de una caja gris vacía.
+const CAT_PHOTO_FALLBACK = "/news/region.jpg";
 
 // NEWS is consumed via useSiteContent() inside NewsGrid / NewsTicker
 
@@ -462,7 +477,7 @@ function NewsGrid() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {NEWS.map((n, i) => {
-            const photo = CAT_PHOTOS[n.cat];
+            const photo = CAT_PHOTOS[n.cat] ?? CAT_PHOTO_FALLBACK;
             return (
               <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
                 {/* Foto de categoría */}
@@ -1189,6 +1204,7 @@ function FloatingPlayer({ station, play }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Waveform color={playing ? accentColor : "#374151"} height={20} />
         <button className="play-btn" onClick={toggle}
+          aria-label={playing ? `Pausar ${isFrontera ? "Radio La Frontera" : "Radio Araucana"}` : `Reproducir ${isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}`}
           style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #cc0000", background: playing ? "#cc0000" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           {playing ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" fill="#fff" />}
         </button>
@@ -1198,6 +1214,7 @@ function FloatingPlayer({ station, play }) {
       {/* Mute + compartir */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative" }}>
         <button onClick={toggleMute}
+          aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted}
           style={{ background: "none", border: "none", cursor: "pointer", color: muted ? "#6b7280" : "#fff", display: "flex", alignItems: "center", padding: 6 }}>
           {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
@@ -1207,7 +1224,10 @@ function FloatingPlayer({ station, play }) {
               <span style={K({ fontSize: 11, color: "#fff" })}>¡Link copiado!</span>
             </div>
           )}
-          <Share2 size={20} color="#fff" style={{ cursor: "pointer" }} onClick={share} />
+          <button onClick={share} aria-label="Compartir por WhatsApp"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
+            <Share2 size={20} color="#fff" />
+          </button>
         </div>
       </div>
     </div>

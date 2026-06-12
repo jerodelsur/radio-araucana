@@ -1,14 +1,18 @@
 {
   "cleanUrls": true,
-  "rewrites": [
+  "redirects": [
     {
       "source": "/stream",
-      "destination": "http://audio.streaminghd.cl:9020/stream"
+      "destination": "https://audio.streaminghd.cl:2000/stream/radioaraucana959",
+      "permanent": false
     },
     {
       "source": "/stream-frontera",
-      "destination": "https://audio.streaminghd.cl:2000/stream/radiofrontera1110"
-    },
+      "destination": "https://audio.streaminghd.cl:2000/stream/radiofrontera1110",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/sobre-nosotros",
       "destination": "/sobre-nosotros.html"

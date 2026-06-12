@@ -290,8 +290,8 @@
       el("p", { class: "panel-sub" }, "Datos de transmisión, contacto e información que aparece en el footer."),
 
       el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px" }, "Streaming de audio (radios)"),
-      settingField("streamAraucana", "URL stream Radio Araucana", "text",
-        "⚠️ Por defecto: /stream (proxy de Vercel hacia http://audio.streaminghd.cl:9020/stream). NO cambiar si la fuente sigue siendo el SHOUTcast HTTP — sin el proxy, el navegador bloquea el audio."),
+      settingField("streamAraucana", "URL stream Radio Araucana", "url",
+        "URL completa del stream HTTPS. Por defecto: https://audio.streaminghd.cl:2000/stream/radioaraucana959 (gateway SSL del proveedor; el valor antiguo /stream sigue funcionando vía redirect, pero consume cuota de Vercel en cada conexión)."),
       settingField("streamFrontera", "URL stream Radio La Frontera", "url",
         "URL completa del stream HTTPS. Por defecto: https://audio.streaminghd.cl:2000/stream/radiofrontera1110"),
 

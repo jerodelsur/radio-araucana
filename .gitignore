@@ -3,3 +3,6 @@ dist/
 .agents/
 dev.sh
 *.local
+
+# macOS
+.DS_Store

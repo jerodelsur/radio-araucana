@@ -151,7 +151,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const subject = `Contacto — ${temaTitulo} — ${cliente.empresa || cliente.nombre}`;
+  const subject = `Contacto — ${temaTitulo} — ${cliente.empresa || cliente.nombre}`.replace(/[\r\n]+/g, " ");
   const html = renderHtml({ cliente, mensaje, temaTitulo, fecha });
   const text = renderText({ cliente, mensaje, temaTitulo, fecha });
 
@@ -166,7 +166,7 @@ export default async function handler(req, res) {
 
   if (!result.ok) {
     console.error("[/api/contacto/submit] envío falló:", result.error);
-    return res.status(502).json({ error: "send_failed", detail: result.error });
+    return res.status(502).json({ error: "send_failed" });
   }
   return res.status(200).json({ ok: true });
 }

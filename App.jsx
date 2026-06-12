@@ -164,8 +164,17 @@ const Waveform = ({ color = "#29623a", height = 24 }) => (
 );
 
 /* ─── Live Placeholder ────────────────────────────────────────────────────── */
+// Videos de fondo cuando no hay transmisión: se elige uno al azar por visita
+// para que el header no muestre siempre el mismo loop.
+const BG_VIDEOS = [
+  "/bg-placeholder.mp4",
+  "/bg-estudio.mp4",
+  "/bg-araucania.mp4",
+];
+
 const LivePlaceholder = () => {
   const { settings } = useSiteContent();
+  const [bgVideo] = useState(() => BG_VIDEOS[Math.floor(Math.random() * BG_VIDEOS.length)]);
   const ytId = getYouTubeId(settings.liveStreamUrl);
   if (ytId) {
     return (
@@ -185,7 +194,7 @@ const LivePlaceholder = () => {
       autoPlay loop muted playsInline
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
     >
-      <source src="/bg-placeholder.mp4" type="video/mp4" />
+      <source src={bgVideo} type="video/mp4" />
     </video>
 
     {/* Dark overlay so text is legible */}
@@ -433,12 +442,11 @@ function NewsTicker() {
 /* ─── News Grid ───────────────────────────────────────────────────────────── */
 // Foto por categoría — reutilizable en cualquier noticia de ese tipo
 const CAT_PHOTOS = {
-  SALUD:    "/news/salud.png",
-  DEPORTE:  "/news/deporte.png",
-  CULTURA:  "/news/cultura.png",
-  REGIÓN:   "/news/region.png",
-  POLÍTICA: "/news/politica.png",
-  ECONOMÍA: "/news/economia.png",
+  DEPORTE:  "/news/deporte.jpg",
+  CULTURA:  "/news/cultura.jpg",
+  REGIÓN:   "/news/region.jpg",
+  POLÍTICA: "/news/politica.jpg",
+  ECONOMÍA: "/news/economia.jpg",
 };
 
 // NEWS is consumed via useSiteContent() inside NewsGrid / NewsTicker

@@ -1,5 +1,5 @@
 // Admin endpoint: uploads a single image to the public Blob store.
-// Auth: ?password=<ADMIN_PASSWORD>  (querystring because clientUpload signs via direct PUT)
+// Auth: Authorization: Bearer <ADMIN_PASSWORD>
 // Body: raw image bytes (Content-Type set by client: image/jpeg, image/png, etc.)
 // Query: filename=<original-name.ext> (sanitized server-side)
 //
@@ -35,13 +35,12 @@ function badRequest(res, message) {
 function authOk(req) {
   const expected = process.env.ADMIN_PASSWORD;
   if (!expected) return false;
-  // Accept either the Authorization header or a ?password= query param
-  // (some upload flows can't set custom headers on direct PUT).
+  // Solo aceptamos la contraseña vía header Authorization. El querystring queda
+  // expuesto en logs de servidor/CDN, historial y cabeceras Referer, así que ya
+  // no se admite ?password=.
   const header = req.headers.authorization || "";
   const [scheme, token] = header.split(" ");
-  if (scheme === "Bearer" && token === expected) return true;
-  const url = new URL(req.url, "http://localhost");
-  return url.searchParams.get("password") === expected;
+  return scheme === "Bearer" && token === expected;
 }
 
 function sanitizeFilename(name) {
@@ -102,6 +101,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: result.url, pathname: result.pathname });
   } catch (err) {
     console.error("[/api/admin/upload] blob write failed:", err);
-    return res.status(500).json({ error: "Failed to upload", detail: String(err?.message ?? err) });
+    return res.status(500).json({ error: "Failed to upload" });
   }
 }

@@ -6,13 +6,16 @@
 // Returns: { url: "https://...blob.vercel-storage.com/..." }
 
 import { put } from "@vercel/blob";
+import { rateLimit, tooManyRequests, safeEqual } from "../_lib/security.js";
 
+// Sin image/svg+xml: un SVG puede llevar <script> y el Blob lo serviría tal
+// cual (stored XSS en el dominio público del store). Los logos del sitio son
+// SVG bundleados en el repo, no subidos por acá.
 const ALLOWED_MIME = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -40,7 +43,7 @@ function authOk(req) {
   // no se admite ?password=.
   const header = req.headers.authorization || "";
   const [scheme, token] = header.split(" ");
-  return scheme === "Bearer" && token === expected;
+  return scheme === "Bearer" && safeEqual(token, expected);
 }
 
 function sanitizeFilename(name) {
@@ -73,6 +76,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
+  // Mismo bucket "admin" que save.js: frena fuerza bruta contra el Bearer.
+  if (!rateLimit(req, { key: "admin", limit: 20 })) return tooManyRequests(res);
   if (!authOk(req)) return unauthorized(res);
 
   const contentType = (req.headers["content-type"] || "").split(";")[0].trim();

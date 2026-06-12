@@ -55,7 +55,7 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
-    return res.status(401).json({ error: "invalid_token", message: authError?.message });
+    return res.status(401).json({ error: "invalid_token" });
   }
 
   // Verificar que es admin/operator

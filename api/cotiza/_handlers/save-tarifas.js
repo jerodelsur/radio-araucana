@@ -93,6 +93,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, url: result.url, savedAt: clean.actualizado });
   } catch (err) {
     console.error("[/api/cotiza/save-tarifas] blob write failed:", err);
-    return res.status(500).json({ error: "Failed to save", detail: String(err?.message ?? err) });
+    return res.status(500).json({ error: "Failed to save" });
   }
 }

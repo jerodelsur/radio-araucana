@@ -429,7 +429,7 @@ export default async function handler(req, res) {
   }
 
   // Email AL EQUIPO COMERCIAL (siempre se envía; si falla, devolvemos error).
-  const subjectTeam = `Solicitud cotización — ${cliente.empresa || cliente.nombre}`;
+  const subjectTeam = `Solicitud cotización — ${cliente.empresa || cliente.nombre}`.replace(/[\r\n]+/g, " ");
   const teamResult = await sendEmail({
     to: cotizaTo(),
     cc: cotizaCc(),
@@ -443,7 +443,7 @@ export default async function handler(req, res) {
 
   if (!teamResult.ok) {
     console.error("[/api/cotiza/submit] envío al equipo falló:", teamResult.error);
-    return res.status(502).json({ error: "send_failed", detail: teamResult.error });
+    return res.status(502).json({ error: "send_failed" });
   }
 
   // Email DE CONFIRMACIÓN AL CLIENTE (best-effort: si falla, no rompe la

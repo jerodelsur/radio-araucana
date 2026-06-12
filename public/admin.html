@@ -226,10 +226,13 @@
   async function uploadImage(file) {
     if (!file) throw new Error("Sin archivo");
     if (file.size > 5 * 1024 * 1024) throw new Error("Imagen demasiado grande (máx 5MB)");
-    const url = `/api/admin/upload?password=${encodeURIComponent(pw)}&filename=${encodeURIComponent(file.name)}`;
+    const url = `/api/admin/upload?filename=${encodeURIComponent(file.name)}`;
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": file.type || "application/octet-stream" },
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+        Authorization: `Bearer ${pw}`,
+      },
       body: file,
     });
     const data = await res.json().catch(() => ({}));

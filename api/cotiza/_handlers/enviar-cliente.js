@@ -258,7 +258,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const subject = `Cotización publicidad Radio Araucana 95.9 FM${cliente.empresa ? " — " + cliente.empresa : ""}${propuestaB ? " (Opción A + B)" : ""}`;
+  const subject = `Cotización publicidad Radio Araucana 95.9 FM${cliente.empresa ? " — " + cliente.empresa : ""}${propuestaB ? " (Opción A + B)" : ""}`.replace(/[\r\n]+/g, " ");
   // Tasa de IVA = monto / subtotal. body.iva es el MONTO (no la tasa), por eso
   // no se usa para esto — usarlo directo daba el famoso "IVA (12825000%)".
   const iva = propuestaA.subtotal > 0
@@ -278,7 +278,7 @@ export default async function handler(req, res) {
 
   if (!result.ok) {
     console.error("[/api/cotiza/enviar-cliente] envío falló:", result.error);
-    return res.status(502).json({ error: "send_failed", detail: result.error });
+    return res.status(502).json({ error: "send_failed" });
   }
 
   // Persistir cotización en Supabase

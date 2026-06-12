@@ -172,9 +172,34 @@ const BG_VIDEOS = [
   "/bg-araucania.mp4",
 ];
 
+// Un solo sorteo a nivel de módulo: las dos secciones que montan
+// LivePlaceholder muestran el mismo archivo y el navegador lo descarga
+// una sola vez (antes cada instancia sorteaba el suyo → hasta 9 MB por visita).
+const BG_VIDEO = BG_VIDEOS[Math.floor(Math.random() * BG_VIDEOS.length)];
+
+// El video es decorativo (va bajo un overlay oscuro): en pantallas chicas,
+// con prefers-reduced-motion o con ahorro de datos activo no se descarga.
+const useBgVideoEnabled = () => {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 768px)");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () =>
+      setEnabled(!mobile.matches && !reduced.matches && navigator.connection?.saveData !== true);
+    update();
+    mobile.addEventListener("change", update);
+    reduced.addEventListener("change", update);
+    return () => {
+      mobile.removeEventListener("change", update);
+      reduced.removeEventListener("change", update);
+    };
+  }, []);
+  return enabled;
+};
+
 const LivePlaceholder = () => {
   const { settings } = useSiteContent();
-  const [bgVideo] = useState(() => BG_VIDEOS[Math.floor(Math.random() * BG_VIDEOS.length)]);
+  const showVideo = useBgVideoEnabled();
   const ytId = getYouTubeId(settings.liveStreamUrl);
   if (ytId) {
     return (
@@ -188,14 +213,16 @@ const LivePlaceholder = () => {
     );
   }
   return (
-  <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-    {/* Looping background video */}
-    <video
-      autoPlay loop muted playsInline
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-    >
-      <source src={bgVideo} type="video/mp4" />
-    </video>
+  <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#0d1a12" }}>
+    {/* Looping background video (solo desktop, sin reduced-motion ni save-data) */}
+    {showVideo && (
+      <video
+        autoPlay loop muted playsInline preload="none"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      >
+        <source src={BG_VIDEO} type="video/mp4" />
+      </video>
+    )}
 
     {/* Dark overlay so text is legible */}
     <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.58)" }} />

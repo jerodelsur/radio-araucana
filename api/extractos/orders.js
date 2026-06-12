@@ -16,6 +16,7 @@
 // Si Gmail SMTP no está configurado, la orden se crea igual y solo logueamos.
 
 import { createOrderInputSchema } from "./_lib/order-schema.js";
+import { rateLimit, tooManyRequests } from "../_lib/security.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./_lib/supabase.js";
 import { sendEmail, isMailerConfigured, adminRecipients } from "./_lib/mailer.js";
 import { clientOrderEmail, adminOrderNotificationEmail } from "./_lib/email-templates.js";
@@ -32,6 +33,9 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "method_not_allowed" });
   }
+
+  // Formulario público: 5 envíos/min por IP frena spam y abuso del mailer.
+  if (!rateLimit(req, { key: "extractos-orders", limit: 5 })) return tooManyRequests(res);
 
   let body = req.body;
   if (typeof body === "string") {

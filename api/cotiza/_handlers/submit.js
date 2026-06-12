@@ -5,6 +5,7 @@
 // por email y arma la cotización formal desde /cotiza/admin.
 
 import { sendEmail, isMailerConfigured } from "../../extractos/_lib/mailer.js";
+import { rateLimit, tooManyRequests } from "../../_lib/security.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
 import { leerTarifas } from "../_lib/tarifas-store.js";
 import { cotizaTo, cotizaCc, cotizaFromEmail } from "../_lib/recipients.js";
@@ -353,6 +354,9 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
+
+  // Formulario público: 5 envíos/min por IP frena spam y abuso del mailer.
+  if (!rateLimit(req, { key: "cotiza-submit", limit: 5 })) return tooManyRequests(res);
 
   if (JSON.stringify(req.body || {}).length > MAX_BODY_LEN) {
     return res.status(413).json({ error: "Body too large" });

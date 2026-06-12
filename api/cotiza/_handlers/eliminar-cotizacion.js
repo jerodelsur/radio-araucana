@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       .single();
     if (error) {
       console.error("[/api/cotiza/eliminar-cotizacion] delete fail:", error.message);
-      return res.status(500).json({ error: "db_error", detail: error.message });
+      return res.status(500).json({ error: "db_error" });
     }
     if (!data) {
       return res.status(404).json({ error: "not_found" });

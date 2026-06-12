@@ -53,7 +53,7 @@ export default async function handler(req, res) {
       .single();
     if (error) {
       console.error("[/api/cotiza/atender-solicitud] update fail:", error.message);
-      return res.status(500).json({ error: "db_error", detail: error.message });
+      return res.status(500).json({ error: "db_error" });
     }
     return res.status(200).json({ ok: true, solicitud: data });
   } catch (err) {

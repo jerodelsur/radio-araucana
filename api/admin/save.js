@@ -3,6 +3,7 @@
 // Body: the full content JSON (must match the shape of src/content/site.json)
 
 import { put } from "@vercel/blob";
+import { rateLimit, tooManyRequests, safeEqual } from "../_lib/security.js";
 
 const BLOB_KEY = "site-content.json";
 
@@ -15,6 +16,7 @@ const ALLOWED_KEYS = new Set([
   "programs",
   "regions",
   "whatsappOptions",
+  "frontera",
 ]);
 
 const REQUIRED_SETTINGS = [
@@ -45,7 +47,7 @@ function authOk(req) {
   if (!expected) return false;
   const header = req.headers.authorization || "";
   const [scheme, token] = header.split(" ");
-  return scheme === "Bearer" && token === expected;
+  return scheme === "Bearer" && safeEqual(token, expected);
 }
 
 export default async function handler(req, res) {
@@ -54,6 +56,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
+  // 20/min por IP alcanza de sobra para uso normal del editor y frena
+  // fuerza bruta contra el Bearer.
+  if (!rateLimit(req, { key: "admin", limit: 20 })) return tooManyRequests(res);
   if (!authOk(req)) return unauthorized(res);
 
   const body = req.body;

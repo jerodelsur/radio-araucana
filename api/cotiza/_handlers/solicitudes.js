@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     const { data, error } = await query;
     if (error) {
       console.error("[/api/cotiza/solicitudes] select fail:", error?.message);
-      return res.status(500).json({ error: "db_error", detail: error.message });
+      return res.status(500).json({ error: "db_error" });
     }
     return res.status(200).json({ solicitudes: data || [] });
   } catch (err) {

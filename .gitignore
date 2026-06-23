@@ -3,6 +3,10 @@ dist/
 .agents/
 dev.sh
 *.local
+.env
+.vercel/
+.playwright-mcp/
 
 # macOS
 .DS_Store
+.vercel

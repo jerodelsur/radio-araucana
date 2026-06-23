@@ -165,6 +165,13 @@ const devApiStub = () => ({
       if (req.method !== 'POST') return next()
       await runHandler('/api/contacto/submit.js', req, res)
     })
+
+    // Acceso privado a la presentación: la ruta pública /propuesta la atiende
+    // una sola función (GET = página/login, POST = validar clave).
+    server.middlewares.use('/propuesta', async (req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'POST') return next()
+      await runHandler('/api/propuesta.js', req, res)
+    })
   },
 })
 

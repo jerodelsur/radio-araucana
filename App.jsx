@@ -279,6 +279,7 @@ function HlsPlayer({ src }) {
   return (
     <video
       ref={videoRef}
+      aria-label="Transmisión en vivo"
       controls
       autoPlay
       muted
@@ -343,7 +344,7 @@ function LiveOffline({ message = "No hay transmisión en vivo en este momento" }
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
           <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
           <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>{message}</p>
-          <a href="#en-vivo" style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", marginTop: 4, textDecoration: "none" })}>Ver repeticiones ↓</a>
+          <a href="#repeticiones" style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", marginTop: 4, textDecoration: "none" })}>Ver repeticiones ↓</a>
         </div>
       </div>
     </div>
@@ -689,7 +690,7 @@ function VideoSection() {
           </div>
         </div>
 
-        <p style={K({ fontWeight: 600, fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16 })}>Últimos videos</p>
+        <p id="repeticiones" style={K({ fontWeight: 600, fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16, scrollMarginTop: 80 })}>Últimos videos</p>
         <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
           {VIDEOS.map((v, i) => {
             const ytId = getYouTubeId(v.youtube);

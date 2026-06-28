@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, { useState, useEffect, useRef, createContext, useContext } from "react";
 import { Menu, X, Play, Pause, Volume2, VolumeX, Share2 } from "lucide-react";
 import defaultContent from "./src/content/site.json";
 
@@ -204,62 +204,181 @@ const useBgVideoEnabled = () => {
   return enabled;
 };
 
-const LivePlaceholder = () => {
-  const { settings } = useSiteContent();
-  const showVideo = useBgVideoEnabled();
-  const ytId = getYouTubeId(settings.liveStreamUrl);
-  if (ytId) {
+// Extrae el src de un <iframe> pegado en el admin. Renderizamos un <iframe>
+// controlado en vez de inyectar HTML crudo (evita XSS y respeta el CSP).
+function extractIframeSrc(code) {
+  if (!code || typeof code !== "string") return null;
+  const m = code.match(/<iframe[^>]*\ssrc=["']([^"']+)["']/i);
+  return m ? m[1] : null;
+}
+
+// Reproductor HLS (.m3u8) para la señal en vivo de XtreamCast.
+// Safari/iOS reproducen HLS de forma nativa; el resto usa hls.js cargado
+// bajo demanda (import dinámico) para no inflar el bundle de la portada.
+function HlsPlayer({ src }) {
+  const videoRef = useRef(null);
+  const [error, setError] = useState(false);
+
+  // El estado de error se resetea remontando el componente (key={src} en el
+  // padre) cuando cambia la fuente, así evitamos un setState síncrono en el efecto.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    let hls;
+    let cancelled = false;
+    let netRetries = 0;
+    const onNativeErr = () => setError(true);
+
+    // Orden importante: hls.js primero (Chrome/Firefox/Edge/Android y Safari de
+    // escritorio, vía MSE). Solo si hls.js no está soportado caemos al HLS
+    // nativo, que es el caso de iOS Safari. Ojo: en Chrome canPlayType("…mpegurl")
+    // devuelve "maybe" pero NO reproduce HLS de verdad, así que no sirve de check.
+    import("hls.js")
+      .then(({ default: Hls }) => {
+        if (cancelled) return;
+        if (Hls.isSupported()) {
+          hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          hls.loadSource(src);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.ERROR, (_evt, data) => {
+            if (!data.fatal) return;
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 2) {
+              netRetries += 1;
+              hls.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+            } else {
+              setError(true);
+              hls.destroy();
+            }
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // iOS Safari: HLS nativo (hls.js no usa MSE ahí).
+          video.src = src;
+          video.addEventListener("error", onNativeErr);
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true));
+
+    return () => {
+      cancelled = true;
+      video.removeEventListener("error", onNativeErr);
+      if (hls) hls.destroy();
+    };
+  }, [src]);
+
+  if (error) {
     return (
-      <iframe
-        title="Transmisión en vivo"
-        src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
+      <LiveOffline message="No se pudo cargar la señal en vivo. Intenta recargar en unos minutos." />
     );
   }
+
   return (
-  <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#0d1a12" }}>
-    {/* Looping background video (solo desktop, sin reduced-motion ni save-data) */}
-    {showVideo && (
-      <video
-        autoPlay loop muted playsInline preload="none"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-      >
-        <source src={BG_VIDEO} type="video/mp4" />
-      </video>
-    )}
+    <video
+      ref={videoRef}
+      controls
+      autoPlay
+      muted
+      playsInline
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", background: "#000", border: 0 }}
+    />
+  );
+}
 
-    {/* Dark overlay so text is legible */}
-    <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.58)" }} />
+// Señal en vivo vía iframe embed (XtreamCast u otro proveedor).
+function LiveIframe({ code }) {
+  const src = extractIframeSrc(code);
+  if (!src) return <LiveOffline />;
+  return (
+    <iframe
+      title="Transmisión en vivo"
+      src={src}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowFullScreen
+    />
+  );
+}
 
-    {/* Content */}
-    <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
-      {/* Animated signal rings */}
-      <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {[0, 0.5, 1.0].map((delay, i) => (
-          <div key={i} style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            border: "1px solid rgba(82,184,112,0.6)",
-            animation: `signalRing 2.4s ease-out ${delay}s infinite`,
-          }} />
-        ))}
-        <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(41,98,58,0.85)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backdropFilter: "blur(4px)" }}>
-          <Play size={20} color="#fff" fill="#fff" />
+// Estado "sin transmisión": placeholder elegante con video de fondo,
+// el logo, la frecuencia y un enlace a las repeticiones.
+function LiveOffline({ message = "No hay transmisión en vivo en este momento" }) {
+  const showVideo = useBgVideoEnabled();
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#0d1a12" }}>
+      {/* Looping background video (solo desktop, sin reduced-motion ni save-data) */}
+      {showVideo && (
+        <video
+          autoPlay loop muted playsInline preload="none"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        >
+          <source src={BG_VIDEO} type="video/mp4" />
+        </video>
+      )}
+
+      {/* Dark overlay so text is legible */}
+      <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.58)" }} />
+
+      {/* Content */}
+      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 16px" }}>
+        {/* Animated signal rings */}
+        <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {[0, 0.5, 1.0].map((delay, i) => (
+            <div key={i} style={{
+              position: "absolute", inset: 0, borderRadius: "50%",
+              border: "1px solid rgba(82,184,112,0.6)",
+              animation: `signalRing 2.4s ease-out ${delay}s infinite`,
+            }} />
+          ))}
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(41,98,58,0.85)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backdropFilter: "blur(4px)" }}>
+            <Play size={20} color="#fff" fill="#fff" />
+          </div>
+        </div>
+
+        <LogoSVG height={38} color="#ffffff" />
+
+        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
+          <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
+          <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>{message}</p>
+          <a href="#en-vivo" style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", marginTop: 4, textDecoration: "none" })}>Ver repeticiones ↓</a>
         </div>
       </div>
-
-      <LogoSVG height={38} color="#ffffff" />
-
-      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
-        <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
-        <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>Sin transmisión de video en este momento</p>
-        <p style={K({ fontWeight: 300, fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 })}>Sintoniza el 95.9 FM en Temuco y la Araucanía</p>
-      </div>
     </div>
-  </div>
   );
+}
+
+const LivePlaceholder = () => {
+  const { settings } = useSiteContent();
+  const lv = settings.liveVideo || {};
+
+  // 1) Configuración nueva (XtreamCast): solo cuando "En vivo ahora" está activo.
+  if (lv.enabled) {
+    if (lv.type === "iframe" && lv.iframeCode) return <LiveIframe code={lv.iframeCode} />;
+    if ((lv.type === "hls" || !lv.type) && lv.hlsUrl) return <HlsPlayer key={lv.hlsUrl} src={lv.hlsUrl} />;
+    // Activo pero sin fuente válida → se trata como sin transmisión.
+  }
+
+  // 2) Legacy: YouTube en vivo (solo si no hay config nueva activa y hay URL).
+  if (!lv.enabled) {
+    const ytId = getYouTubeId(settings.liveStreamUrl);
+    if (ytId) {
+      return (
+        <iframe
+          title="Transmisión en vivo"
+          src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+  }
+
+  // 3) Sin transmisión → placeholder elegante.
+  return <LiveOffline />;
 };
 
 const CAT_COLORS = {
@@ -594,6 +713,11 @@ function VideoSection() {
                   </div>
                 </div>
                 <p style={K({ fontWeight: 600, fontSize: 14, color: "#fff", lineHeight: 1.3, marginTop: 8, marginBottom: 4 })}>{v.title}</p>
+                {(v.programa || v.fecha) && (
+                  <p style={K({ fontWeight: 600, fontSize: 11, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 })}>
+                    {[v.programa, v.fecha].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>{v.views}</span>
               </Wrapper>
             );

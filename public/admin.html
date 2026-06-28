@@ -284,6 +284,49 @@
     );
   }
 
+  // Bloque "Streaming en vivo (video)": toggle En vivo + tipo HLS/iframe.
+  function renderLiveVideo() {
+    const lv = content.settings.liveVideo
+      || (content.settings.liveVideo = { enabled: false, type: "hls", hlsUrl: "", iframeCode: "" });
+
+    // Toggle "En vivo ahora"
+    const checkbox = el("input", { type: "checkbox",
+      oninput: (e) => { lv.enabled = e.target.checked; markDirty(); renderBody(); } });
+    if (lv.enabled) checkbox.setAttribute("checked", "");
+    const toggle = el("div", { class: "field" },
+      el("label", { class: "field-label" }, "En vivo ahora"),
+      el("label", { style: "display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px;color:var(--bone)" },
+        checkbox,
+        el("span", null, lv.enabled ? "Transmitiendo — la web muestra el reproductor" : "Apagado — la web muestra «No hay transmisión»"),
+      ),
+      el("p", { class: "field-hint" }, "Actívalo solo cuando haya señal en vivo. Apagado, la web muestra un placeholder con enlace a las repeticiones."),
+    );
+
+    // Selector de tipo de fuente
+    const select = el("select", {
+      onchange: (e) => { lv.type = e.target.value; markDirty(); renderBody(); } });
+    [["hls", "HLS (.m3u8) — recomendado"], ["iframe", "Iframe (código embed)"]].forEach(([v, label]) => {
+      const o = el("option", { value: v }, label);
+      if ((lv.type || "hls") === v) o.setAttribute("selected", "");
+      select.appendChild(o);
+    });
+    const typeField = el("div", { class: "field" },
+      el("label", { class: "field-label" }, "Tipo de fuente"),
+      select,
+    );
+
+    // Campo condicional según el tipo
+    const sourceField = lv.type === "iframe"
+      ? textAreaField("Código <iframe> de XtreamCast", lv.iframeCode,
+          (v) => { lv.iframeCode = v; markDirty(); },
+          "Pega el <iframe ...></iframe> completo que entrega XtreamCast. Se extrae el src automáticamente. Importante: el dominio del embed debe estar permitido en el CSP — si el video no aparece, avísame para habilitarlo.")
+      : textField("URL del stream HLS (.m3u8)", lv.hlsUrl,
+          (v) => { lv.hlsUrl = v; markDirty(); }, "url",
+          "Pega el enlace .m3u8 que entrega XtreamCast (ej: https://servidor:puerto/live/.../index.m3u8). Funciona en Chrome, Safari y móviles.");
+
+    return el("div", null, toggle, typeField, sourceField);
+  }
+
   function renderSettings() {
     const wrap = el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Configuración del sitio"),
@@ -295,9 +338,12 @@
       settingField("streamFrontera", "URL stream Radio La Frontera", "url",
         "URL completa del stream HTTPS. Por defecto: https://audio.streaminghd.cl:2000/stream/radiofrontera1110"),
 
-      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Transmisión en vivo (YouTube)"),
-      settingField("liveStreamUrl", "URL del stream en vivo de YouTube", "url",
-        "Pegá el link de YouTube cuando la radio esté transmitiendo en vivo (ej: https://www.youtube.com/watch?v=ABC123 o https://youtu.be/ABC123). Cuando se llena, reemplaza el placeholder en el hero y en 'EN DIRECTO Y EN VIDEO' por el video embebido. Dejalo vacío para volver al placeholder cuando no transmiten."),
+      el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Streaming en vivo (video · XtreamCast)"),
+      renderLiveVideo(),
+      el("p", { class: "field-hint", style: "margin-top:14px" },
+        "Legacy YouTube: solo se usa si el bloque de arriba está apagado y este campo tiene una URL. Déjalo vacío al migrar a XtreamCast."),
+      settingField("liveStreamUrl", "URL YouTube en vivo (legacy)", "url",
+        "Opcional. Link de YouTube (youtube.com/watch?v=… o youtu.be/…). Se mantiene solo por compatibilidad; la señal en vivo nueva va por el bloque XtreamCast de arriba."),
 
       el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Contacto general (footer)"),
       settingField("address", "Dirección"),
@@ -348,7 +394,7 @@
       news: "Las 4 noticias más recientes que aparecen en la portada.",
       programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
       regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
-      videos: "Carrusel horizontal de videos en la sección 'En directo y en video'.",
+      videos: "Repeticiones (capítulos guardados de YouTube) en la grilla de la sección 'En directo y en video'.",
       whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
     })[key] || "";
   }
@@ -375,10 +421,11 @@
       hint ? el("p", { class: "field-hint" }, hint) : null,
     );
   }
-  function textAreaField(label, value, onChange) {
+  function textAreaField(label, value, onChange, hint = "") {
     return el("div", { class: "field" },
       el("label", { class: "field-label" }, label),
       el("textarea", { oninput: (e) => onChange(e.target.value) }, value ?? ""),
+      hint ? el("p", { class: "field-hint" }, hint) : null,
     );
   }
 
@@ -481,7 +528,13 @@
       cardHeader(`Video ${idx + 1}`, idx, list),
       textField("Título", item.title, (v) => { item.title = v; markDirty(); }),
       textField("URL de YouTube", item.youtube, (v) => { item.youtube = v; markDirty(); }, "url",
-        "Pegá el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente y al clickear el card, abre el video en YouTube."),
+        "Pega el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente y al clickear el card, abre el video en YouTube."),
+      el("div", { class: "field-row" },
+        textField("Programa / categoría (opcional)", item.programa, (v) => { item.programa = v; markDirty(); }, "text",
+          "Ej: «Trenzando Voces». Aparece como etiqueta sobre la portada."),
+        textField("Fecha (opcional)", item.fecha, (v) => { item.fecha = v; markDirty(); }, "text",
+          "Texto libre, ej: «12 jun 2025»."),
+      ),
       el("div", { class: "field-row" },
         textField("Duración (ej. 24:18)", item.dur, (v) => { item.dur = v; markDirty(); }),
         textField("Vistas (ej. 12.4K vistas)", item.views, (v) => { item.views = v; markDirty(); }),
@@ -490,7 +543,7 @@
         "Gradiente CSS o color sólido. Solo se usa cuando el video no tiene URL de YouTube."),
     );
   }
-  videoCard.empty = () => ({ title: "", youtube: "", dur: "0:00", views: "0 vistas", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
+  videoCard.empty = () => ({ title: "", youtube: "", programa: "", fecha: "", dur: "", views: "", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
 
   function waCard(item, idx, list) {
     return el("div", { class: "item-card" },

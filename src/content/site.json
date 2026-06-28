@@ -8,7 +8,13 @@
     "adminEmail": "cotizaciones@araucanayfrontera.cl",
     "adminPhone": "+56 9 9287 2087",
     "adminHours": "Lunes a Viernes, 9:00 a 18:00 hrs.",
-    "liveStreamUrl": ""
+    "liveStreamUrl": "",
+    "liveVideo": {
+      "enabled": false,
+      "type": "hls",
+      "hlsUrl": "",
+      "iframeCode": ""
+    }
   },
   "news": [
     {

@@ -61,9 +61,9 @@ export default function AdminLogin() {
                 type="email"
                 inputMode="email"
                 autoComplete="username"
-                placeholder="extractos@araucanayfrontera.cl"
+                placeholder="correo@ejemplo.cl"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setLocalError(null); }}
                 autoFocus
               />
             </Field>
@@ -73,7 +73,7 @@ export default function AdminLogin() {
                 type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setLocalError(null); }}
               />
             </Field>
             {(localError || authError) && (

@@ -12,7 +12,7 @@
 // — el cliente recibe directamente el certificado + factura que envía la
 // operadora luego de difundir.
 
-import { getSupabaseAdmin, isSupabaseConfigured } from "../_lib/supabase.js";
+import { getSupabaseAdmin, isSupabaseConfigured, isSupabaseUnreachable } from "../_lib/supabase.js";
 import { sendEmail, isMailerConfigured } from "../_lib/mailer.js";
 import {
   paymentConfirmedEmail,
@@ -55,6 +55,14 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
+    // Fallo de red ≠ token inválido: con la BD caída, un 401 manda a la
+    // operadora a revisar su clave cuando el problema es el servicio.
+    if (isSupabaseUnreachable(authError)) {
+      return res.status(503).json({
+        error: "auth_unavailable",
+        message: "La base de datos no está disponible en este momento. Espera unos minutos y reintenta.",
+      });
+    }
     return res.status(401).json({ error: "invalid_token" });
   }
 
@@ -65,6 +73,12 @@ export default async function handler(req, res) {
     .eq("id", user.id)
     .maybeSingle();
   if (adminErr || !adminRow) {
+    if (isSupabaseUnreachable(adminErr)) {
+      return res.status(503).json({
+        error: "auth_unavailable",
+        message: "La base de datos no está disponible en este momento. Espera unos minutos y reintenta.",
+      });
+    }
     return res.status(403).json({ error: "not_admin" });
   }
 

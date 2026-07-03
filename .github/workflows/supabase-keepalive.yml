@@ -1,0 +1,26 @@
+# Respaldo del cron de Vercel: pinguea /api/keepalive dos veces por semana
+# para que el proyecto Supabase free no se pause por inactividad (la pausa
+# llega tras ~7 días sin actividad de API). Corre fuera de Vercel a propósito:
+# si un deploy rompe los crons o cambia el plan, este workflow sigue vivo.
+#
+# Si el proyecto Vercel define CRON_SECRET, crear el secret homónimo en
+# GitHub (Settings → Secrets → Actions) con el mismo valor. Sin secret,
+# el curl va sin Authorization y el endpoint abierto lo acepta igual.
+name: Supabase keepalive
+
+on:
+  schedule:
+    - cron: "7 12 * * 1,4" # lunes y jueves 12:07 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/keepalive
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            ${CRON_SECRET:+-H "Authorization: Bearer $CRON_SECRET"} \
+            https://radioaraucana.cl/api/keepalive

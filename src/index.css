@@ -3,3 +3,20 @@
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; }
 #root { width: 100%; }
+
+/* Autofill de Chrome/Safari pinta los inputs con su propio fondo (blanco o
+   amarillo), ilegible sobre formularios oscuros. background-clip: text evita
+   que ese fondo se pinte y conserva el fondo propio del input. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-background-clip: text;
+}
+/* En inputs sobre fondo oscuro, además forzar texto y caret claros (el
+   autofill fuerza texto negro por defecto). */
+.dark-autofill:-webkit-autofill,
+.dark-autofill:-webkit-autofill:hover,
+.dark-autofill:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+}

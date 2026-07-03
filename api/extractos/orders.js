@@ -17,7 +17,7 @@
 
 import { createOrderInputSchema } from "./_lib/order-schema.js";
 import { rateLimit, tooManyRequests } from "../_lib/security.js";
-import { getSupabaseAdmin, isSupabaseConfigured } from "./_lib/supabase.js";
+import { getSupabaseAdmin, isSupabaseConfigured, isSupabaseUnreachable } from "./_lib/supabase.js";
 import { sendEmail, isMailerConfigured, adminRecipients } from "./_lib/mailer.js";
 import { clientOrderEmail, adminOrderNotificationEmail } from "./_lib/email-templates.js";
 import { calculatePriceCLP, exceedsMaxLines, DEFAULT_TARIFF } from "../../src/extractos/lib/pricing.js";
@@ -147,10 +147,7 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error("[/api/extractos/orders] insert order error:", error);
-    return res.status(500).json({
-      error: "db_error",
-      message: "No pudimos guardar tu orden. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL,
-    });
+    return respondOrderNotSaved(res, error, input, computedExtracts, totalCLP);
   }
 
   // Insertamos los N extractos hijos. Si alguno falla, borramos la orden y devolvemos error.
@@ -178,11 +175,14 @@ export default async function handler(req, res) {
   if (exErr || !insertedExtracts) {
     console.error("[/api/extractos/orders] insert extracts error:", exErr);
     // Cleanup: borrar la orden bundle (cascade borra extractos si quedaron parciales).
-    await supabase.from("orders").delete().eq("id", order.id);
-    return res.status(500).json({
-      error: "db_error",
-      message: "No pudimos guardar los extractos. Intenta de nuevo o escríbenos a " + SUPPORT_EMAIL,
-    });
+    const { error: delErr } = await supabase.from("orders").delete().eq("id", order.id);
+    if (delErr) {
+      console.error(
+        `[/api/extractos/orders] cleanup falló — orden ${order.id} (${order.order_number}) queda pending_payment sin extractos:`,
+        delErr.message
+      );
+    }
+    return respondOrderNotSaved(res, exErr, input, computedExtracts, totalCLP);
   }
 
   // Disparar emails en paralelo. Errores se loguean pero no rompen la respuesta:
@@ -230,6 +230,59 @@ export default async function handler(req, res) {
     amountCLP: order.amount_clp,
     extractCount: insertedExtracts.length,
     paymentRedirectUrl: null,
+  });
+}
+
+// La BD no guardó la orden (proyecto pausado, red caída, etc.). Antes de
+// rendirnos, rescatamos el lead: el mailer (SMTP) es independiente de
+// Supabase, así que mandamos al equipo todos los datos ya calculados para
+// procesar a mano. El cliente recibe un mensaje honesto según si el rescate
+// funcionó o no.
+async function respondOrderNotSaved(res, dbError, input, computedExtracts, totalCLP) {
+  let rescued = false;
+  if (isMailerConfigured()) {
+    try {
+      const fmtCLP = (n) => Number(n || 0).toLocaleString("es-CL");
+      const lines = [
+        "ORDEN NO PERSISTIDA — la base de datos no estaba disponible al momento del envío.",
+        "Estos son todos los datos recalculados server-side para procesarla a mano:",
+        "",
+        `Cliente: ${input.clientName} (${input.clientRUT})`,
+        `Email: ${input.clientEmail} · Fono: ${input.clientPhone}`,
+        input.clientOrganization ? `Organización: ${input.clientOrganization}` : null,
+        `Facturación: ${input.billingLegalName} · RUT ${input.billingRUT} · Giro: ${input.billingGiro}`,
+        `Dirección: ${input.billingAddress} · Email facturación: ${input.billingEmail}`,
+        `TOTAL: $${fmtCLP(totalCLP)} CLP · ${computedExtracts.length} extracto(s)`,
+        "",
+        ...computedExtracts.flatMap((e) => [
+          `— Extracto #${e.index} · ${e.procedureType} · ${e.comuna}, ${e.provincia} (${e.region})`,
+          `  Difusión: día ${e.publicationDay} de ${e.publicationMonth} (${e.resolvedDateIso}) · ${e.lineCount} líneas · $${fmtCLP(e.amountCLP)}`,
+          e.finalText,
+          "",
+        ]),
+        `Error técnico: ${dbError?.message || dbError}`,
+      ].filter((l) => l !== null);
+
+      const result = await sendEmail({
+        to: adminRecipients(),
+        subject: `⚠️ Orden NO guardada (BD no disponible) — ${input.clientName}`,
+        text: lines.join("\n"),
+        replyTo: input.clientEmail,
+      });
+      rescued = Boolean(result?.ok);
+    } catch (err) {
+      console.error("[/api/extractos/orders] rescate por email también falló:", err?.message ?? err);
+    }
+  }
+
+  return res.status(isSupabaseUnreachable(dbError) ? 503 : 500).json({
+    error: "db_error",
+    message: rescued
+      ? "Nuestro sistema de órdenes está temporalmente fuera de servicio, pero tus datos sí llegaron " +
+        "al equipo por correo y te contactaremos con la cotización. Si prefieres, escríbenos directo a " +
+        SUPPORT_EMAIL + "."
+      : "Nuestro sistema de órdenes está temporalmente fuera de servicio. Envía tu extracto a " +
+        SUPPORT_EMAIL + " y te respondemos con la cotización en el día.",
   });
 }
 

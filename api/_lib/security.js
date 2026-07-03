@@ -35,7 +35,10 @@ export function rateLimit(req, { key = "global", limit = 5, windowMs = 60_000 } 
 
 export function tooManyRequests(res) {
   res.setHeader("Retry-After", "60");
-  return res.status(429).json({ error: "too_many_requests" });
+  return res.status(429).json({
+    error: "too_many_requests",
+    message: "Demasiados intentos seguidos. Espera un minuto e inténtalo de nuevo.",
+  });
 }
 
 // Comparación de secretos en tiempo constante. Se comparan los SHA-256 de

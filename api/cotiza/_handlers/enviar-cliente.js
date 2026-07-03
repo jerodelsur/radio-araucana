@@ -5,7 +5,7 @@
 import { sendEmail, isMailerConfigured } from "../../extractos/_lib/mailer.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
 import { consumirCupon } from "../_lib/tarifas-store.js";
-import { authOk } from "../_lib/auth.js";
+import { checkAuth, denyAuth } from "../_lib/auth.js";
 import { cotizaTo, cotizaCc, cotizaFromEmail } from "../_lib/recipients.js";
 
 export const config = { runtime: "nodejs" };
@@ -216,7 +216,8 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  if (!(await authOk(req))) return res.status(401).json({ error: "Unauthorized" });
+  const auth = await checkAuth(req);
+  if (auth !== "ok") return denyAuth(res, auth);
 
   if (JSON.stringify(req.body || {}).length > MAX_BODY_LEN) {
     return res.status(413).json({ error: "Body too large" });

@@ -27,12 +27,13 @@ const TABS = [
 export default function Admin() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, loading: authLoading, accessToken, signOut, adminProfile, authError } = useAuth();
+  const { isAdmin, loading: authLoading, accessToken, signOut, adminProfile } = useAuth();
 
   const [tarifas, setTarifas] = useState(null);
   const [errorCarga, setErrorCarga] = useState("");
   const [solicitudPrecargada, setSolicitudPrecargada] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [tarifasIntento, setTarifasIntento] = useState(0);
 
   // Determinar tab activa desde ?tab=... (default: armar)
   const params = new URLSearchParams(location.search);
@@ -47,11 +48,18 @@ export default function Admin() {
 
   useEffect(() => {
     if (!isAdmin) return;
+    let alive = true;
     fetch("/api/cotiza/tarifas", { cache: "no-store" })
-      .then((r) => r.json())
-      .then(setTarifas)
-      .catch((e) => setErrorCarga(e?.message || String(e)));
-  }, [isAdmin]);
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => { if (alive) setTarifas(data); })
+      .catch(() => {
+        if (alive) setErrorCarga("No pudimos cargar las tarifas. Revisa tu conexión e inténtalo de nuevo.");
+      });
+    return () => { alive = false; };
+  }, [isAdmin, tarifasIntento]);
 
   const handlePrecargarSolicitud = (sol) => {
     setSolicitudPrecargada(sol);
@@ -73,22 +81,39 @@ export default function Admin() {
   }
 
   if (!isAdmin) {
+    // El error de auth lo muestra LoginAdmin en su bloque de error — acá solo
+    // va la descripción estática (pasarlo también como descripción lo duplicaba
+    // en pantalla).
     return (
       <LoginAdmin
         titulo="Administración del cotizador"
-        descripcion={
-          authError ||
-          "Ingresa con tu cuenta de administración (misma del panel de extractos)."
-        }
+        descripcion="Ingresa con tu cuenta de administración (misma del panel de extractos)."
       />
     );
   }
 
   if (!tarifas) {
     return (
-      <p style={{ padding: 80, textAlign: "center", color: "rgba(255,255,255,0.5)" }}>
-        {errorCarga ? `Error: ${errorCarga}` : "Cargando…"}
-      </p>
+      <div style={{ padding: 80, textAlign: "center", color: "rgba(255,255,255,0.5)" }}>
+        {errorCarga ? (
+          <>
+            <p role="alert" style={{ marginBottom: 16 }}>{errorCarga}</p>
+            <button
+              type="button"
+              onClick={() => { setErrorCarga(""); setTarifasIntento((n) => n + 1); }}
+              style={K({
+                background: "#52b870", color: "#0a3d23", border: "none",
+                borderRadius: 6, padding: "10px 20px", fontWeight: 700,
+                fontSize: 13, cursor: "pointer",
+              })}
+            >
+              Reintentar
+            </button>
+          </>
+        ) : (
+          "Cargando…"
+        )}
+      </div>
     );
   }
 

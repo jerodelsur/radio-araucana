@@ -1,9 +1,9 @@
 // POST: guarda el catálogo de tarifas en Vercel Blob.
-// Auth: Authorization: Bearer <ADMIN_PASSWORD>
+// Auth: Authorization: Bearer <JWT de Supabase> (misma cuenta admin que extractos).
 // Body: el JSON completo de tarifas (mismo shape que src/content/cotiza-tarifas.json)
 
 import { put } from "@vercel/blob";
-import { authOk } from "../_lib/auth.js";
+import { checkAuth, denyAuth } from "../_lib/auth.js";
 
 const BLOB_KEY = "cotiza-tarifas.json";
 
@@ -69,7 +69,8 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  if (!(await authOk(req))) return res.status(401).json({ error: "Unauthorized" });
+  const auth = await checkAuth(req);
+  if (auth !== "ok") return denyAuth(res, auth);
 
   const error = validar(req.body);
   if (error) return res.status(400).json({ error });

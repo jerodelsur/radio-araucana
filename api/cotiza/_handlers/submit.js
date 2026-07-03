@@ -447,7 +447,10 @@ export default async function handler(req, res) {
 
   if (!teamResult.ok) {
     console.error("[/api/cotiza/submit] envío al equipo falló:", teamResult.error);
-    return res.status(502).json({ error: "send_failed" });
+    return res.status(502).json({
+      error: "send_failed",
+      message: "No pudimos enviar tu solicitud en este momento. Escríbenos a cotizaciones@araucanayfrontera.cl y te respondemos a la brevedad.",
+    });
   }
 
   // Email DE CONFIRMACIÓN AL CLIENTE (best-effort: si falla, no rompe la

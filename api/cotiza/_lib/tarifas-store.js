@@ -7,15 +7,27 @@ import defaultTarifas from "../../../src/content/cotiza-tarifas.json" with { typ
 
 const BLOB_KEY = "cotiza-tarifas.json";
 
+// Cachear la URL pública del blob en memoria del lambda (mismo patrón que
+// api/content.js): list() es una "advanced operation" con cuota mensual
+// (2k/mes en Hobby) y solo hace falta la primera vez tras un cold start —
+// con addRandomSuffix:false la URL nunca cambia al reescribir.
+let cachedBlobUrl = null;
+
 export async function leerTarifas() {
   try {
-    const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
-    const target = blobs.find((b) => b.pathname === BLOB_KEY);
-    if (target) {
-      const fetched = await fetch(target.url, { cache: "no-store" });
+    if (!cachedBlobUrl) {
+      const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
+      const target = blobs.find((b) => b.pathname === BLOB_KEY);
+      if (target) cachedBlobUrl = target.url;
+    }
+    if (cachedBlobUrl) {
+      const fetched = await fetch(cachedBlobUrl, { cache: "no-store" });
       if (fetched.ok) return await fetched.json();
+      // URL inválida (improbable): invalidar para re-listar al próximo request.
+      cachedBlobUrl = null;
     }
   } catch (err) {
+    cachedBlobUrl = null;
     console.warn("[tarifas-store] read fail:", err?.message ?? err);
   }
   return defaultTarifas;

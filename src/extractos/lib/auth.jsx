@@ -68,6 +68,11 @@ export function AuthProvider({ children }) {
     const supabase = getSupabaseBrowser();
     let alive = true;
     let bootstrapDone = false;
+    // Cuando el safety-timer decide mostrar login, las continuaciones tardías
+    // del bootstrap (getSession/loadProfile que resuelven después) deben
+    // ignorarse — si no, la pantalla salta del formulario al panel mientras
+    // el usuario está escribiendo su contraseña.
+    let bootstrapAborted = false;
 
     // Timeout duro: si algo se cuelga >3s, desbloqueamos la UI mostrando login.
     // El bootstrap normal toma <500ms; 3s ya es señal clara de que algo (extensión,
@@ -76,10 +81,11 @@ export function AuthProvider({ children }) {
     const safetyTimer = setTimeout(() => {
       if (!alive || bootstrapDone) return;
       console.warn("[auth] safety timeout — desbloqueando loading state");
+      bootstrapAborted = true;
       setLoading(false);
     }, 3000);
 
-    async function loadProfile(currentUser) {
+    async function loadProfile(currentUser, { fromBootstrap = false } = {}) {
       if (!currentUser) {
         setAdminProfile(null);
         return;
@@ -90,11 +96,15 @@ export function AuthProvider({ children }) {
           .select("id, full_name, phone, role")
           .eq("id", currentUser.id)
           .maybeSingle();
-        if (!alive) return;
+        if (!alive || (fromBootstrap && bootstrapAborted)) return;
         if (error) {
           console.warn("[auth] error leyendo admin_users:", error.message);
           setAdminProfile(null);
-          setAuthError(`No pudimos verificar tus permisos: ${error.message}`);
+          setAuthError(
+            isNetworkAuthError(error)
+              ? MSG_SIN_CONEXION
+              : `No pudimos verificar tus permisos: ${error.message}`
+          );
           return;
         }
         if (!data) {
@@ -128,10 +138,10 @@ export function AuthProvider({ children }) {
           setTimeout(() => reject(new Error("getSession timeout")), 2000)
         );
         const session = await Promise.race([sessionPromise, timeoutPromise]);
-        if (!alive) return;
+        if (!alive || bootstrapAborted) return;
         setUser(session?.user ?? null);
         setAccessToken(session?.access_token ?? null);
-        await loadProfile(session?.user ?? null);
+        await loadProfile(session?.user ?? null, { fromBootstrap: true });
       } catch (err) {
         // En timeout o error, asumimos sesión inválida y mostramos login.
         // No bloqueamos al user con un error rojo: si las credenciales son válidas
@@ -146,6 +156,11 @@ export function AuthProvider({ children }) {
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!alive) return;
+      // Tras un bootstrap abortado ya limpiamos localStorage; un INITIAL_SESSION
+      // tardío con la sesión que gotrue retiene en memoria dejaría al usuario
+      // mitad-logueado con el storage vacío. Los eventos de login fresh
+      // (SIGNED_IN, TOKEN_REFRESHED, etc.) sí pasan.
+      if (bootstrapAborted && _event === "INITIAL_SESSION") return;
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
       await loadProfile(session?.user ?? null);
@@ -188,18 +203,31 @@ export function AuthProvider({ children }) {
       } catch (err) {
         const isTimeout = err?.message === "timeout";
         const msg = isTimeout
-          ? "El login tardó más de 15 segundos. Esto suele pasar con extensiones del navegador interfiriendo. Prueba en una ventana incógnita (Cmd+Shift+N) o desactiva temporalmente las extensiones."
-          : err?.message || "Error al iniciar sesión.";
+          ? "El servidor no respondió. Revisa tu conexión e inténtalo de nuevo en unos minutos; si persiste, avisa a gerencia."
+          : translateAuthError(err);
         setAuthError(msg);
         return { ok: false, error: msg };
       }
     },
     async signOut() {
-      const supabase = getSupabaseBrowser();
-      await supabase.auth.signOut();
+      // Logout local garantizado PRIMERO: con el servidor caído, gotrue devuelve
+      // el error sin borrar localStorage y la sesión quedaría zombie. El logout
+      // nunca debe depender de que el servidor responda.
+      clearStoredSession();
       setUser(null);
       setAccessToken(null);
       setAdminProfile(null);
+      setAuthError(null);
+      try {
+        const supabase = getSupabaseBrowser();
+        // Best-effort: revocar el token en el servidor, máximo 3s, sin bloquear.
+        await Promise.race([
+          supabase.auth.signOut({ scope: "local" }),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } catch {
+        // El logout local ya ocurrió; el token expira solo en ~1h.
+      }
     },
     async requestPasswordReset(email) {
       const supabase = getSupabaseBrowser();
@@ -210,21 +238,22 @@ export function AuthProvider({ children }) {
     },
     async updatePassword(newPassword) {
       const supabase = getSupabaseBrowser();
-      console.log("[auth] updatePassword: iniciando...");
-      const sessionRes = await supabase.auth.getSession();
-      console.log("[auth] updatePassword: session?", Boolean(sessionRes.data.session), sessionRes.data.session?.user?.email);
       try {
         const updatePromise = supabase.auth.updateUser({ password: newPassword });
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout: la solicitud tardó más de 15 segundos. Intenta de nuevo o pide un nuevo link de reset.")), 15000)
+          setTimeout(() => reject(new Error("La solicitud tardó demasiado. Intenta de nuevo o pide un nuevo link de reset.")), 15000)
         );
         const { error } = await Promise.race([updatePromise, timeoutPromise]);
-        console.log("[auth] updatePassword: completado, error?", error);
         if (error) return { ok: false, error: translateAuthError(error) };
         return { ok: true };
       } catch (err) {
         console.error("[auth] updatePassword: excepción:", err);
-        return { ok: false, error: err?.message || "Error desconocido al actualizar contraseña." };
+        return {
+          ok: false,
+          error: isNetworkAuthError(err)
+            ? MSG_SIN_CONEXION
+            : err?.message || "Error desconocido al actualizar contraseña.",
+        };
       }
     },
   }), [user, accessToken, adminProfile, loading, authError]);
@@ -238,7 +267,25 @@ export function useAuth() {
   return ctx;
 }
 
+// Los errores de red de gotrue llegan con el mensaje crudo del navegador
+// ("Failed to fetch" en Chrome, "Load failed" en Safari, "NetworkError..." en
+// Firefox) dentro de un AuthRetryableFetchError con status 0.
+function isNetworkAuthError(error) {
+  const msg = (error?.message || "").toLowerCase();
+  return (
+    error?.name === "AuthRetryableFetchError" ||
+    error?.status === 0 ||
+    /failed to fetch|load failed|networkerror|fetch failed|network request failed/.test(msg)
+  );
+}
+
+const MSG_SIN_CONEXION =
+  "No pudimos conectar con el servidor. Puede ser un problema de tu conexión " +
+  "o que el servicio esté temporalmente caído. Inténtalo de nuevo en unos " +
+  "minutos y, si persiste, avisa a gerencia@araucanayfrontera.cl.";
+
 function translateAuthError(error) {
+  if (isNetworkAuthError(error)) return MSG_SIN_CONEXION;
   const msg = (error?.message || "").toLowerCase();
   if (msg.includes("invalid login")) return "Email o contraseña incorrectos.";
   if (msg.includes("email not confirmed")) return "Tu email aún no está confirmado.";

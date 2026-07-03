@@ -260,6 +260,8 @@ export default function Cotizador() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formSnapshot),
+        // Sin esto, un backend colgado deja al cliente en "Enviando…" sin fin.
+        signal: AbortSignal.timeout(20000),
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.orderNumber) {
@@ -288,10 +290,12 @@ export default function Cotizador() {
           data.message ||
           "No pudimos procesar tu solicitud en este momento. Intenta de nuevo o escríbenos a extractos@araucanayfrontera.cl.",
       });
-    } catch (err) {
+    } catch {
       setSubmitState({
         status: "error",
-        message: "Sin conexión con el servidor. Verifica tu internet e intenta de nuevo.",
+        message:
+          "No pudimos conectar con el servidor. Puede ser tu conexión o una falla temporal del sistema. " +
+          "Intenta de nuevo en unos minutos o escríbenos a extractos@araucanayfrontera.cl.",
       });
     }
   }

@@ -11,9 +11,13 @@ export default function LoginAdmin({ titulo, descripcion }) {
 
   const submit = async (e) => {
     e?.preventDefault?.();
+    if (validando) return;
     const em = email.trim();
     const pw = password;
-    if (!em || !pw || validando) return;
+    if (!em || !pw) {
+      setError("Ingresa tu email y contraseña.");
+      return;
+    }
 
     setError("");
     setValidando(true);
@@ -28,7 +32,8 @@ export default function LoginAdmin({ titulo, descripcion }) {
     }
   };
 
-  const disabled = validando || authLoading || !email.trim() || !password;
+  const mensajeError = error || authError;
+  const disabled = validando || authLoading;
 
   return (
     <section style={{ padding: "clamp(64px, 10vw, 120px) 24px" }}>
@@ -49,14 +54,16 @@ export default function LoginAdmin({ titulo, descripcion }) {
             type="email"
             inputMode="email"
             autoComplete="username"
+            className="dark-autofill"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError(""); }}
             autoFocus
             disabled={validando}
-            placeholder="gerencia@araucanayfrontera.cl"
+            aria-invalid={Boolean(mensajeError)}
+            placeholder="correo@ejemplo.cl"
             style={{
               width: "100%", background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${error ? "#e87171" : "rgba(255,255,255,0.12)"}`,
+              border: `1px solid ${mensajeError ? "#e87171" : "rgba(255,255,255,0.12)"}`,
               borderRadius: 6, padding: "12px 14px", color: "#fff",
               fontFamily: "'Open Sans', sans-serif", fontSize: 14, outline: "none",
             }} />
@@ -67,49 +74,51 @@ export default function LoginAdmin({ titulo, descripcion }) {
           <input
             type="password"
             autoComplete="current-password"
+            className="dark-autofill"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setError(""); }}
             disabled={validando}
+            aria-invalid={Boolean(mensajeError)}
             style={{
               width: "100%", background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${error ? "#e87171" : "rgba(255,255,255,0.12)"}`,
+              border: `1px solid ${mensajeError ? "#e87171" : "rgba(255,255,255,0.12)"}`,
               borderRadius: 6, padding: "12px 14px", color: "#fff",
               fontFamily: "'Open Sans', sans-serif", fontSize: 14, outline: "none",
             }} />
         </label>
 
-        {(error || authError) && (
-          <p style={K({ fontSize: 12, color: "#e87171", marginBottom: 16, lineHeight: 1.5 })}>
-            {error || authError}
+        {mensajeError && (
+          <p role="alert" style={K({ fontSize: 12, color: "#e87171", marginBottom: 16, lineHeight: 1.5 })}>
+            {mensajeError}
           </p>
         )}
 
         <button type="submit" className="cot-btn-primary" disabled={disabled}
           style={K({
             width: "100%",
-            background: validando ? "rgba(82,184,112,0.4)" : "#52b870",
+            background: "#52b870",
             color: "#0a3d23",
             border: "none", borderRadius: 6, padding: "12px 22px",
             fontWeight: 700, fontSize: 14,
-            cursor: validando ? "wait" : (disabled ? "not-allowed" : "pointer"),
-            opacity: disabled ? 0.6 : 1,
+            cursor: validando ? "wait" : "pointer",
+            opacity: disabled && !validando ? 0.7 : 1,
             letterSpacing: "0.02em",
           })}>
-          {validando ? "Validando..." : "Entrar"}
+          {validando ? "Validando…" : "Entrar"}
         </button>
 
-        <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 16, lineHeight: 1.5, textAlign: "center" })}>
+        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 16, lineHeight: 1.5, textAlign: "center" })}>
           Misma cuenta que para el panel de extractos.
         </p>
 
-        <p style={K({ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.5, textAlign: "center" })}>
+        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 12, lineHeight: 1.5, textAlign: "center" })}>
           ¿Se queda colgado o no entra?{" "}
           <button
             type="button"
             onClick={() => { clearStoredSession(); window.location.reload(); }}
             style={{
               background: "none", border: "none", padding: 0,
-              color: "#7bd8a0", cursor: "pointer", fontSize: 11,
+              color: "#7bd8a0", cursor: "pointer", fontSize: 12,
               textDecoration: "underline", fontFamily: "inherit",
             }}
           >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, createContext, useContext } from "react";
-import { Menu, X, Play, Pause, Volume2, VolumeX, Share2 } from "lucide-react";
+import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown } from "lucide-react";
 import defaultContent from "./src/content/site.json";
 
 /* ─── Editable content ──────────────────────────────────────────────────────
@@ -615,20 +615,28 @@ const CAT_PHOTO_FALLBACK = "/news/region.jpg";
 
 function NewsGrid() {
   const { news: NEWS } = useSiteContent();
+  const [openIdx, setOpenIdx] = useState(null);
   return (
-    <section id="noticias" style={{ background: "#f4f4f4", padding: "64px 24px" }}>
+    <section id="noticias" style={{ background: "#f4f4f4", padding: "48px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 32 }}>
+        <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 24 }}>
           <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {NEWS.map((n, i) => {
             const photo = CAT_PHOTOS[n.cat] ?? CAT_PHOTO_FALLBACK;
+            const abierta = openIdx === i;
+            const tieneBajada = Boolean(n.bajada);
             return (
-              <article key={i} className="news-card" style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}>
+              <article
+                key={i}
+                className="news-card"
+                style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}
+                onClick={() => setOpenIdx(openIdx === i ? null : i)}
+              >
                 {/* Foto de categoría */}
-                <div style={{ height: 200, position: "relative", background: "#2d2d2d", overflow: "hidden" }}>
+                <div style={{ height: 140, position: "relative", background: "#2d2d2d", overflow: "hidden" }}>
                   {photo && (
                     <img
                       src={photo}
@@ -636,7 +644,7 @@ function NewsGrid() {
                       loading="lazy"
                       decoding="async"
                       width="400"
-                      height="200"
+                      height="140"
                       className="news-img"
                       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
                     />
@@ -647,9 +655,27 @@ function NewsGrid() {
                   </div>
                 </div>
                 {/* Texto */}
-                <div style={{ padding: "16px 18px 20px" }}>
-                  <h3 style={K({ fontWeight: 700, fontSize: 17, color: "#191919", lineHeight: 1.3, marginBottom: 8 })}>{n.headline}</h3>
-                  <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55 })}>{n.bajada}</p>
+                <div style={{ padding: "14px 16px 16px" }}>
+                  <button
+                    type="button"
+                    aria-expanded={abierta}
+                    aria-controls={"noticia-detalle-" + i}
+                    style={K({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, width: "100%", background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" })}
+                  >
+                    <h3 style={K({ fontWeight: 700, fontSize: 16, color: "#191919", lineHeight: 1.3, marginBottom: 0 })}>{n.headline}</h3>
+                    {tieneBajada && (
+                      <span style={{ flexShrink: 0, marginTop: 2, transition: "transform 200ms ease", transform: abierta ? "rotate(180deg)" : "rotate(0deg)" }}>
+                        <ChevronDown size={16} color="#6b7280" />
+                      </span>
+                    )}
+                  </button>
+                  {tieneBajada && (
+                    <div id={"noticia-detalle-" + i} aria-hidden={!abierta} style={{ display: "grid", gridTemplateRows: abierta ? "1fr" : "0fr", transition: "grid-template-rows 280ms ease" }}>
+                      <div style={{ overflow: "hidden", minHeight: 0 }}>
+                        <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55, paddingTop: 8 })}>{n.bajada}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
             );

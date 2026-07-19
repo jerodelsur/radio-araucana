@@ -362,13 +362,14 @@ const LivePlaceholder = () => {
     // Activo pero sin fuente válida → se trata como sin transmisión.
   }
 
-  // 2) Legacy: YouTube en vivo (solo si no hay config nueva activa y hay URL).
+  // 2) Video destacado elegido en el admin, con fallback al legacy de YouTube
+  // en vivo (solo si no hay config nueva activa).
   if (!lv.enabled) {
-    const ytId = getYouTubeId(settings.liveStreamUrl);
+    const ytId = getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl);
     if (ytId) {
       return (
         <iframe
-          title="Transmisión en vivo"
+          title="Video destacado"
           src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -381,6 +382,22 @@ const LivePlaceholder = () => {
   // 3) Sin transmisión → placeholder elegante.
   return <LiveOffline />;
 };
+
+// Rótulo bajo el reproductor: refleja si se ve el vivo, un video destacado
+// o nada. Antes decía "En vivo ahora" fijo aunque no hubiera transmisión.
+function LiveCaption({ suffix = "" }) {
+  const { settings } = useSiteContent();
+  const live = Boolean(settings.liveVideo?.enabled);
+  const hasVideo = !live && Boolean(getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl));
+  const label = live ? "En vivo ahora" : hasVideo ? "Video destacado" : "Señal 95.9 FM";
+  const dot = live ? "#ef4444" : "#52b870";
+  return (
+    <>
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: dot }} />
+      <span style={K({ fontWeight: 400, fontSize: 13, color: "#9ca3af" })}>{label}{suffix}</span>
+    </>
+  );
+}
 
 const CAT_COLORS = {
   REGIÓN: "#29623a", POLÍTICA: "#191919", CULTURA: "#4a7c59",
@@ -522,8 +539,7 @@ function Hero({ playing, toggle }) {
               <LivePlaceholder />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
-              <span style={K({ fontWeight: 400, fontSize: 13, color: "#9ca3af" })}>En vivo ahora</span>
+              <LiveCaption />
               <Share2 size={14} color="#9ca3af" style={{ marginLeft: "auto", cursor: "pointer" }} />
             </div>
           </div>
@@ -710,8 +726,7 @@ function VideoSection() {
             <LivePlaceholder />
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
-            <span style={K({ fontWeight: 500, fontSize: 14, color: "#52b870" })}>En vivo ahora · 95.9 FM</span>
+            <LiveCaption suffix=" · 95.9 FM" />
             <Share2 size={16} color="#fff" style={{ marginLeft: 12, cursor: "pointer" }} />
           </div>
         </div>

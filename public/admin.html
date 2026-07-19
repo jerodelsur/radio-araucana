@@ -327,6 +327,40 @@
     return el("div", null, toggle, typeField, sourceField);
   }
 
+  // Selector de "Video destacado cuando no hay vivo": elige, entre los videos
+  // ya cargados en la pestaña Videos, cuál se muestra en el hero y en
+  // "En directo y en video" mientras el toggle de arriba esté apagado.
+  function renderOfflineVideoPicker() {
+    const current = content.settings.offlineVideo ?? "";
+    const videos = content.videos || [];
+
+    const options = [["", "— Ninguno: placeholder \"No hay transmisión\" —"]];
+    videos.forEach((v) => {
+      if (!v.youtube) return;
+      const title = v.title || v.youtube;
+      const label = title.length > 70 ? `${title.slice(0, 70)}…` : title;
+      options.push([v.youtube, label]);
+    });
+    if (current && !options.some(([v]) => v === current)) {
+      options.push([current, "(URL actual, ya no está en la lista de Videos)"]);
+    }
+
+    const select = el("select", {
+      onchange: (e) => { content.settings.offlineVideo = e.target.value; markDirty(); } });
+    options.forEach(([v, label]) => {
+      const o = el("option", { value: v }, label);
+      if (v === current) o.setAttribute("selected", "");
+      select.appendChild(o);
+    });
+
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, "Video destacado cuando no hay vivo"),
+      select,
+      el("p", { class: "field-hint" },
+        "Se muestra en la portada (y en la sección \"En directo y en video\") cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Los videos se administran en la pestaña Videos."),
+    );
+  }
+
   function renderSettings() {
     const wrap = el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Configuración del sitio"),
@@ -340,6 +374,7 @@
 
       el("h3", { style: "font-size:13px;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px" }, "Streaming en vivo (video · XtreamCast)"),
       renderLiveVideo(),
+      renderOfflineVideoPicker(),
       el("p", { class: "field-hint", style: "margin-top:14px" },
         "Legacy YouTube: solo se usa si el bloque de arriba está apagado y este campo tiene una URL. Déjalo vacío al migrar a XtreamCast."),
       settingField("liveStreamUrl", "URL YouTube en vivo (legacy)", "url",

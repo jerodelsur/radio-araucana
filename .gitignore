@@ -10,3 +10,7 @@ dev.sh
 # macOS
 .DS_Store
 .vercel
+
+# Permisos locales de Claude Code: son por máquina, no se versionan
+.claude/settings.local.json
+.claude/settings.local.json.bak*

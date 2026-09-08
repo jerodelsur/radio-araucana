@@ -573,7 +573,7 @@ function Hero({ playing, toggle }) {
             </div>
           </div>
 
-          <div className="fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div id="en-vivo" className="fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 96 }}>
             <span aria-hidden="true" style={K({
               position: "absolute",
               top: "-0.42em",
@@ -770,26 +770,24 @@ function getYouTubeId(url) {
   return m ? m[1] : null;
 }
 
+// El reproductor (vivo o video destacado) vive solo en el hero. Antes esta
+// sección lo repetía; con las noticias apagadas quedaban dos reproductores
+// idénticos uno debajo del otro. Aquí queda únicamente la grilla de
+// repeticiones. El ancla #en-vivo apunta ahora al reproductor del hero.
 function VideoSection() {
   const { videos: VIDEOS } = useSiteContent();
+  if (!Array.isArray(VIDEOS) || VIDEOS.length === 0) return null;
   return (
-    <section id="en-vivo" style={{ background: "#191919", padding: "64px 24px" }}>
+    <section id="repeticiones" style={{ background: "#191919", padding: "64px 24px", scrollMarginTop: 80 }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", marginBottom: 40, letterSpacing: "-0.01em" })}>
-          EN DIRECTO Y EN VIDEO
-        </h2>
-
-        <div style={{ maxWidth: 800, margin: "0 auto 48px" }}>
-          <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 80px rgba(41,98,58,0.5)" }}>
-            <LivePlaceholder />
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
-            <LiveCaption suffix=" · 95.9 FM" />
-            <Share2 size={16} color="#fff" style={{ marginLeft: 12, cursor: "pointer" }} />
-          </div>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
+          <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", letterSpacing: "-0.01em" })}>
+            ÚLTIMOS VIDEOS
+          </h2>
+          <a href="https://www.youtube.com/@araucanafm" target="_blank" rel="noreferrer" style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none", letterSpacing: "0.04em", textTransform: "uppercase" })}>
+            Ver canal en YouTube →
+          </a>
         </div>
-
-        <p id="repeticiones" style={K({ fontWeight: 600, fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16, scrollMarginTop: 80 })}>Últimos videos</p>
         <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
           {VIDEOS.map((v, i) => {
             const ytId = getYouTubeId(v.youtube);

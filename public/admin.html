@@ -328,8 +328,8 @@
   }
 
   // Selector de "Video destacado cuando no hay vivo": elige, entre los videos
-  // ya cargados en la pestaña Videos, cuál se muestra en el hero y en
-  // "En directo y en video" mientras el toggle de arriba esté apagado.
+  // ya cargados en la pestaña Videos, cuál se muestra en el reproductor de
+  // la portada mientras el toggle de arriba esté apagado.
   function renderOfflineVideoPicker() {
     const current = content.settings.offlineVideo ?? "";
     const videos = content.videos || [];
@@ -357,7 +357,7 @@
       el("label", { class: "field-label" }, "Video destacado cuando no hay vivo"),
       select,
       el("p", { class: "field-hint" },
-        "Se muestra en la portada (y en la sección \"En directo y en video\") cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Los videos se administran en la pestaña Videos."),
+        "Se muestra en el reproductor de la portada cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Los videos se administran en la pestaña Videos."),
     );
   }
 
@@ -453,7 +453,7 @@
       news: "Las 4 noticias más recientes que aparecen en la portada.",
       programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
       regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
-      videos: "Repeticiones (capítulos guardados de YouTube) en la grilla de la sección 'En directo y en video'.",
+      videos: "Repeticiones (capítulos guardados de YouTube) en la grilla 'Últimos videos' de la portada.",
       whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
     })[key] || "";
   }

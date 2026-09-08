@@ -243,7 +243,7 @@
   /* ───────── Tabs ───────── */
   const TABS = [
     { id: "settings", label: "Configuración",  render: renderSettings },
-    { id: "news",     label: "Noticias",       render: () => renderList("news", newsCard) },
+    { id: "news",     label: "Noticias",       render: () => renderList("news", newsCard, renderNewsToggle()) },
     { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
     { id: "videos",   label: "Videos",         render: () => renderList("videos", videoCard) },
@@ -397,7 +397,7 @@
   }
 
   /* ───────── List renderer ───────── */
-  function renderList(key, cardFn) {
+  function renderList(key, cardFn, extra = null) {
     const items = content[key] || [];
     const list = el("div", { class: "item-list" });
     items.forEach((item, i) => list.appendChild(cardFn(item, i, items)));
@@ -410,8 +410,32 @@
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, panelTitleFor(key)),
       el("p", { class: "panel-sub" }, panelSubFor(key)),
+      extra,
       list,
       addBtn,
+    );
+  }
+
+  // Interruptor "Mostrar noticias en la portada" (settings.newsEnabled).
+  // Apagado por defecto: mientras no exista un proceso que las actualice a
+  // diario, la sección "Lo Más Reciente" y sus links del menú/footer se
+  // ocultan para que la portada no se vea desactualizada. Las noticias
+  // cargadas se conservan y reaparecen al encenderlo.
+  function renderNewsToggle() {
+    const on = content.settings.newsEnabled === true;
+    const checkbox = el("input", { type: "checkbox",
+      oninput: (e) => { content.settings.newsEnabled = e.target.checked; markDirty(); renderBody(); } });
+    if (on) checkbox.setAttribute("checked", "");
+    return el("div", { class: "field", style: "margin-bottom:18px;padding:14px 16px;border:1px solid var(--border);border-radius:6px" },
+      el("label", { class: "field-label" }, "Mostrar noticias en la portada"),
+      el("label", { style: "display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px;color:var(--bone)" },
+        checkbox,
+        el("span", null, on
+          ? "Encendido — la sección «Lo Más Reciente» se muestra en la portada"
+          : "Apagado — la sección y el link «Noticias» del menú están ocultos"),
+      ),
+      el("p", { class: "field-hint" },
+        "Enciéndelo solo cuando exista un proceso que actualice las noticias todos los días. Las noticias de abajo se guardan igual aunque esté apagado."),
     );
   }
 

@@ -454,6 +454,9 @@ const NAV_LINKS = [
 
 function Navbar() {
   const [open, setOpen] = useState(false);
+  const { settings, news } = useSiteContent();
+  const showNews = newsVisible(settings, news);
+  const links = NAV_LINKS.filter((l) => l.href !== "#noticias" || showNews);
 
   return (
     <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
@@ -466,7 +469,7 @@ function Navbar() {
 
         {/* Center nav */}
         <div className="hidden md:flex" style={{ gap: 28, alignItems: "center" }}>
-          {NAV_LINKS.map((l) => (
+          {links.map((l) => (
             <a key={l.label} href={l.href}
               {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
               className="nav-link"
@@ -495,7 +498,7 @@ function Navbar() {
 
       {open && (
         <div className="md:hidden" style={{ background: "#191919", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
-          {NAV_LINKS.map((l) => (
+          {links.map((l) => (
             <a key={l.label} href={l.href}
               {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
               onClick={() => setOpen(false)}
@@ -676,9 +679,17 @@ const CAT_PHOTO_FALLBACK = "/news/region.jpg";
 
 // NEWS is consumed via useSiteContent() inside NewsGrid / NewsTicker
 
+// La sección se oculta completa mientras settings.newsEnabled no sea true
+// (interruptor en /admin → Noticias). Sin un proceso que actualice las
+// noticias a diario, mostrarlas hacía ver la portada desactualizada.
+function newsVisible(settings, news) {
+  return Boolean(settings?.newsEnabled) && Array.isArray(news) && news.length > 0;
+}
+
 function NewsGrid() {
-  const { news: NEWS } = useSiteContent();
+  const { news: NEWS, settings } = useSiteContent();
   const [openIdx, setOpenIdx] = useState(null);
+  if (!newsVisible(settings, NEWS)) return null;
   return (
     <section id="noticias" style={{ background: "#f4f4f4", padding: "48px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -1121,7 +1132,8 @@ const FOOTER_LINKS = [
 ];
 
 function Footer() {
-  const { settings: SETTINGS } = useSiteContent();
+  const { settings: SETTINGS, news } = useSiteContent();
+  const showNews = newsVisible(SETTINGS, news);
   return (
     <footer id="contacto" style={{ background: "#191919", padding: "64px 24px 0" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -1168,7 +1180,7 @@ function Footer() {
             {FOOTER_LINKS.map((g) => (
               <div key={g.title}>
                 <h4 style={K({ fontWeight: 500, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 })}>{g.title}</h4>
-                {g.links.map((l) => {
+                {g.links.filter((l) => l.href !== "#noticias" || showNews).map((l) => {
                   if (l.inactive) {
                     return (
                       <span key={l.label}

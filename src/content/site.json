@@ -10,6 +10,7 @@
     "adminHours": "Lunes a Viernes, 9:00 a 18:00 hrs.",
     "liveStreamUrl": "",
     "offlineVideo": "",
+    "newsEnabled": false,
     "liveVideo": {
       "enabled": false,
       "type": "hls",

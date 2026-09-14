@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, createContext, useContext } from "react";
-import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
+import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import defaultContent from "./src/content/site.json";
 
 /* ─── Editable content ──────────────────────────────────────────────────────
@@ -11,19 +11,18 @@ import defaultContent from "./src/content/site.json";
 const SiteContentContext = createContext(defaultContent);
 const useSiteContent = () => useContext(SiteContentContext);
 
-/* ─── Social SVGs ─────────────────────────────────────────────────────────── */
-const SvgInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
-const SvgTwitter  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>;
-const SvgYoutube  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>;
-const SvgFacebook = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
-const SOC = [SvgInstagram, SvgYoutube, SvgFacebook];
+/* ─── Social ──────────────────────────────────────────────────────────────── */
+const SvgInstagram = ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
+const SvgYoutube  = ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>;
+const SvgFacebook = ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
 
-// URLs oficiales de redes sociales (consumidas por el footer y por sameAs en JSON-LD).
+// URLs oficiales de redes sociales (footer, hero, bloque "Síguenos" y sameAs en JSON-LD).
 const SOC_LINKS = [
-  { label: "Instagram", href: "https://www.instagram.com/araucanaradio", Icon: SvgInstagram },
-  { label: "YouTube",   href: "https://www.youtube.com/@araucanafm",      Icon: SvgYoutube  },
-  { label: "Facebook",  href: "https://www.facebook.com/share/1aK6itN6zP/?mibextid=wwXIfr", Icon: SvgFacebook },
+  { key: "youtube",   label: "YouTube",   handle: "@araucanafm",    cta: "Suscribirse", href: "https://www.youtube.com/@araucanafm?sub_confirmation=1", Icon: SvgYoutube,   what: "Podcast, entrevistas completas y shorts" },
+  { key: "instagram", label: "Instagram", handle: "@araucanaradio", cta: "Seguir",      href: "https://www.instagram.com/araucanaradio", Icon: SvgInstagram, what: "Reels, fotos del estudio y avisos del día" },
+  { key: "facebook",  label: "Facebook",  handle: "Radio Araucana", cta: "Seguir",      href: "https://www.facebook.com/share/1aK6itN6zP/?mibextid=wwXIfr", Icon: SvgFacebook, what: "Noticias regionales y transmisiones" },
 ];
+const YT_CHANNEL = "https://www.youtube.com/@araucanafm";
 
 /* ─── Official brand logo SVG (from araucanayfrontera.cl) ─────────────────── */
 const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
@@ -33,6 +32,8 @@ const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
     fill={color}
     xmlns="http://www.w3.org/2000/svg"
     style={{ display: "block" }}
+    aria-hidden="true"
+    focusable="false"
   >
     <g>
       <g>
@@ -69,119 +70,342 @@ const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
 );
 
 /* ─── Global Styles ───────────────────────────────────────────────────────── */
+// Sistema visual: fondo entintado (nunca negro puro), crema como texto,
+// verde araucaria como acento y el rojo solo para "en vivo". El mosaico verde
+// de los contenidos digitales (thumbnails de YouTube) vuelve como textura.
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
+    :root {
+      --ink: #191919;
+      --ink-2: #111311;
+      --ink-3: #1f221f;
+      --surface: #242724;
+      --line: rgba(246,243,238,0.10);
+      --line-strong: rgba(246,243,238,0.18);
+      --cream: #F6F3EE;
+      --cream-70: rgba(246,243,238,0.72);
+      --cream-55: rgba(246,243,238,0.58);
+      --green: #52B870;
+      --green-deep: #29623A;
+      --lime: #B4E356;
+      --red: #D7261E;
+      --font: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --ease: cubic-bezier(.22,1,.36,1);
+      --container: 1240px;
+      --gutter: clamp(20px, 4vw, 44px);
+    }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Open Sans', sans-serif; background: #191919; overscroll-behavior-y: none; }
-    html { scroll-behavior: smooth; background: #191919; overscroll-behavior-y: none; }
-    section[id], footer[id] { scroll-margin-top: 80px; }
+    html { scroll-behavior: smooth; background: var(--ink); overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
+    body { font-family: var(--font); background: var(--ink); color: var(--cream); overscroll-behavior-y: none; -webkit-font-smoothing: antialiased; }
+    img, svg, video { display: block; max-width: 100%; }
+    button, a { font-family: inherit; }
+    section[id], footer[id], div[id] { scroll-margin-top: 84px; }
+    h1, h2, h3 { text-wrap: balance; }
+    p { text-wrap: pretty; }
 
-    @keyframes livePulse {
-      0%, 100% { transform: scale(1);   opacity: 1;   }
-      50%       { transform: scale(1.4); opacity: 0.6; }
-    }
-    @keyframes waveform {
-      from { transform: scaleY(0.25); }
-      to   { transform: scaleY(1);    }
-    }
-    @keyframes marquee {
-      from { transform: translateX(0);    }
-      to   { transform: translateX(-50%); }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0);    }
-    }
-    @keyframes signalRing {
-      0%   { transform: scale(0.4); opacity: 0.7; }
-      100% { transform: scale(2.6); opacity: 0;   }
-    }
+    :focus { outline: none; }
+    :focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; border-radius: 4px; }
 
-    .live-dot      { animation: livePulse 1.5s ease-in-out infinite; }
-    .wave-bar      { animation: waveform 0.8s ease-in-out alternate infinite; transform-origin: bottom; }
-    .marquee-track { animation: marquee 28s linear infinite; white-space: nowrap; display: inline-block; }
+    .skip-link { position: absolute; left: 16px; top: -60px; z-index: 20000; background: var(--lime); color: #111; font-weight: 700; padding: 12px 18px; border-radius: 6px; text-decoration: none; transition: top 160ms var(--ease); }
+    .skip-link:focus { top: 16px; }
 
-    .fiu-0 { animation: fadeInUp 0.6s ease forwards 0s;    opacity: 0; }
-    .fiu-1 { animation: fadeInUp 0.6s ease forwards 0.15s; opacity: 0; }
-    .fiu-2 { animation: fadeInUp 0.6s ease forwards 0.3s;  opacity: 0; }
-    .fiu-3 { animation: fadeInUp 0.6s ease forwards 0.45s; opacity: 0; }
-    .fiu-4 { animation: fadeInUp 0.6s ease forwards 0.6s;  opacity: 0; }
+    .container { max-width: var(--container); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); width: 100%; }
+    .kicker { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--green); }
+    .kicker::before { content: ''; width: 22px; height: 2px; background: var(--green); }
+    .h2 { font-weight: 800; font-size: clamp(30px, 4.2vw, 52px); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream); }
+    .lede { font-weight: 400; font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6; color: var(--cream-70); max-width: 58ch; }
+    .meta { font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--cream-55); font-variant-numeric: tabular-nums; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 700; font-size: 14px; letter-spacing: .02em; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease); white-space: nowrap; }
+    .btn:active { transform: translateY(1px) scale(.99); }
+    .btn-red { background: var(--red); color: #fff; box-shadow: 0 10px 30px rgba(215,38,30,.28); }
+    .btn-red:hover { background: #ee3b33; transform: translateY(-1px); box-shadow: 0 14px 34px rgba(215,38,30,.36); }
+    .btn-cream { background: var(--cream); color: #131413; }
+    .btn-cream:hover { background: #fff; transform: translateY(-1px); }
+    .btn-ghost { background: rgba(246,243,238,.04); color: var(--cream); border-color: var(--line-strong); }
+    .btn-ghost:hover { background: rgba(246,243,238,.09); border-color: rgba(246,243,238,.32); transform: translateY(-1px); }
+    .btn-green { background: var(--green); color: #0f1a12; }
+    .btn-green:hover { background: #63c67f; transform: translateY(-1px); }
+    .btn-sm { min-height: 44px; padding: 0 16px; font-size: 13px; }
+    .icon-btn { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--line-strong); color: var(--cream); cursor: pointer; transition: background 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease); text-decoration: none; }
+    .icon-btn:hover { background: rgba(246,243,238,.08); border-color: rgba(246,243,238,.32); }
+    .icon-btn:active { transform: scale(.96); }
+    .icon-btn[disabled] { opacity: .35; cursor: default; }
+
+    /* Header */
+    .site-header { position: sticky; top: 0; z-index: 1000; background: rgba(25,25,25,.78); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid var(--line); }
+    .nav-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--cream-70); text-decoration: none; transition: color 150ms var(--ease), background 150ms var(--ease); }
+    .nav-link:hover { color: var(--cream); background: rgba(246,243,238,.06); }
+    .nav-link[aria-current="true"] { color: var(--cream); }
+    .live-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 12px; border-radius: 999px; background: var(--red); color: #fff; font-weight: 800; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; border: none; cursor: pointer; transition: background 150ms var(--ease), transform 150ms var(--ease); }
+    .live-pill:hover { background: #ee3b33; }
+    .live-pill:active { transform: scale(.97); }
+    .mobile-menu a { display: flex; align-items: center; justify-content: space-between; min-height: 52px; font-weight: 600; font-size: 17px; color: var(--cream); text-decoration: none; border-bottom: 1px solid var(--line); }
+
+    /* Animations */
+    @keyframes livePulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: .55; } }
+    @keyframes waveform { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes signalRing { 0% { transform: scale(0.4); opacity: 0.7; } 100% { transform: scale(2.6); opacity: 0; } }
+    @keyframes shimmer { from { background-position: -600px 0; } to { background-position: 600px 0; } }
+    @keyframes driftMosaic { from { background-position: 0 0; } to { background-position: -96px 48px; } }
+
+    .live-dot { animation: livePulse 1.6s ease-in-out infinite; }
+    .wave-bar { animation: waveform 0.8s ease-in-out alternate infinite; transform-origin: bottom; }
+    .marquee-track { animation: marquee 34s linear infinite; white-space: nowrap; display: inline-block; }
+    .marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+    .fiu-0 { animation: fadeInUp .7s var(--ease) forwards 0s; opacity: 0; }
+    .fiu-1 { animation: fadeInUp .7s var(--ease) forwards .12s; opacity: 0; }
+    .fiu-2 { animation: fadeInUp .7s var(--ease) forwards .24s; opacity: 0; }
+    .fiu-3 { animation: fadeInUp .7s var(--ease) forwards .36s; opacity: 0; }
+    .fiu-4 { animation: fadeInUp .8s var(--ease) forwards .3s; opacity: 0; }
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+    .mosaic-drift { animation: driftMosaic 40s linear infinite alternate; }
+    .skeleton { background: linear-gradient(90deg, rgba(246,243,238,.05) 0%, rgba(246,243,238,.11) 50%, rgba(246,243,238,.05) 100%); background-size: 1200px 100%; animation: shimmer 1.6s linear infinite; border-radius: 10px; }
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .live-dot, .wave-bar, .marquee-track { animation: none; }
+      .live-dot, .wave-bar, .marquee-track, .mosaic-drift, .skeleton { animation: none; }
       .fiu-0, .fiu-1, .fiu-2, .fiu-3, .fiu-4 { animation: none; opacity: 1; }
+      .reveal { opacity: 1; transform: none; transition: none; }
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
 
-    .news-card { transition: transform 200ms ease, box-shadow 200ms ease; cursor: pointer; }
-    .news-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
-    .news-img { filter: contrast(1.08) saturate(0.82) brightness(0.96); transition: filter 300ms ease; }
-    .news-card:hover .news-img { filter: contrast(1.05) saturate(0.95) brightness(1.0); }
+    /* Cards */
+    .ep-card { display: grid; grid-template-columns: 148px 1fr; gap: 16px; align-items: center; padding: 14px; border-radius: 14px; text-decoration: none; color: inherit; background: transparent; border: 1px solid transparent; transition: background 180ms var(--ease), border-color 180ms var(--ease), transform 180ms var(--ease); text-align: left; width: 100%; cursor: pointer; }
+    .ep-card:hover { background: rgba(246,243,238,.05); border-color: var(--line); transform: translateX(3px); }
+    .ep-card .thumb { position: relative; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #0e1a12; }
+    .ep-card .thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+    .ep-card:hover .thumb img { transform: scale(1.05); }
+    @media (max-width: 480px) { .ep-card { grid-template-columns: 112px 1fr; gap: 12px; padding: 10px; } }
 
-    .video-card { transition: transform 200ms ease; cursor: pointer; }
-    .video-card:hover { transform: scale(1.03); }
+    .feature-card { position: relative; display: block; border-radius: 18px; overflow: hidden; background: #0e1a12; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--line); text-align: left; width: 100%; color: inherit; padding: 0; }
+    .feature-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease); }
+    .feature-card:hover img { transform: scale(1.04); }
+    .feature-card .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,14,11,.94) 0%, rgba(10,14,11,.45) 45%, rgba(10,14,11,0) 75%); }
+    .play-ring { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: var(--cream); color: #0f1a12; box-shadow: 0 12px 32px rgba(0,0,0,.45); transition: transform 200ms var(--ease), background 200ms var(--ease); }
+    .feature-card:hover .play-ring, .reel-card:hover .play-ring { transform: scale(1.08); background: var(--lime); }
 
-    .region-card { transition: transform 300ms ease, filter 300ms ease; cursor: pointer; }
-    .region-card:hover { transform: scale(1.02); filter: brightness(1.1); }
+    .reel-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 18px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .reel-row::-webkit-scrollbar { display: none; }
+    .reel-card { position: relative; flex: 0 0 auto; width: clamp(190px, 22vw, 250px); aspect-ratio: 9/16; border-radius: 16px; overflow: hidden; background: #0e1a12; scroll-snap-align: start; cursor: pointer; border: 1px solid var(--line); padding: 0; text-align: left; color: inherit; }
+    .reel-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
+    .reel-card:hover img { transform: scale(1.05); }
+    .reel-card .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,14,11,.92) 0%, rgba(10,14,11,.2) 50%, rgba(10,14,11,.15) 100%); }
+    .reel-card .play-ring { width: 44px; height: 44px; }
 
-    .prog-card { transition: transform 200ms ease; cursor: pointer; }
-    .prog-card:hover { transform: scale(1.02); }
+    .prog-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 18px; align-items: center; padding: 18px 16px; border-top: 1px solid var(--line); border-radius: 0; transition: background 160ms var(--ease); }
+    .prog-row:last-child { border-bottom: 1px solid var(--line); }
+    .prog-row.active { background: linear-gradient(90deg, rgba(82,184,112,.16), rgba(82,184,112,.02)); border-radius: 12px; border-color: transparent; }
+    @media (max-width: 560px) { .prog-row { grid-template-columns: 1fr; gap: 6px; } }
 
-    .social-tile { position: relative; aspect-ratio: 1/1; cursor: pointer; overflow: hidden; border-radius: 3px; }
-    .social-tile::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; transition: opacity 200ms ease; }
-    .social-tile:hover::after { opacity: 1; }
+    .soc-card { display: flex; flex-direction: column; gap: 14px; padding: 26px; border-radius: 18px; background: var(--ink-3); border: 1px solid var(--line); transition: transform 200ms var(--ease), border-color 200ms var(--ease); }
+    .soc-card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
 
-    .sponsor-block { opacity: 0.55; transition: opacity 200ms ease; }
-    .sponsor-block:hover { opacity: 1; }
+    .region-card { position: relative; display: block; border-radius: 16px; overflow: hidden; min-height: 320px; cursor: pointer; border: 1px solid var(--line); padding: 0; text-align: left; color: inherit; width: 100%; background: #0e1a12; }
+    .region-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease), filter .5s var(--ease); }
+    .region-card:hover img { transform: scale(1.05); filter: brightness(1.08); }
 
-    .footer-link { transition: color 150ms ease; }
-    .footer-link:hover { color: #52b870 !important; }
+    .footer-link { color: var(--cream-70); text-decoration: none; display: inline-flex; align-items: center; min-height: 36px; transition: color 150ms var(--ease); }
+    .footer-link:hover { color: var(--green); }
 
-    .nav-link { transition: color 150ms ease; }
-    .nav-link:hover { color: #52b870 !important; }
+    .wa-panel { animation: waPop .22s cubic-bezier(.34,1.56,.64,1) forwards; }
+    @keyframes waPop { from { opacity: 0; transform: scale(.9) translateY(12px); } to { opacity: 1; transform: none; } }
+    .wa-opt { transition: background 150ms var(--ease), transform 120ms var(--ease); cursor: pointer; }
+    .wa-opt:hover { background: #f0fdf4 !important; transform: translateX(3px); }
+    .wa-fab { transition: transform 180ms var(--ease), box-shadow 180ms var(--ease); }
+    .wa-fab:hover { transform: scale(1.06); }
 
-    .social-icon-btn { transition: background 200ms ease; }
-    .social-icon-btn:hover { background: #29623a !important; }
-
-    .play-btn { transition: background 200ms ease; }
-    .play-btn:hover { background: #29623a !important; }
-
-    .cta-btn { transition: background 150ms ease, transform 120ms ease; }
-    .cta-btn:hover { background: #aa0000 !important; transform: translateY(-1px); }
-
-    ::-webkit-scrollbar { height: 4px; }
-    ::-webkit-scrollbar-track { background: #191919; }
-    ::-webkit-scrollbar-thumb { background: #29623a; border-radius: 2px; }
+    ::-webkit-scrollbar { height: 6px; width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--ink); }
+    ::-webkit-scrollbar-thumb { background: var(--green-deep); border-radius: 4px; }
+    ::selection { background: var(--lime); color: #111; }
   `}</style>
 );
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
-const K = (style) => ({ fontFamily: "'Open Sans', sans-serif", ...style });
+const K = (style) => ({ fontFamily: "var(--font)", ...style });
 
-const Waveform = ({ color = "#29623a", height = 24 }) => (
-  <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height }}>
+const Waveform = ({ color = "#52B870", height = 24 }) => (
+  <div aria-hidden="true" style={{ display: "flex", alignItems: "flex-end", gap: 3, height }}>
     {[0, 0.1, 0.2, 0.3, 0.4].map((d, i) => (
-      <div key={i} className="wave-bar"
-        style={{ width: 4, height, background: color, borderRadius: 2, animationDelay: `${d}s` }} />
+      <div key={i} className="wave-bar" style={{ width: 4, height, background: color, borderRadius: 2, animationDelay: `${d}s` }} />
     ))}
   </div>
 );
 
-/* ─── Live Placeholder ────────────────────────────────────────────────────── */
+// Mosaico verde: la misma textura pixelada de los thumbnails de Araucana
+// Digital, generada como SVG determinista (misma semilla → mismo dibujo).
+function mosaicDataUri(seed = 7, cols = 26, rows = 14, cell = 48) {
+  let s = seed >>> 0;
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const palette = ["#0b2416", "#123320", "#1a4a2a", "#23683a", "#2f8a45", "#4aab55", "#7ccb68", "#a8de5e"];
+  const weights = [0.30, 0.22, 0.17, 0.12, 0.09, 0.05, 0.03, 0.02];
+  let rects = "";
+  const pickColor = () => { const r = rnd(); let acc = 0; for (let i = 0; i < weights.length; i++) { acc += weights[i]; if (r <= acc) return palette[i]; } return palette[0]; };
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    rects += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}" fill="${pickColor()}"/>`;
+  }
+  // Bloques grandes (2×2) para romper la regularidad, como en las miniaturas.
+  for (let i = 0; i < Math.floor(cols * rows * 0.05); i++) {
+    const x = Math.floor(rnd() * (cols - 1)), y = Math.floor(rnd() * (rows - 1));
+    rects += `<rect x="${x * cell}" y="${y * cell}" width="${cell * 2}" height="${cell * 2}" fill="${pickColor()}"/>`;
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${cols * cell}" height="${rows * cell}" shape-rendering="crispEdges">${rects}</svg>`;
+  return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
+}
+
+function Mosaic({ seed = 7, opacity = 0.35, style, drift = true, mask = "linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.35) 60%, transparent)" }) {
+  const uri = useMemo(() => mosaicDataUri(seed), [seed]);
+  return (
+    <div aria-hidden="true" className={drift ? "mosaic-drift" : undefined} style={{
+      position: "absolute", inset: 0, pointerEvents: "none", opacity,
+      backgroundImage: uri, backgroundSize: "1248px 672px", backgroundRepeat: "repeat",
+      WebkitMaskImage: mask, maskImage: mask,
+      ...style,
+    }} />
+  );
+}
+
+const fmtViews = (n) => {
+  if (!n) return "";
+  const v = new Intl.NumberFormat("es-CL", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  return `${v} vistas`;
+};
+const fmtDate = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const days = Math.round((Date.now() - d.getTime()) / 86400000);
+  if (days <= 0) return "hoy";
+  if (days < 7) return new Intl.RelativeTimeFormat("es-CL", { numeric: "auto" }).format(-days, "day");
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: days > 300 ? "numeric" : undefined }).format(d);
+};
+const cleanTitle = (t = "") => t.replace(/#shorts?/gi, "").replace(/\|\s*Araucana Digital\s*$/i, "").replace(/\s{2,}/g, " ").trim();
+
+// Extract YouTube videoId from common URL formats
+function getYouTubeId(url) {
+  if (!url || typeof url !== "string") return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m ? m[1] : null;
+}
+
+// Contador que avanza cada minuto: sirve para recalcular el programa al aire
+// sin llamar setState dentro del cuerpo del efecto.
+function useMinuteTick() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return tick;
+}
+
+// Reveal on scroll (una coreografía por sección; visible de inmediato con
+// prefers-reduced-motion porque el CSS anula la transición).
+function useReveal() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") { el?.classList.add("in"); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -10% 0px", threshold: 0.08 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
+
+/* ─── YouTube data (podcast + shorts) ─────────────────────────────────────── */
+function useYouTube() {
+  const { videos } = useSiteContent();
+  const videosRef = useRef(videos);
+  useEffect(() => { videosRef.current = videos; }, [videos]);
+  const [state, setState] = useState({ loading: true, episodes: [], shorts: [], fromFallback: false });
+
+  // Una sola consulta por visita: el fallback lee los videos del admin desde
+  // el ref para no relanzar el fetch cuando /api/content actualiza el contexto.
+  useEffect(() => {
+    let alive = true;
+    const fallback = () => {
+      const eps = (videosRef.current || []).map((v) => {
+        const id = getYouTubeId(v.youtube);
+        return id ? { id, title: v.title, url: v.youtube, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, thumbHd: `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`, published: "", views: 0 } : null;
+      }).filter(Boolean);
+      if (alive) setState({ loading: false, episodes: eps, shorts: [], fromFallback: true });
+    };
+    fetch("/api/youtube")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!alive) return;
+        if (data && Array.isArray(data.episodes) && (data.episodes.length || data.shorts?.length)) {
+          setState({ loading: false, episodes: data.episodes, shorts: data.shorts || [], fromFallback: false });
+        } else fallback();
+      })
+      .catch(fallback);
+    return () => { alive = false; };
+  }, []);
+
+  return state;
+}
+
+/* ─── Video modal (reproductor embebido) ──────────────────────────────────── */
+function VideoModal({ video, vertical = false, onClose }) {
+  const closeRef = useRef(null);
+  const boxRef = useRef(null);
+
+  useEffect(() => {
+    const prev = document.activeElement;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key !== "Tab" || !boxRef.current) return;
+      const f = boxRef.current.querySelectorAll('button, a[href], iframe, [tabindex]:not([tabindex="-1"])');
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); prev?.focus?.(); };
+  }, [onClose]);
+
+  const title = cleanTitle(video.title);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(8,10,9,.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
+        style={{ width: "100%", maxWidth: vertical ? 420 : 1040, display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <p style={K({ fontWeight: 700, fontSize: 15, color: "var(--cream)", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" })}>{title}</p>
+          <button ref={closeRef} onClick={onClose} className="icon-btn" aria-label="Cerrar video" style={{ flexShrink: 0, background: "rgba(246,243,238,.08)" }}><X size={20} /></button>
+        </div>
+        <div style={{ position: "relative", width: "100%", aspectRatio: vertical ? "9/16" : "16/9", maxHeight: "78vh", borderRadius: 16, overflow: "hidden", background: "#000", border: "1px solid var(--line-strong)", boxShadow: "0 40px 90px rgba(0,0,0,.6)" }}>
+          <iframe
+            title={title}
+            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <a href={video.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><SvgYoutube size={16} /> Ver en YouTube <ArrowUpRight size={14} /></a>
+          <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="btn btn-red btn-sm">Suscribirse al canal</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Live player (hero) ──────────────────────────────────────────────────── */
 // Videos de fondo cuando no hay transmisión: se elige uno al azar por visita
 // para que el header no muestre siempre el mismo loop.
-const BG_VIDEOS = [
-  "/bg-placeholder.mp4",
-  "/bg-estudio.mp4",
-  "/bg-araucania.mp4",
-];
-
-// Un solo sorteo a nivel de módulo: las dos secciones que montan
-// LivePlaceholder muestran el mismo archivo y el navegador lo descarga
-// una sola vez (antes cada instancia sorteaba el suyo → hasta 9 MB por visita).
+const BG_VIDEOS = ["/bg-placeholder.mp4", "/bg-estudio.mp4", "/bg-araucania.mp4"];
 const BG_VIDEO = BG_VIDEOS[Math.floor(Math.random() * BG_VIDEOS.length)];
 
 // El video es decorativo (va bajo un overlay oscuro): en pantallas chicas,
@@ -191,15 +415,11 @@ const useBgVideoEnabled = () => {
   useEffect(() => {
     const mobile = window.matchMedia("(max-width: 768px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () =>
-      setEnabled(!mobile.matches && !reduced.matches && navigator.connection?.saveData !== true);
+    const update = () => setEnabled(!mobile.matches && !reduced.matches && navigator.connection?.saveData !== true);
     update();
     mobile.addEventListener("change", update);
     reduced.addEventListener("change", update);
-    return () => {
-      mobile.removeEventListener("change", update);
-      reduced.removeEventListener("change", update);
-    };
+    return () => { mobile.removeEventListener("change", update); reduced.removeEventListener("change", update); };
   }, []);
   return enabled;
 };
@@ -219,21 +439,13 @@ function HlsPlayer({ src }) {
   const videoRef = useRef(null);
   const [error, setError] = useState(false);
 
-  // El estado de error se resetea remontando el componente (key={src} en el
-  // padre) cuando cambia la fuente, así evitamos un setState síncrono en el efecto.
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !src) return;
-
     let hls;
     let cancelled = false;
     let netRetries = 0;
     const onNativeErr = () => setError(true);
-
-    // Orden importante: hls.js primero (Chrome/Firefox/Edge/Android y Safari de
-    // escritorio, vía MSE). Solo si hls.js no está soportado caemos al HLS
-    // nativo, que es el caso de iOS Safari. Ojo: en Chrome canPlayType("…mpegurl")
-    // devuelve "maybe" pero NO reproduce HLS de verdad, así que no sirve de check.
     import("hls.js")
       .then(({ default: Hls }) => {
         if (cancelled) return;
@@ -243,18 +455,11 @@ function HlsPlayer({ src }) {
           hls.attachMedia(video);
           hls.on(Hls.Events.ERROR, (_evt, data) => {
             if (!data.fatal) return;
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 2) {
-              netRetries += 1;
-              hls.startLoad();
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              hls.recoverMediaError();
-            } else {
-              setError(true);
-              hls.destroy();
-            }
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 2) { netRetries += 1; hls.startLoad(); }
+            else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
+            else { setError(true); hls.destroy(); }
           });
         } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          // iOS Safari: HLS nativo (hls.js no usa MSE ahí).
           video.src = src;
           video.addEventListener("error", onNativeErr);
         } else {
@@ -262,89 +467,53 @@ function HlsPlayer({ src }) {
         }
       })
       .catch(() => setError(true));
-
-    return () => {
-      cancelled = true;
-      video.removeEventListener("error", onNativeErr);
-      if (hls) hls.destroy();
-    };
+    return () => { cancelled = true; video.removeEventListener("error", onNativeErr); if (hls) hls.destroy(); };
   }, [src]);
 
-  if (error) {
-    return (
-      <LiveOffline message="No se pudo cargar la señal en vivo. Intenta recargar en unos minutos." />
-    );
-  }
-
+  if (error) return <LiveOffline message="No se pudo cargar la señal en vivo. Intenta recargar en unos minutos." />;
   return (
-    <video
-      ref={videoRef}
-      aria-label="Transmisión en vivo"
-      controls
-      autoPlay
-      muted
-      playsInline
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", background: "#000", border: 0 }}
-    />
+    <video ref={videoRef} aria-label="Transmisión en vivo" controls autoPlay muted playsInline
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", background: "#000", border: 0 }} />
   );
 }
 
-// Señal en vivo vía iframe embed (XtreamCast u otro proveedor).
 function LiveIframe({ code }) {
   const src = extractIframeSrc(code);
   if (!src) return <LiveOffline />;
   return (
-    <iframe
-      title="Transmisión en vivo"
-      src={src}
+    <iframe title="Transmisión en vivo" src={src}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-      allowFullScreen
-    />
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
   );
 }
 
-// Estado "sin transmisión": placeholder elegante con video de fondo,
-// el logo, la frecuencia y un enlace a las repeticiones.
-function LiveOffline({ message = "No hay transmisión en vivo en este momento" }) {
+// Estado "sin transmisión": placeholder con video de fondo, el logo, la
+// frecuencia y un enlace al podcast.
+function LiveOffline({ message = "Sin transmisión de video en este momento" }) {
   const showVideo = useBgVideoEnabled();
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#0d1a12" }}>
-      {/* Looping background video (solo desktop, sin reduced-motion ni save-data) */}
       {showVideo && (
-        <video
-          autoPlay loop muted playsInline preload="none"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-        >
+        <video autoPlay loop muted playsInline preload="none" aria-hidden="true"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
           <source src={BG_VIDEO} type="video/mp4" />
         </video>
       )}
-
-      {/* Dark overlay so text is legible */}
-      <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.58)" }} />
-
-      {/* Content */}
-      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 16px" }}>
-        {/* Animated signal rings */}
+      <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,14,0.62)" }} />
+      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: "0 16px" }}>
         <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {[0, 0.5, 1.0].map((delay, i) => (
-            <div key={i} style={{
-              position: "absolute", inset: 0, borderRadius: "50%",
-              border: "1px solid rgba(82,184,112,0.6)",
-              animation: `signalRing 2.4s ease-out ${delay}s infinite`,
-            }} />
+            <div key={i} aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px solid rgba(82,184,112,0.6)", animation: `signalRing 2.4s ease-out ${delay}s infinite` }} />
           ))}
           <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(41,98,58,0.85)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backdropFilter: "blur(4px)" }}>
-            <Play size={20} color="#fff" fill="#fff" />
+            <Play size={20} color="#fff" fill="#fff" aria-hidden="true" />
           </div>
         </div>
-
         <LogoSVG height={38} color="#ffffff" />
-
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
-          <p style={K({ fontWeight: 700, fontSize: 18, color: "#52b870", letterSpacing: "0.1em" })}>95.9 FM</p>
-          <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.7)" })}>{message}</p>
-          <a href="#repeticiones" style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", marginTop: 4, textDecoration: "none" })}>Ver repeticiones ↓</a>
+          <p style={K({ fontWeight: 700, fontSize: 18, color: "var(--green)", letterSpacing: "0.1em" })}>95.9 FM</p>
+          <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.78)" })}>{message}</p>
+          <a href="#podcast" style={K({ fontWeight: 700, fontSize: 13, color: "var(--lime)", marginTop: 4, textDecoration: "none", display: "inline-flex", minHeight: 44, alignItems: "center", justifyContent: "center" })}>Ver el podcast ↓</a>
         </div>
       </div>
     </div>
@@ -354,244 +523,174 @@ function LiveOffline({ message = "No hay transmisión en vivo en este momento" }
 const LivePlaceholder = () => {
   const { settings } = useSiteContent();
   const lv = settings.liveVideo || {};
-
-  // 1) Configuración nueva (XtreamCast): solo cuando "En vivo ahora" está activo.
   if (lv.enabled) {
     if (lv.type === "iframe" && lv.iframeCode) return <LiveIframe code={lv.iframeCode} />;
     if ((lv.type === "hls" || !lv.type) && lv.hlsUrl) return <HlsPlayer key={lv.hlsUrl} src={lv.hlsUrl} />;
-    // Activo pero sin fuente válida → se trata como sin transmisión.
   }
-
-  // 2) Video destacado elegido en el admin, con fallback al legacy de YouTube
-  // en vivo (solo si no hay config nueva activa).
   if (!lv.enabled) {
     const ytId = getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl);
     if (ytId) {
       return (
-        <iframe
-          title="Video destacado"
-          src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+        <iframe title="Video destacado" src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
       );
     }
   }
-
-  // 3) Sin transmisión → placeholder elegante.
   return <LiveOffline />;
 };
 
-// Rótulo bajo el reproductor: refleja si se ve el vivo, un video destacado
-// o nada. Antes decía "En vivo ahora" fijo aunque no hubiera transmisión.
-function LiveCaption({ suffix = "" }) {
-  const { settings } = useSiteContent();
+function liveState(settings) {
   const live = Boolean(settings.liveVideo?.enabled);
   const hasVideo = !live && Boolean(getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl));
-  const label = live ? "En vivo ahora" : hasVideo ? "Video destacado" : "Señal 95.9 FM";
-  const dot = live ? "#ef4444" : "#52b870";
-  return (
-    <>
-      <div style={{ width: 8, height: 8, borderRadius: "50%", background: dot }} />
-      <span style={K({ fontWeight: 400, fontSize: 13, color: "#9ca3af" })}>{label}{suffix}</span>
-    </>
-  );
+  return { live, hasVideo, label: live ? "En vivo ahora" : hasVideo ? "Video destacado" : "Señal 95.9 FM" };
 }
 
-// Banda de sintonía bajo el video del hero: regla de dial FM (88–108) con la
-// aguja clavada en 95.9. Ancla visualmente el reproductor y cuenta la marca
-// ("del dial a la pantalla"). La línea sangra hacia el borde derecho de la
-// pantalla; la recorta el overflow:hidden de la sección.
-function DialBand() {
-  return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <LiveCaption />
-      </div>
-      <div aria-hidden="true" style={{ flex: 1, position: "relative", height: 26, minWidth: 110 }}>
-        <div style={{ position: "absolute", left: 0, right: 0, top: 13, height: 1, background: "rgba(82,184,112,0.3)" }} />
-        {Array.from({ length: 21 }, (_, i) => {
-          const major = i % 4 === 0;
-          return (
-            <div key={i} style={{
-              position: "absolute",
-              left: `${(i / 20) * 100}%`,
-              transform: "translateX(-50%)",
-              top: major ? 8 : 10,
-              width: 1,
-              height: major ? 10 : 6,
-              background: major ? "rgba(82,184,112,0.4)" : "rgba(82,184,112,0.22)",
-            }} />
-          );
-        })}
-        <div style={{ position: "absolute", left: "39.5%", transform: "translateX(-50%)", top: 3, width: 2, height: 20, background: "#cc0000" }} />
-      </div>
-      <span aria-hidden="true" style={K({ flexShrink: 0, fontWeight: 600, fontSize: 10, letterSpacing: "0.08em", color: "rgba(255,255,255,0.35)" })}>MHz</span>
-      <Share2 size={14} color="#9ca3af" style={{ flexShrink: 0, cursor: "pointer" }} />
-      <div aria-hidden="true" style={{ position: "absolute", left: "100%", marginLeft: 14, top: 13, width: "50vw", height: 1, background: "rgba(82,184,112,0.16)" }} />
-    </div>
-  );
-}
-
-const CAT_COLORS = {
-  REGIÓN: "#29623a", POLÍTICA: "#191919", CULTURA: "#4a7c59",
-  DEPORTE: "#8B0000", ECONOMÍA: "#1a3a5c", SALUD: "#1a3a5c",
-};
-const Tag = ({ label }) => (
-  <span style={K({ background: CAT_COLORS[label] ?? "#29623a", color: "#fff", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 2, display: "inline-block" })}>{label}</span>
-);
-
-/* ─── Navbar ──────────────────────────────────────────────────────────────── */
+/* ─── Header ──────────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { label: "Inicio",             href: "#inicio" },
-  { label: "Noticias",           href: "#noticias" },
-  { label: "En Vivo",            href: "#en-vivo" },
-  { label: "Programación",       href: "#programacion" },
-  { label: "Contacto",           href: "/contacto" },
-  { label: "Radio La Frontera",  href: "/frontera", logo: "/frontera-logo-white.svg" },
+  { label: "En vivo",       href: "#inicio" },
+  { label: "Podcast",       href: "#podcast" },
+  { label: "Reels",         href: "#reels" },
+  { label: "Programación",  href: "#programacion" },
+  { label: "Noticias",      href: "#noticias" },
+  { label: "Contacto",      href: "/contacto" },
+  { label: "La Frontera",   href: "/frontera" },
 ];
 
-function Navbar() {
+function Header({ playing, toggle }) {
   const [open, setOpen] = useState(false);
   const { settings, news } = useSiteContent();
   const showNews = newsVisible(settings, news);
   const links = NAV_LINKS.filter((l) => l.href !== "#noticias" || showNews);
 
-  return (
-    <nav style={{ background: "#191919", height: 64, position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid #2d2d2d" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
-        {/* Official logo */}
-        <a href="#inicio" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          <LogoSVG height={44} color="#ffffff" />
+  return (
+    <header className="site-header">
+      <div className="container" style={{ height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <a href="#inicio" aria-label="Radio Araucana 95.9 FM, ir al inicio" style={{ display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+          <LogoSVG height={40} color="#F6F3EE" />
         </a>
 
-        {/* Center nav */}
-        <div className="hidden md:flex" style={{ gap: 28, alignItems: "center" }}>
+        <nav aria-label="Secciones" className="hidden lg:flex" style={{ gap: 2, alignItems: "center" }}>
           {links.map((l) => (
-            <a key={l.label} href={l.href}
-              {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
-              className="nav-link"
-              aria-label={l.label}
-              style={K({ fontWeight: 500, fontSize: 14, color: "#fff", textDecoration: "none", display: "flex", alignItems: "center" })}>
-              {l.logo
-                ? <img src={l.logo} alt={l.label} style={{ height: 26, width: "auto", display: "block" }} />
-                : l.label}
-            </a>
+            <a key={l.label} href={l.href} className="nav-link">{l.label}</a>
           ))}
-        </div>
+        </nav>
 
-        {/* Right */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div className="live-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "#cc0000" }} />
-            <span style={K({ fontWeight: 700, fontSize: 13, color: "#cc0000", textTransform: "uppercase", letterSpacing: "0.1em" })}>EN VIVO</span>
-          </div>
-          <button onClick={() => setOpen(!open)} className="md:hidden"
-            aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}>
-            {open ? <X size={24} /> : <Menu size={24} />}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="icon-btn hidden sm:inline-flex" aria-label="Suscribirse al canal de YouTube de Radio Araucana"><SvgYoutube size={18} /></a>
+          <button className="live-pill" onClick={toggle} aria-pressed={playing} aria-label={playing ? "Pausar Radio Araucana 95.9 FM" : "Escuchar Radio Araucana 95.9 FM en vivo"}>
+            <span className="live-dot" aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
+            {playing ? <Pause size={14} aria-hidden="true" /> : <Play size={14} fill="#fff" aria-hidden="true" />}
+            <span>{playing ? "Al aire" : "En vivo"}</span>
+          </button>
+          <button onClick={() => setOpen(!open)} className="icon-btn lg:hidden" aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open} aria-controls="menu-movil">
+            {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="md:hidden" style={{ background: "#191919", borderTop: "1px solid #2d2d2d", padding: "8px 24px 16px" }}>
+        <nav id="menu-movil" aria-label="Secciones" className="mobile-menu lg:hidden container" style={{ paddingTop: 6, paddingBottom: 18, borderTop: "1px solid var(--line)", background: "rgba(25,25,25,.96)" }}>
           {links.map((l) => (
-            <a key={l.label} href={l.href}
-              {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
-              onClick={() => setOpen(false)}
-              aria-label={l.label}
-              style={K({ display: "flex", alignItems: "center", fontWeight: 500, fontSize: 16, color: "#fff", textDecoration: "none", padding: "12px 0", borderBottom: "1px solid #2d2d2d" })}>
-              {l.logo
-                ? <img src={l.logo} alt={l.label} style={{ height: 30, width: "auto", display: "block" }} />
-                : l.label}
-            </a>
+            <a key={l.label} href={l.href} onClick={() => setOpen(false)}>{l.label} <ChevronRight size={18} aria-hidden="true" style={{ color: "var(--cream-55)" }} /></a>
           ))}
-        </div>
+          <div style={{ display: "flex", gap: 10, paddingTop: 16 }}>
+            {SOC_LINKS.map(({ key, label, href, Icon }) => (
+              <a key={key} href={href} target="_blank" rel="noreferrer" className="icon-btn" aria-label={`Radio Araucana en ${label}`}><Icon /></a>
+            ))}
+          </div>
+        </nav>
       )}
-    </nav>
+    </header>
   );
 }
 
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
-function Hero({ playing, toggle }) {
-  const { programs: PROGRAMS } = useSiteContent();
-  const [progIdx, setProgIdx] = React.useState(() => getCurrentProgram(PROGRAMS));
-  React.useEffect(() => {
-    setProgIdx(getCurrentProgram(PROGRAMS));
-    const id = setInterval(() => setProgIdx(getCurrentProgram(PROGRAMS)), 60_000);
-    return () => clearInterval(id);
-  }, [PROGRAMS]);
+function Hero({ playing, toggle, latest }) {
+  const { programs: PROGRAMS, settings } = useSiteContent();
+  useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
+  const progIdx = getCurrentProgram(PROGRAMS);
   const currentProg = progIdx >= 0 ? PROGRAMS[progIdx] : null;
+  const ls = liveState(settings);
 
   return (
-    <section id="inicio" style={{
-      background: "#191919",
-      backgroundImage: "url(/mapuche.svg), repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 22px)",
-      backgroundSize: "60px 60px, auto",
-      display: "flex", alignItems: "center", padding: "clamp(60px, 8vw, 120px) 24px",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%" }}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <section id="inicio" aria-labelledby="hero-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink)", padding: "clamp(44px, 7vw, 96px) 0 clamp(40px, 6vw, 72px)" }}>
+      <Mosaic seed={11} opacity={0.34} mask="linear-gradient(115deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.95) 100%)" />
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "radial-gradient(60% 70% at 15% 30%, rgba(25,25,25,.96) 0%, rgba(25,25,25,.7) 45%, rgba(25,25,25,0) 100%)", pointerEvents: "none" }} />
+      <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 160, background: "linear-gradient(to bottom, rgba(25,25,25,0), var(--ink))", pointerEvents: "none" }} />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div className="fiu-0" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#29623a" }} />
-              <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.14em" })}>
-                TRANSMITIENDO EN VIVO · 95.9 FM
+      <div className="container" style={{ position: "relative", zIndex: 1 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+
+          <div className="lg:col-span-6" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+            <div className="fiu-0" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(215,38,30,.14)", border: "1px solid rgba(215,38,30,.4)", borderRadius: 999, padding: "6px 12px 6px 10px" }}>
+                <span className="live-dot" aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff5a52" }} />
+                <span style={K({ fontWeight: 800, fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "#fff" })}>En vivo · 95.9 FM</span>
               </span>
+              <span className="meta" style={{ color: "var(--cream-70)" }}>Temuco · La Araucanía · desde 1960</span>
             </div>
 
-            <h1 className="fiu-1" style={K({ fontWeight: 900, fontSize: "clamp(38px, 5.5vw, 72px)", color: "#fff", lineHeight: 1.04 })}>
-              La radio histórica de<br />
-              <span style={{ color: "#52b870" }}>Temuco y la Araucanía,</span><br />
-              en directo.
+            <h1 id="hero-title" className="fiu-1" style={K({ fontWeight: 800, fontSize: "clamp(40px, 6.2vw, 84px)", lineHeight: 0.98, letterSpacing: "-0.035em", color: "var(--cream)" })}>
+              La radio de Temuco,<br />
+              <span style={{ color: "var(--green)" }}>en vivo</span> y <span style={{ color: "var(--lime)" }}>en video.</span>
             </h1>
 
-            <p className="fiu-1" style={K({ fontWeight: 300, fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 440 })}>
-              En 1960 nacimos en Temuco. Crecimos con la ciudad y hoy seguimos siendo la voz principal de su gente.
+            <p className="fiu-1 lede">
+              Radio Araucana 95.9 FM es la radio en Temuco que informa a La Araucanía desde 1960. Hoy también hace podcast, entrevistas y reels: escúchanos en el dial o síguenos en YouTube, Instagram y Facebook.
             </p>
 
+            <div className="fiu-3" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <button className="btn btn-red" onClick={toggle} aria-pressed={playing} style={{ minHeight: 54, paddingLeft: 24, paddingRight: 26, fontSize: 15 }}>
+                {playing ? <Pause size={18} aria-hidden="true" /> : <Play size={18} fill="#fff" aria-hidden="true" />}
+                {playing ? "Al aire · pausar" : "Escuchar en vivo"}
+              </button>
+              <a href={latest ? "#podcast" : YT_CHANNEL} className="btn btn-ghost" style={{ minHeight: 54 }}>
+                <SvgYoutube size={18} /> {latest ? "Ver el último capítulo" : "Ver el canal"}
+              </a>
+            </div>
+
             {currentProg && (
-              <div className="fiu-2" style={{ background: "#2d2d2d", borderLeft: "3px solid #29623a", padding: "16px 20px", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <p style={K({ fontWeight: 700, fontSize: 16, color: "#fff" })}>{currentProg.name}</p>
-                  <p style={K({ fontWeight: 300, fontSize: 13, color: "#9ca3af", marginTop: 3 })}>{currentProg.host} · {currentProg.start} – {currentProg.end}</p>
-                </div>
+              <div className="fiu-3" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14, background: "rgba(246,243,238,.05)", border: "1px solid var(--line)", maxWidth: 520 }}>
                 <Waveform />
+                <div style={{ minWidth: 0 }}>
+                  <p className="meta" style={{ color: "var(--green)", marginBottom: 2 }}>Ahora al aire</p>
+                  <p style={K({ fontWeight: 700, fontSize: 16, color: "var(--cream)", lineHeight: 1.25 })}>{currentProg.name}</p>
+                  <p style={K({ fontWeight: 400, fontSize: 13, color: "var(--cream-70)", marginTop: 2, fontVariantNumeric: "tabular-nums" })}>{currentProg.host} · {currentProg.start} – {currentProg.end}</p>
+                </div>
               </div>
             )}
 
-            <div className="fiu-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button className="cta-btn" onClick={toggle} style={K({ background: "#cc0000", color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 28px", borderRadius: 3, border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 })}>
-                {playing ? <Pause size={16} /> : <Play size={16} fill="#fff" />}
-                {playing ? "En vivo — pausar" : "Escúchanos en el 95.9 FM"}
-              </button>
-            </div>
+            <ul className="fiu-3" aria-label="Redes sociales de Radio Araucana" style={{ listStyle: "none", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {SOC_LINKS.map(({ key, label, handle, href, Icon }) => (
+                <li key={key}>
+                  <a href={href} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" aria-label={`${label}: ${handle}`} style={{ background: "transparent" }}>
+                    <Icon size={16} /> <span>{handle}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div id="en-vivo" className="fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 96 }}>
-            <span aria-hidden="true" style={K({
-              position: "absolute",
-              top: "-0.42em",
-              right: -8,
-              fontWeight: 900,
-              fontSize: "clamp(48px, 6vw, 88px)",
-              lineHeight: 1,
-              letterSpacing: "-0.03em",
-              color: "transparent",
-              WebkitTextStroke: "1.5px rgba(82,184,112,0.38)",
-              pointerEvents: "none",
-              userSelect: "none",
-              zIndex: 0,
-            })}>95.9</span>
-            <div style={{ position: "relative", zIndex: 1, paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", boxShadow: "0 0 60px rgba(41,98,58,0.4)", border: "1px solid rgba(82,184,112,0.22)" }}>
+          <div className="lg:col-span-6 fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}>
+            <span aria-hidden="true" style={K({ position: "absolute", top: "-0.55em", right: -6, fontWeight: 800, fontSize: "clamp(56px, 7vw, 104px)", lineHeight: 1, letterSpacing: "-0.04em", color: "transparent", WebkitTextStroke: "1.5px rgba(180,227,86,0.35)", pointerEvents: "none", userSelect: "none", zIndex: 0 })}>95.9</span>
+            <div style={{ position: "relative", zIndex: 1, aspectRatio: "16/9", borderRadius: 18, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(246,243,238,.1)", background: "#0d1a12" }}>
               <LivePlaceholder />
             </div>
-            <DialBand />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: ls.live ? "#ff5a52" : "var(--green)" }} />
+                <span className="meta" style={{ color: "var(--cream-70)", textTransform: "none", letterSpacing: 0, fontSize: 13, fontWeight: 600 }}>{ls.label}</span>
+              </div>
+              <span className="meta">Radio Araucana · Temuco</span>
+            </div>
           </div>
 
         </div>
@@ -609,54 +708,39 @@ const WEATHER_CITIES = [
   { name: "Victoria",   lat: -38.2326, lon: -72.3312 },
   { name: "Lautaro",    lat: -38.5271, lon: -72.4382 },
 ];
-
 const WMO = {
-  0: "Despejado ☀️", 1: "Mayormente despejado 🌤️", 2: "Parcialmente nublado ⛅",
-  3: "Nublado ☁️", 45: "Neblina 🌫️", 48: "Neblina 🌫️",
-  51: "Llovizna 🌦️", 53: "Llovizna 🌦️", 55: "Llovizna 🌦️",
-  61: "Lluvia leve 🌧️", 63: "Lluvia 🌧️", 65: "Lluvia intensa 🌧️",
-  71: "Nieve 🌨️", 73: "Nieve 🌨️", 75: "Nieve intensa 🌨️",
-  80: "Chubascos 🌦️", 81: "Chubascos 🌧️", 82: "Chubascos fuertes 🌧️",
-  95: "Tormenta ⛈️",
+  0: "Despejado", 1: "Mayormente despejado", 2: "Parcialmente nublado", 3: "Nublado", 45: "Neblina", 48: "Neblina",
+  51: "Llovizna", 53: "Llovizna", 55: "Llovizna", 61: "Lluvia leve", 63: "Lluvia", 65: "Lluvia intensa",
+  71: "Nieve", 73: "Nieve", 75: "Nieve intensa", 80: "Chubascos", 81: "Chubascos", 82: "Chubascos fuertes", 95: "Tormenta",
 };
 
-function NewsTicker() {
-  const [weather, setWeather] = React.useState(null); // null = cargando, [] = sin datos
-
-  React.useEffect(() => {
-    Promise.all(
-      WEATHER_CITIES.map(c =>
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,weathercode&timezone=America/Santiago`)
-          .then(r => r.json())
-          .then(d => ({
-            name: c.name,
-            temp: Math.round(d.current.temperature_2m),
-            feels: Math.round(d.current.apparent_temperature),
-            label: WMO[d.current.weathercode] ?? "Variable",
-          }))
-          .catch(() => null)
-      )
-    ).then(results => setWeather(results.filter(Boolean)));
+function WeatherTicker() {
+  const [weather, setWeather] = useState(null);
+  useEffect(() => {
+    Promise.all(WEATHER_CITIES.map((c) =>
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,weathercode&timezone=America/Santiago`)
+        .then((r) => r.json())
+        .then((d) => ({ name: c.name, temp: Math.round(d.current.temperature_2m), label: WMO[d.current.weathercode] ?? "Variable" }))
+        .catch(() => null)
+    )).then((results) => setWeather(results.filter(Boolean)));
   }, []);
 
-  // Tres estados: cargando, con datos, y "todos los fetch fallaron" — antes
-  // este último quedaba pegado en "CARGANDO..." para siempre.
-  const tickerText = weather === null
-    ? "CARGANDO DATOS METEOROLÓGICOS DE LA ARAUCANÍA..."
+  const items = weather === null
+    ? ["Cargando el tiempo en La Araucanía"]
     : weather.length > 0
-      ? weather.map(c => `${c.name.toUpperCase()}  ${c.temp}°C  ${c.label}`).join("     ·     ") + "     ·     "
-      : "METEO ARAUCANÍA  ·  TEMUCO  ·  PUCÓN  ·  VILLARRICA  ·  ANGOL  ·  VICTORIA  ·  LAUTARO     ·     ";
+      ? weather.map((c) => `${c.name} ${c.temp}°C · ${c.label}`)
+      : WEATHER_CITIES.map((c) => c.name);
+  const text = items.join("      ·      ") + "      ·      ";
 
   return (
-    <div style={{ background: "#29623a", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
-      <div className="hidden sm:flex" style={{ background: "#1c4a28", padding: "10px 18px", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
-        <span style={{ fontSize: 15 }}>🌡️</span>
-        <span style={K({ fontWeight: 700, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em", whiteSpace: "nowrap" })}>METEO ARAUCANÍA</span>
+    <div className="marquee" style={{ background: "var(--green-deep)", borderTop: "1px solid rgba(246,243,238,.08)", borderBottom: "1px solid rgba(246,243,238,.08)", display: "flex", alignItems: "stretch", overflow: "hidden" }}>
+      <div className="hidden sm:flex" style={{ background: "#1e4b2c", padding: "11px 18px", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
+        <span style={K({ fontWeight: 800, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: "0.16em", whiteSpace: "nowrap" })}>El tiempo</span>
       </div>
-      <div style={{ overflow: "hidden", flex: 1, padding: "10px 0" }}>
+      <div style={{ overflow: "hidden", flex: 1, padding: "11px 0" }} aria-live="off">
         <div className="marquee-track">
-          <span style={K({ fontWeight: 500, fontSize: 13, color: "#fff", letterSpacing: "0.04em" })}>
-            {tickerText}<span aria-hidden="true">{tickerText}</span>
+          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff", letterSpacing: "0.03em", fontVariantNumeric: "tabular-nums" })}>
+            {text}<span aria-hidden="true">{text}</span>
           </span>
         </div>
       </div>
@@ -664,89 +748,270 @@ function NewsTicker() {
   );
 }
 
-/* ─── News Grid ───────────────────────────────────────────────────────────── */
-// Foto por categoría — reutilizable en cualquier noticia de ese tipo
-const CAT_PHOTOS = {
-  DEPORTE:  "/news/deporte.jpg",
-  CULTURA:  "/news/cultura.jpg",
-  REGIÓN:   "/news/region.jpg",
-  POLÍTICA: "/news/politica.jpg",
-  ECONOMÍA: "/news/economia.jpg",
-};
-// Categorías sin foto propia (p.ej. SUCESOS, seleccionable en el admin)
-// degradan a una foto genérica en vez de una caja gris vacía.
+/* ─── Podcast (Araucana Digital) ──────────────────────────────────────────── */
+function SectionHead({ id, kicker, title, lede, aside }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, flexWrap: "wrap", marginBottom: "clamp(28px, 4vw, 44px)" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 720 }}>
+        {kicker && <span className="kicker">{kicker}</span>}
+        <h2 id={id} className="h2">{title}</h2>
+        {lede && <p className="lede">{lede}</p>}
+      </div>
+      {aside && <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>{aside}</div>}
+    </div>
+  );
+}
+
+function PodcastSection({ data, onPlay }) {
+  const ref = useReveal();
+  const { loading, episodes } = data;
+  const [featured, ...rest] = episodes;
+  const list = rest.slice(0, 5);
+
+  return (
+    <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
+      <Mosaic seed={23} opacity={0.16} drift={false} mask="radial-gradient(70% 60% at 85% 20%, rgba(0,0,0,.9), transparent 70%)" />
+      <div className="container reveal" ref={ref} style={{ position: "relative", zIndex: 1 }}>
+        <SectionHead
+          id="podcast-title"
+          kicker="Araucana Digital · Podcast"
+          title="Las conversaciones de La Araucanía, en video."
+          lede="Entrevistas completas con las personas que mueven la región: deporte, cultura, negocios y política. Un capítulo nuevo cada semana en YouTube."
+          aside={<>
+            <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Ver todos los capítulos <ArrowUpRight size={15} aria-hidden="true" /></a>
+            <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="btn btn-red btn-sm"><SvgYoutube size={16} /> Suscribirse</a>
+          </>}
+        />
+
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-7 skeleton" style={{ aspectRatio: "16/9", borderRadius: 18 }} />
+            <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 96 }} />)}
+            </div>
+          </div>
+        ) : !featured ? (
+          <p className="lede">Muy pronto: los capítulos se publican en <a href={YT_CHANNEL} style={{ color: "var(--green)" }}>nuestro canal de YouTube</a>.</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            <div className="lg:col-span-7">
+              <button className="feature-card" onClick={() => onPlay(featured, false)} aria-label={`Reproducir: ${cleanTitle(featured.title)}`}>
+                <img src={featured.thumbHd || featured.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
+                  onError={(e) => { if (featured.thumb && e.currentTarget.src !== featured.thumb) e.currentTarget.src = featured.thumb; }} />
+                <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
+                <div style={{ position: "absolute", top: 18, left: 18 }}>
+                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>Último capítulo</span>
+                </div>
+                <div style={{ position: "absolute", right: 20, bottom: 20 }}>
+                  <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
+                </div>
+              </button>
+              <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(featured.title)}</p>
+                <p className="meta">{[fmtDate(featured.published), fmtViews(featured.views), "Araucana Digital"].filter(Boolean).join(" · ")}</p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <p className="meta" style={{ padding: "0 14px 10px", color: "var(--cream-55)" }}>Capítulos anteriores</p>
+              {list.map((ep) => (
+                <button key={ep.id} className="ep-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
+                  <div className="thumb">
+                    <img src={ep.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)", marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(ep.title)}</p>
+                    <p className="meta">{[fmtDate(ep.published), fmtViews(ep.views)].filter(Boolean).join(" · ")}</p>
+                  </div>
+                </button>
+              ))}
+              <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="footer-link" style={{ padding: "14px 14px 0", fontWeight: 700, fontSize: 14, color: "var(--green)" }}>Todos los capítulos en YouTube <ArrowUpRight size={15} aria-hidden="true" style={{ marginLeft: 6 }} /></a>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ─── Reels / Shorts ──────────────────────────────────────────────────────── */
+function ReelsSection({ data, onPlay }) {
+  const ref = useReveal();
+  const rowRef = useRef(null);
+  const { loading, shorts } = data;
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+
+  const update = useCallback(() => {
+    const el = rowRef.current; if (!el) return;
+    setCanPrev(el.scrollLeft > 8);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+  useEffect(() => {
+    const el = rowRef.current; if (!el) return;
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => { el.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+  }, [update, shorts.length]);
+  const scrollBy = (dir) => { const el = rowRef.current; if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" }); };
+
+  if (!loading && shorts.length === 0) return null;
+
+  return (
+    <section id="reels" aria-labelledby="reels-title" style={{ background: "var(--ink)", padding: "clamp(64px, 9vw, 120px) 0", overflow: "hidden" }}>
+      <div className="container reveal" ref={ref}>
+        <SectionHead
+          id="reels-title"
+          kicker="Reels y Shorts"
+          title="Un minuto de La Araucanía."
+          lede="Los momentos que quedan: frases, ideas y datos de cada entrevista, en vertical para ver desde el teléfono."
+          aside={<>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="icon-btn" onClick={() => scrollBy(-1)} disabled={!canPrev} aria-label="Reels anteriores"><ChevronLeft size={20} /></button>
+              <button className="icon-btn" onClick={() => scrollBy(1)} disabled={!canNext} aria-label="Más reels"><ChevronRight size={20} /></button>
+            </div>
+          </>}
+        />
+      </div>
+
+      <div className="container">
+        <div ref={rowRef} className="reel-row" role="list" aria-label="Reels recientes">
+          {loading
+            ? [0, 1, 2, 3, 4].map((i) => <div key={i} className="skeleton" style={{ flex: "0 0 auto", width: "clamp(190px, 22vw, 250px)", aspectRatio: "9/16", borderRadius: 16 }} />)
+            : shorts.map((s) => (
+              <div key={s.id} role="listitem" style={{ display: "contents" }}>
+                <button className="reel-card" onClick={() => onPlay(s, true)} aria-label={`Reproducir reel: ${cleanTitle(s.title)}`}>
+                  <img src={s.thumb} alt="" width="405" height="720" loading="lazy" decoding="async" />
+                  <div className="scrim" aria-hidden="true" />
+                  <div style={{ position: "absolute", top: 14, left: 14 }}><span className="play-ring" aria-hidden="true"><Play size={18} fill="currentColor" /></span></div>
+                  <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 16 }}>
+                    <p style={K({ fontWeight: 700, fontSize: 14, lineHeight: 1.3, color: "#fff", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 6 })}>{cleanTitle(s.title)}</p>
+                    <p className="meta" style={{ color: "rgba(255,255,255,.7)" }}>{fmtViews(s.views) || fmtDate(s.published)}</p>
+                  </div>
+                </button>
+              </div>
+            ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+          <a href="https://www.instagram.com/araucanaradio" target="_blank" rel="noreferrer" className="btn btn-cream btn-sm"><SvgInstagram size={16} /> Seguir en Instagram</a>
+          <a href={`${YT_CHANNEL}/shorts`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><SvgYoutube size={16} /> Todos los shorts</a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Program Schedule ────────────────────────────────────────────────────── */
+const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+
+function getCurrentProgram(programs) {
+  const parts = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
+  const h = Number(parts.find((p) => p.type === "hour").value);
+  const m = Number(parts.find((p) => p.type === "minute").value);
+  const cur = h * 60 + m;
+  const dayMap = { dom: 0, lun: 1, mar: 2, mié: 3, mie: 3, jue: 4, vie: 5, sáb: 6, sab: 6 };
+  const wkRaw = (parts.find((p) => p.type === "weekday")?.value || "").toLowerCase().replace(/\.$/, "");
+  const today = dayMap[wkRaw] ?? new Date().getDay();
+  return (programs || []).findIndex((p) => {
+    const days = p.days || [1, 2, 3, 4, 5];
+    return days.includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
+  });
+}
+
+function ProgramSchedule({ playing, toggle }) {
+  const ref = useReveal();
+  const { programs: PROGRAMS } = useSiteContent();
+  useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
+  const activeIdx = getCurrentProgram(PROGRAMS);
+
+  return (
+    <section id="programacion" aria-labelledby="prog-title" style={{ background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
+      <div className="container reveal" ref={ref}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4" style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "flex-start" }}>
+            <span className="kicker">Programación</span>
+            <h2 id="prog-title" className="h2">Lo que suena hoy en el 95.9.</h2>
+            <p className="lede">De lunes a viernes, hora de Chile. Sintoniza en Temuco y La Araucanía o escucha en vivo desde cualquier lugar.</p>
+            <button className="btn btn-red" onClick={toggle} aria-pressed={playing}>
+              {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} fill="#fff" aria-hidden="true" />}
+              {playing ? "Al aire · pausar" : "Escuchar en vivo"}
+            </button>
+          </div>
+
+          <ol className="lg:col-span-8" style={{ listStyle: "none" }} aria-label="Parrilla de hoy">
+            {PROGRAMS.map((p, i) => {
+              const active = i === activeIdx;
+              return (
+                <li key={i} className={`prog-row${active ? " active" : ""}`} aria-current={active ? "true" : undefined}>
+                  <span style={K({ fontWeight: 700, fontSize: 15, color: active ? "var(--lime)" : "var(--cream-70)", fontVariantNumeric: "tabular-nums", letterSpacing: ".02em" })}>{p.start} – {p.end}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={K({ display: "block", fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.15, color: "var(--cream)" })}>{p.name}</span>
+                    <span style={K({ display: "block", fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 3 })}>{p.host}</span>
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10, justifySelf: "end" }}>
+                    {active ? (
+                      <>
+                        <Waveform height={18} />
+                        <span style={K({ fontWeight: 800, fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--lime)" })}>Al aire</span>
+                      </>
+                    ) : (
+                      <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 3, background: p.color || "var(--green-deep)" }} />
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        {activeIdx === -1 && (
+          <p style={K({ fontWeight: 400, fontSize: 14, color: "var(--cream-55)", marginTop: 16 })}>Fuera del horario de programas: ahora suena la selección musical de Radio Araucana.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ─── News Grid (se muestra solo con settings.newsEnabled) ────────────────── */
+const CAT_COLORS = { REGIÓN: "#29623a", POLÍTICA: "#3a3a3a", CULTURA: "#4a7c59", DEPORTE: "#8B0000", ECONOMÍA: "#1a3a5c", SALUD: "#1a3a5c" };
+const CAT_PHOTOS = { DEPORTE: "/news/deporte.jpg", CULTURA: "/news/cultura.jpg", REGIÓN: "/news/region.jpg", POLÍTICA: "/news/politica.jpg", ECONOMÍA: "/news/economia.jpg" };
 const CAT_PHOTO_FALLBACK = "/news/region.jpg";
 
-// NEWS is consumed via useSiteContent() inside NewsGrid / NewsTicker
-
-// La sección se oculta completa mientras settings.newsEnabled no sea true
-// (interruptor en /admin → Noticias). Sin un proceso que actualice las
-// noticias a diario, mostrarlas hacía ver la portada desactualizada.
 function newsVisible(settings, news) {
   return Boolean(settings?.newsEnabled) && Array.isArray(news) && news.length > 0;
 }
 
 function NewsGrid() {
+  const ref = useReveal();
   const { news: NEWS, settings } = useSiteContent();
   const [openIdx, setOpenIdx] = useState(null);
   if (!newsVisible(settings, NEWS)) return null;
   return (
-    <section id="noticias" style={{ background: "#f4f4f4", padding: "48px 24px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ borderLeft: "4px solid #29623a", paddingLeft: 12, marginBottom: 24 }}>
-          <h2 style={K({ fontWeight: 800, fontSize: 28, color: "#191919", textTransform: "uppercase", letterSpacing: "0.02em" })}>Lo Más Reciente</h2>
-        </div>
-
+    <section id="noticias" aria-labelledby="news-title" style={{ background: "var(--ink)", padding: "clamp(56px, 8vw, 100px) 0" }}>
+      <div className="container reveal" ref={ref}>
+        <SectionHead id="news-title" kicker="Noticias" title="Lo más reciente." />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {NEWS.map((n, i) => {
             const photo = CAT_PHOTOS[n.cat] ?? CAT_PHOTO_FALLBACK;
             const abierta = openIdx === i;
             const tieneBajada = Boolean(n.bajada);
             return (
-              <article
-                key={i}
-                className="news-card"
-                style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }}
-                onClick={() => setOpenIdx(openIdx === i ? null : i)}
-              >
-                {/* Foto de categoría */}
-                <div style={{ height: 140, position: "relative", background: "#2d2d2d", overflow: "hidden" }}>
-                  {photo && (
-                    <img
-                      src={photo}
-                      alt={n.cat}
-                      loading="lazy"
-                      decoding="async"
-                      width="400"
-                      height="140"
-                      className="news-img"
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
-                    />
-                  )}
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 60%)" }} />
-                  <div style={{ position: "absolute", top: 12, left: 12 }}>
-                    <Tag label={n.cat} />
-                  </div>
+              <article key={i} style={{ background: "var(--ink-3)", borderRadius: 14, overflow: "hidden", border: "1px solid var(--line)" }}>
+                <div style={{ height: 150, position: "relative", overflow: "hidden" }}>
+                  <img src={photo} alt="" loading="lazy" decoding="async" width="400" height="150" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <span style={K({ position: "absolute", top: 12, left: 12, background: CAT_COLORS[n.cat] ?? "#29623a", color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 8px", borderRadius: 4 })}>{n.cat}</span>
                 </div>
-                {/* Texto */}
                 <div style={{ padding: "14px 16px 16px" }}>
-                  <button
-                    type="button"
-                    aria-expanded={abierta}
-                    aria-controls={"noticia-detalle-" + i}
-                    style={K({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, width: "100%", background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" })}
-                  >
-                    <h3 style={K({ fontWeight: 700, fontSize: 16, color: "#191919", lineHeight: 1.3, marginBottom: 0 })}>{n.headline}</h3>
-                    {tieneBajada && (
-                      <span style={{ flexShrink: 0, marginTop: 2, transition: "transform 200ms ease", transform: abierta ? "rotate(180deg)" : "rotate(0deg)" }}>
-                        <ChevronDown size={16} color="#6b7280" />
-                      </span>
-                    )}
+                  <button type="button" onClick={() => setOpenIdx(abierta ? null : i)} aria-expanded={abierta} aria-controls={"noticia-detalle-" + i}
+                    style={K({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, width: "100%", background: "none", border: "none", padding: 0, textAlign: "left", cursor: tieneBajada ? "pointer" : "default", color: "inherit" })}>
+                    <h3 style={K({ fontWeight: 700, fontSize: 16, color: "var(--cream)", lineHeight: 1.3 })}>{n.headline}</h3>
+                    {tieneBajada && <ChevronDown size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2, transition: "transform 200ms ease", transform: abierta ? "rotate(180deg)" : "none", color: "var(--cream-55)" }} />}
                   </button>
                   {tieneBajada && (
-                    <div id={"noticia-detalle-" + i} aria-hidden={!abierta} style={{ display: "grid", gridTemplateRows: abierta ? "1fr" : "0fr", transition: "grid-template-rows 280ms ease" }}>
+                    <div id={"noticia-detalle-" + i} style={{ display: "grid", gridTemplateRows: abierta ? "1fr" : "0fr", transition: "grid-template-rows 280ms ease" }}>
                       <div style={{ overflow: "hidden", minHeight: 0 }}>
-                        <p style={K({ fontWeight: 300, fontSize: 14, color: "#6b7280", lineHeight: 1.55, paddingTop: 8 })}>{n.bajada}</p>
+                        <p style={K({ fontWeight: 400, fontSize: 14, color: "var(--cream-70)", lineHeight: 1.55, paddingTop: 8 })}>{n.bajada}</p>
                       </div>
                     </div>
                   )}
@@ -760,178 +1025,63 @@ function NewsGrid() {
   );
 }
 
-/* ─── Video Section ───────────────────────────────────────────────────────── */
-// VIDEOS is consumed via useSiteContent() inside VideoSection
-
-// Extract YouTube videoId from common URL formats
-function getYouTubeId(url) {
-  if (!url || typeof url !== "string") return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
-  return m ? m[1] : null;
-}
-
-// El reproductor (vivo o video destacado) vive solo en el hero. Antes esta
-// sección lo repetía; con las noticias apagadas quedaban dos reproductores
-// idénticos uno debajo del otro. Aquí queda únicamente la grilla de
-// repeticiones. El ancla #en-vivo apunta ahora al reproductor del hero.
-function VideoSection() {
-  const { videos: VIDEOS } = useSiteContent();
-  if (!Array.isArray(VIDEOS) || VIDEOS.length === 0) return null;
+/* ─── Síguenos ────────────────────────────────────────────────────────────── */
+function SocialSection() {
+  const ref = useReveal();
   return (
-    <section id="repeticiones" style={{ background: "#191919", padding: "64px 24px", scrollMarginTop: 80 }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
-          <h2 style={K({ fontWeight: 900, fontSize: "clamp(28px, 4vw, 52px)", color: "#fff", letterSpacing: "-0.01em" })}>
-            ÚLTIMOS VIDEOS
-          </h2>
-          <a href="https://www.youtube.com/@araucanafm" target="_blank" rel="noreferrer" style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", textDecoration: "none", letterSpacing: "0.04em", textTransform: "uppercase" })}>
-            Ver canal en YouTube →
-          </a>
-        </div>
-        <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
-          {VIDEOS.map((v, i) => {
-            const ytId = getYouTubeId(v.youtube);
-            const thumbStyle = ytId
-              ? { backgroundColor: "#0a0a0a", backgroundImage: `url(https://img.youtube.com/vi/${ytId}/hqdefault.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }
-              : { background: v.bg };
-            const Wrapper = ytId ? "a" : "div";
-            const wrapperProps = ytId
-              ? { href: v.youtube, target: "_blank", rel: "noreferrer", style: { width: 260, flexShrink: 0, textDecoration: "none", color: "inherit", cursor: "pointer" } }
-              : { style: { width: 260, flexShrink: 0 } };
-            return (
-              <Wrapper key={i} className="video-card" {...wrapperProps}>
-                <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 4, overflow: "hidden", ...thumbStyle }}>
-                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Play size={20} color="#29623a" fill="#29623a" />
-                    </div>
-                  </div>
-                  <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(25,25,25,0.82)", borderRadius: 2, padding: "2px 7px" }}>
-                    <span style={K({ fontWeight: 600, fontSize: 11, color: "#fff" })}>{v.dur}</span>
-                  </div>
+    <section id="siguenos" aria-labelledby="soc-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink)", padding: "clamp(64px, 9vw, 120px) 0" }}>
+      <Mosaic seed={41} opacity={0.22} mask="linear-gradient(to top, rgba(0,0,0,.9), rgba(0,0,0,.2) 50%, transparent)" />
+      <div className="container reveal" ref={ref} style={{ position: "relative", zIndex: 1 }}>
+        <SectionHead id="soc-title" kicker="Síguenos" title="La radio también se ve. Súmate donde estés." lede="Cada capítulo, reel y noticia llega primero a nuestras redes. Elige tu plataforma y no te pierdas nada de lo que pasa en La Araucanía." />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {SOC_LINKS.map(({ key, label, handle, cta, href, Icon, what }) => (
+            <div key={key} className="soc-card">
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(246,243,238,.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--cream)" }}><Icon size={20} /></span>
+                <div>
+                  <p style={K({ fontWeight: 800, fontSize: 17, color: "var(--cream)", lineHeight: 1.2 })}>{label}</p>
+                  <p className="meta" style={{ textTransform: "none", letterSpacing: 0, fontSize: 13 }}>{handle}</p>
                 </div>
-                <p style={K({ fontWeight: 600, fontSize: 14, color: "#fff", lineHeight: 1.3, marginTop: 8, marginBottom: 4 })}>{v.title}</p>
-                {(v.programa || v.fecha) && (
-                  <p style={K({ fontWeight: 600, fontSize: 11, color: "#52b870", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 })}>
-                    {[v.programa, v.fecha].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-                <span style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280" })}>{v.views}</span>
-              </Wrapper>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── Program Schedule ────────────────────────────────────────────────────── */
-// PROGRAMS is consumed via useSiteContent() inside ProgramSchedule and Hero
-
-const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-
-function getCurrentProgram(programs) {
-  const parts = new Intl.DateTimeFormat("es-CL", {
-    timeZone: "America/Santiago",
-    weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-  }).formatToParts(new Date());
-  const h = Number(parts.find(p => p.type === "hour").value);
-  const m = Number(parts.find(p => p.type === "minute").value);
-  const cur = h * 60 + m;
-  // Use UTC day shifted by Santiago offset would be brittle; derive day directly.
-  const dayMap = { dom: 0, lun: 1, mar: 2, mié: 3, mie: 3, jue: 4, vie: 5, sáb: 6, sab: 6 };
-  const wkRaw = (parts.find(p => p.type === "weekday")?.value || "").toLowerCase().replace(/\.$/, "");
-  const today = dayMap[wkRaw] ?? new Date().getDay();
-  return (programs || []).findIndex(p => {
-    const days = p.days || [1, 2, 3, 4, 5];
-    return days.includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
-  });
-}
-
-function ProgramSchedule() {
-  const { programs: PROGRAMS } = useSiteContent();
-  const [activeIdx, setActiveIdx] = useState(() => getCurrentProgram(PROGRAMS));
-
-  // Re-check every minute
-  React.useEffect(() => {
-    setActiveIdx(getCurrentProgram(PROGRAMS));
-    const id = setInterval(() => setActiveIdx(getCurrentProgram(PROGRAMS)), 60_000);
-    return () => clearInterval(id);
-  }, [PROGRAMS]);
-
-  return (
-    <section id="programacion" style={{ background: "#fff", padding: "64px 24px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32, letterSpacing: "0.01em" })}>
-          PROGRAMACIÓN DE HOY
-        </h2>
-
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16 }}>
-          {PROGRAMS.map((p, i) => {
-            const active = i === activeIdx;
-            return (
-              <div key={i} className="prog-card" style={{
-                minWidth: 172, padding: 14, borderRadius: 4,
-                border: active ? "2px solid #29623a" : "1px solid #e5e7eb",
-                background: active ? "#29623a" : "#fff",
-                flexShrink: 0, position: "relative", paddingBottom: 18,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  {active && <div className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", flexShrink: 0 }} />}
-                  <span style={K({ fontWeight: 700, fontSize: 13, color: active ? "#fff" : "#29623a" })}>{p.start} – {p.end}</span>
-                </div>
-                <p style={K({ fontWeight: 600, fontSize: 14, color: active ? "#fff" : "#191919", lineHeight: 1.25, marginBottom: 4 })}>{p.name}</p>
-                <p style={K({ fontWeight: 300, fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "#9ca3af" })}>{p.host}</p>
-                {!active && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: p.color, borderRadius: "0 0 4px 4px" }} />}
               </div>
-            );
-          })}
+              <p style={K({ fontWeight: 400, fontSize: 14, color: "var(--cream-70)", lineHeight: 1.5, flex: 1 })}>{what}</p>
+              <a href={href} target="_blank" rel="noreferrer" className={`btn btn-sm ${key === "youtube" ? "btn-red" : "btn-cream"}`} aria-label={`${cta} en ${label} (${handle})`} style={{ alignSelf: "flex-start" }}>{cta} <ArrowUpRight size={15} aria-hidden="true" /></a>
+            </div>
+          ))}
         </div>
-
-        {activeIdx === -1 && (
-          <p style={K({ fontWeight: 400, fontSize: 14, color: "#9ca3af", marginTop: 12 })}>Sin programa en este horario</p>
-        )}
       </div>
     </section>
   );
 }
 
 /* ─── Regional Stories ────────────────────────────────────────────────────── */
-// REGIONS is consumed via useSiteContent() inside RegionalStories
-
 function ArticleModal({ region, onClose }) {
-  React.useEffect(() => {
+  const closeRef = useRef(null);
+  useEffect(() => {
+    const prev = document.activeElement;
     document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); };
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); prev?.focus?.(); };
   }, [onClose]);
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(10,15,12,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 8, maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 32px 80px rgba(0,0,0,0.5)" }}>
-        {/* Hero image */}
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(8,10,9,.86)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="region-title" onClick={(e) => e.stopPropagation()} style={{ background: "var(--ink-3)", borderRadius: 18, maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", border: "1px solid var(--line-strong)" }}>
         <div style={{ position: "relative", height: 280, flexShrink: 0 }}>
           <img src={region.img} alt={region.name} loading="lazy" decoding="async" width="720" height="280" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
-          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-            <X size={18} />
-          </button>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,14,11,.85) 0%, transparent 60%)" }} />
+          <button ref={closeRef} onClick={onClose} className="icon-btn" aria-label="Cerrar artículo" style={{ position: "absolute", top: 14, right: 14, background: "rgba(0,0,0,.5)" }}><X size={20} /></button>
           <div style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}>
-            <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 4vw, 36px)", color: "#fff", lineHeight: 1.1, margin: 0 })}>{region.name}</h2>
-            <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.85)", margin: "6px 0 0" })}>{region.sub}</p>
+            <h2 id="region-title" style={K({ fontWeight: 800, fontSize: "clamp(24px, 4vw, 38px)", letterSpacing: "-0.02em", color: "#fff", lineHeight: 1.05 })}>{region.name}</h2>
+            <p style={K({ fontWeight: 400, fontSize: 14, color: "rgba(255,255,255,0.85)", margin: "6px 0 0" })}>{region.sub}</p>
           </div>
         </div>
-        {/* Body */}
-        <div style={{ overflowY: "auto", padding: "32px 28px" }}>
+        <div style={{ overflowY: "auto", padding: "28px 28px 32px" }}>
           {region.body.map((p, i) => (
-            <p key={i} style={K({ fontWeight: 400, fontSize: 16, color: "#374151", lineHeight: 1.75, marginBottom: 20 })}>{p}</p>
+            <p key={i} style={K({ fontWeight: 400, fontSize: 16, color: "var(--cream-70)", lineHeight: 1.75, marginBottom: 18 })}>{p}</p>
           ))}
-          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 3, height: 20, background: "#29623a", borderRadius: 2 }} />
-            <p style={K({ fontWeight: 500, fontSize: 13, color: "#6b7280", margin: 0 })}>Radio Araucana 95.9 FM — La voz histórica de Temuco y la Araucanía</p>
-          </div>
+          <p className="meta" style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>Radio Araucana 95.9 FM · Temuco y La Araucanía</p>
         </div>
       </div>
     </div>
@@ -939,270 +1089,173 @@ function ArticleModal({ region, onClose }) {
 }
 
 function RegionalStories() {
+  const ref = useReveal();
   const { regions: REGIONS } = useSiteContent();
   const [active, setActive] = useState(null);
-
   return (
-    <section id="destinos" style={{ background: "#191919", padding: "64px 24px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={K({ fontWeight: 900, fontSize: "clamp(22px, 3.5vw, 40px)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.02em", marginBottom: 40 })}>
-          <span style={{ color: "#52b870" }}>NUESTRA</span> REGIÓN, NUESTRA CASA
-        </h2>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <section id="destinos" aria-labelledby="reg-title" style={{ background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
+      <div className="container reveal" ref={ref}>
+        <SectionHead id="reg-title" kicker="Nuestra región" title="La Araucanía, de la cordillera al mar." lede="Cuatro territorios, una sola casa. Conoce los lugares desde donde contamos la región." />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {REGIONS.map((r, i) => (
-            <div key={i} className="region-card" onClick={() => setActive(r)} style={{ borderRadius: 4, minHeight: 380, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer" }}>
-              <img src={r.img} alt={r.name} loading="lazy" decoding="async" width="600" height="380" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,20,14,0.92) 0%, rgba(10,20,14,0.3) 55%, transparent 100%)" }} />
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundImage: "repeating-linear-gradient(90deg, #52b870 0px, #52b870 8px, transparent 8px, transparent 16px)" }} />
-              <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
-                <h3 style={K({ fontWeight: 800, fontSize: "clamp(18px, 2.4vw, 30px)", color: "#fff", lineHeight: 1.1, marginBottom: 6 })}>{r.name}</h3>
-                <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 10 })}>{r.sub}</p>
-                <span style={K({ fontWeight: 600, fontSize: 12, color: "#52b870" })}>Leer artículo →</span>
+            <button key={i} className="region-card" onClick={() => setActive(r)} aria-label={`Leer artículo: ${r.name}`}>
+              <img src={r.img} alt="" loading="lazy" decoding="async" width="600" height="380" />
+              <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,14,11,.94) 0%, rgba(10,14,11,.3) 55%, transparent 100%)" }} />
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 20 }}>
+                <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 26px)", letterSpacing: "-0.02em", color: "#fff", lineHeight: 1.1, marginBottom: 6 })}>{r.name}</p>
+                <p style={K({ fontWeight: 400, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 10 })}>{r.sub}</p>
+                <span style={K({ fontWeight: 700, fontSize: 13, color: "var(--lime)" })}>Leer artículo →</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
-
       {active && <ArticleModal region={active} onClose={() => setActive(null)} />}
     </section>
   );
 }
 
-/* ─── Social Feeds ────────────────────────────────────────────────────────── */
-const SvgInstagramColor = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#f09433"/>
-        <stop offset="25%" stopColor="#e6683c"/>
-        <stop offset="50%" stopColor="#dc2743"/>
-        <stop offset="75%" stopColor="#cc2366"/>
-        <stop offset="100%" stopColor="#bc1888"/>
-      </linearGradient>
-    </defs>
-    <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#ig)" strokeWidth="2"/>
-    <circle cx="12" cy="12" r="4" stroke="url(#ig)" strokeWidth="2"/>
-    <circle cx="17.5" cy="6.5" r="1" fill="#dc2743"/>
-  </svg>
-);
-const SvgFacebookColor = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-  </svg>
-);
-
-function SocialFeeds() {
-  // Brand palette: greens (deep → bright), yellows/gold, blacks
-  const IG_GRADS = [
-    "linear-gradient(135deg,#0f2d1a,#29623a)",  // deep → mid green
-    "linear-gradient(135deg,#191919,#29623a)",  // black → green
-    "linear-gradient(135deg,#2d4a1a,#7dbb5e)",  // forest → leaf
-    "linear-gradient(135deg,#b8860b,#f5b800)",  // mustard → gold
-    "linear-gradient(135deg,#0a0a0a,#2d2d2d)",  // pure dark
-    "linear-gradient(135deg,#1d4a2b,#52b870)",  // deep → bright green
-    "linear-gradient(135deg,#5c5c1a,#d4a017)",  // olive → amber
-    "linear-gradient(135deg,#29623a,#7dbb5e)",  // mid → leaf green
-    "linear-gradient(135deg,#3a6e28,#c9a227)",  // green → warm gold
-  ];
-
-  const FB_GRADS = [
-    "linear-gradient(135deg,#0a0a0a,#1d4a2b)",  // black → deep green
-    "linear-gradient(135deg,#29623a,#d4a017)",  // green → gold (signature)
-    "linear-gradient(135deg,#2d4a1a,#4a7c59)",  // forest tones
-    "linear-gradient(135deg,#1a3a1e,#52b870)",  // dark → bright green
-    "linear-gradient(135deg,#c9a227,#f5b800)",  // amber → gold
-    "linear-gradient(135deg,#191919,#3a6e28)",  // dark → green
-    "linear-gradient(135deg,#0f2d1a,#7dbb5e)",  // deep → leaf
-    "linear-gradient(135deg,#6b8e23,#d4a017)",  // olive → gold
-    "linear-gradient(135deg,#1d4a2b,#52b870)",  // green gradient
-  ];
-
+/* ─── Radio La Frontera ───────────────────────────────────────────────────── */
+function FronteraSection({ playing, toggle }) {
+  const ref = useReveal();
   return (
-    <section style={{ background: "#f4f4f4", padding: "64px 24px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-
-        <h2 style={K({ fontWeight: 800, fontSize: 32, color: "#191919", marginBottom: 32 })}>SÍGUENOS</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          {/* Instagram */}
-          <div style={{ background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-            <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <SvgInstagramColor />
-                <div>
-                  <p style={K({ fontWeight: 700, fontSize: 14, color: "#191919", margin: 0 })}>@araucanaradio</p>
-                  <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Instagram</p>
-                </div>
-              </div>
-              <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-                style={K({ fontWeight: 600, fontSize: 12, color: "#191919", textDecoration: "none", background: "#f4f4f4", border: "1px solid #e5e7eb", padding: "6px 14px", borderRadius: 20 })}>
-                Seguir
-              </a>
-            </div>
-            <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
-                {IG_GRADS.map((g, i) => (
-                  <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
-                ))}
-              </div>
-            </a>
-            <div style={{ padding: "12px 20px" }}>
-              <a href="https://instagram.com/araucanaradio" target="_blank" rel="noreferrer"
-                style={K({ fontWeight: 600, fontSize: 13, color: "#6b7280", textDecoration: "none" })}>Ver todas las publicaciones →</a>
+    <section id="frontera" aria-labelledby="frontera-title" style={{ background: "linear-gradient(160deg, #0d2410 0%, #173a1c 55%, #0a1f0d 100%)", padding: "clamp(64px, 9vw, 110px) 0", position: "relative", overflow: "hidden" }}>
+      <Mosaic seed={5} opacity={0.14} drift={false} mask="linear-gradient(to right, transparent, rgba(0,0,0,.8))" />
+      <div className="container reveal" ref={ref} style={{ position: "relative", zIndex: 1 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div style={{ display: "flex", flexDirection: "column", gap: 22, alignItems: "flex-start" }}>
+            <span className="kicker" style={{ color: "#9BD57A" }}>Emisora hermana · 1110 AM</span>
+            <h2 id="frontera-title" className="sr-only">Radio La Frontera 1110 AM</h2>
+            <img src="/frontera-logo-white.svg" alt="Radio La Frontera, la primera del sur de Chile" loading="lazy" decoding="async" width="480" height="120" style={{ width: "100%", maxWidth: 440, height: "auto" }} />
+            <p className="lede" style={{ color: "rgba(255,255,255,.7)" }}>
+              Fundada en octubre de 1939, Radio La Frontera es una de las radios más antiguas del sur de Chile. Folklore, información campesina y la región al día, en el 1110 AM.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn" onClick={toggle} aria-pressed={playing} style={{ background: playing ? "#9BD57A" : "transparent", color: playing ? "#0f1a12" : "#9BD57A", borderColor: "#9BD57A" }}>
+                {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} fill="currentColor" aria-hidden="true" />}
+                {playing ? "Escuchando La Frontera · pausar" : "Escuchar La Frontera 1110 AM"}
+              </button>
+              <a href="/frontera" className="btn btn-ghost">Conocer La Frontera <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
           </div>
-
-          {/* Facebook */}
-          <div style={{ background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-            <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <SvgFacebookColor />
-                <div>
-                  <p style={K({ fontWeight: 700, fontSize: 14, color: "#191919", margin: 0 })}>Radio Araucana</p>
-                  <p style={K({ fontWeight: 300, fontSize: 12, color: "#6b7280", margin: 0 })}>Facebook</p>
-                </div>
-              </div>
-              <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
-                style={K({ fontWeight: 600, fontSize: 12, color: "#fff", textDecoration: "none", background: "#1877F2", padding: "6px 14px", borderRadius: 20 })}>
-                Seguir
-              </a>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
-              {FB_GRADS.map((g, i) => (
-                <div key={i} className="social-tile" style={{ background: g, aspectRatio: "1/1" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ position: "relative", width: 260, height: 260, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {[0, 0.6, 1.2].map((delay, i) => (
+                <div key={i} aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px solid rgba(155,213,122,0.5)", animation: `signalRing 2.8s ease-out ${delay}s infinite` }} />
               ))}
-            </div>
-            <div style={{ padding: "12px 20px" }}>
-              <a href="https://www.facebook.com/radioaraucana" target="_blank" rel="noreferrer"
-                style={K({ fontWeight: 600, fontSize: 13, color: "#6b7280", textDecoration: "none" })}>Ver página en Facebook →</a>
+              <img src="/frontera-listener.jpg" alt="Oyente escuchando Radio La Frontera 1110 AM" width="200" height="200" loading="lazy" decoding="async"
+                style={{ width: 200, height: 200, borderRadius: "50%", objectFit: "cover", objectPosition: "center top", border: "2px solid rgba(155,213,122,0.7)", boxShadow: "0 0 50px rgba(155,213,122,0.3)" }} />
             </div>
           </div>
-
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── Sponsor Strip ───────────────────────────────────────────────────────── */
-function SponsorStrip() {
+/* ─── Sobre la radio (SEO: "radio en Temuco") ─────────────────────────────── */
+function AboutSection() {
+  const ref = useReveal();
+  const stats = [
+    { n: "1960", l: "Primera radio FM de Chile" },
+    { n: "95.9", l: "FM en Temuco y La Araucanía" },
+    { n: "65+", l: "Años al aire" },
+    { n: "24/7", l: "En vivo por internet" },
+  ];
   return (
-    <div style={{ background: "#191919", padding: "28px 24px" }}>
-      <p style={K({ fontWeight: 500, fontSize: 12, color: "rgba(255,255,255,0.5)", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20 })}>
-        EMPRESAS QUE CONFÍAN EN NOSOTROS
-      </p>
-      <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-        {["COCA-COLA", "COPEC", "BCI", "SALCOBRAND", "SODIMAC"].map((s) => (
-          <div key={s} className="sponsor-block" style={{ border: "1px solid rgba(41,98,58,0.4)", width: 120, height: 48, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={K({ fontWeight: 500, fontSize: 11, color: "#9ca3af", letterSpacing: "0.05em" })}>{s}</span>
+    <section id="sobre" aria-labelledby="about-title" style={{ background: "var(--ink)", padding: "clamp(64px, 9vw, 120px) 0", borderTop: "1px solid var(--line)" }}>
+      <div className="container reveal" ref={ref}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-7" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <span className="kicker">Radio en Temuco desde 1960</span>
+            <h2 id="about-title" className="h2">La primera FM de Chile sigue siendo la voz de La Araucanía.</h2>
+            <p className="lede">
+              Radio Araucana nació el 1 de enero de 1960 en Temuco como XQD 1, la primera radio de Frecuencia Modulada en Chile y la segunda de Latinoamérica. Desde 1981 transmite desde el Cerro Ñielol y los estudios de audiencia de Ipsos la ubican de forma consistente como la radio en Temuco con mayor sintonía.
+            </p>
+            <p className="lede">
+              Hoy la señal 95.9 FM cubre Temuco, Padre Las Casas y el centro de la región, y el stream en radioaraucana.cl llega a cualquier país. Con Araucana Digital sumamos podcast, entrevistas en video y reels para que la conversación regional también viva en YouTube, Instagram y Facebook.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+              <a href="/sobre-nosotros" className="btn btn-ghost btn-sm">Nuestra historia</a>
+              <a href="/faq" className="btn btn-ghost btn-sm">Preguntas frecuentes</a>
+              <a href="/cotiza" className="btn btn-green btn-sm">Publicita en la radio</a>
+            </div>
           </div>
-        ))}
+          <dl className="lg:col-span-5 grid grid-cols-2 gap-3" style={{ alignSelf: "center" }}>
+            {stats.map((s) => (
+              <div key={s.n} style={{ padding: "22px 20px", borderRadius: 16, background: "var(--ink-3)", border: "1px solid var(--line)" }}>
+                <dt className="meta" style={{ marginBottom: 6 }}>{s.l}</dt>
+                <dd style={K({ fontWeight: 800, fontSize: "clamp(30px, 3.4vw, 44px)", letterSpacing: "-0.03em", lineHeight: 1, color: "var(--lime)", fontVariantNumeric: "tabular-nums" })}>{s.n}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */
 const FOOTER_LINKS = [
-  { title: "Radio", links: [
-    { label: "Quiénes somos", href: "/sobre-nosotros" },
-    { label: "Historia",      href: "/sobre-nosotros#nuestra-historia" },
-    { label: "Preguntas frecuentes", href: "/faq" },
-    { label: "Radio La Frontera",   href: "/frontera" },
-  ]},
   { title: "Contenido", links: [
-    { label: "Noticias",            href: "#noticias" },
-    { label: "Destinos Araucanía", href: "#destinos" },
-    { label: "Señal en vivo",      href: "#en-vivo" },
+    { label: "Señal en vivo",  href: "#inicio" },
+    { label: "Podcast",        href: "#podcast" },
+    { label: "Reels",          href: "#reels" },
+    { label: "Programación",   href: "#programacion" },
+    { label: "Nuestra región", href: "#destinos" },
   ]},
-  { title: "Programación", links: [
-    { label: "Programas",    href: "#programacion" },
-    { label: "En vivo ahora", href: "#inicio" },
+  { title: "La radio", links: [
+    { label: "Quiénes somos",        href: "/sobre-nosotros" },
+    { label: "Preguntas frecuentes", href: "/faq" },
+    { label: "Radio La Frontera",    href: "/frontera" },
+    { label: "Contacto",             href: "/contacto" },
   ]},
-  { title: "Publicidad", links: [
+  { title: "Empresas", links: [
     { label: "Cotiza tu publicidad", href: "/cotiza" },
-    { label: "Cotiza tu extracto",   href: "/frontera/extractos" },
-    { label: "Contáctanos",          href: "/contacto" },
+    { label: "Extractos legales",    href: "/frontera/extractos" },
   ]},
 ];
 
 function Footer() {
-  const { settings: SETTINGS, news } = useSiteContent();
-  const showNews = newsVisible(SETTINGS, news);
+  const { settings: SETTINGS } = useSiteContent();
   return (
-    <footer id="contacto" style={{ background: "#191919", padding: "64px 24px 0" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
-
-          <div>
-            <div style={{ marginBottom: 20 }}>
-              <LogoSVG height={44} color="#ffffff" />
-            </div>
-            <p style={K({ fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.6 })}>
-              Radio Araucana, acompañando a Temuco<br />y la Araucanía desde 1960.
+    <footer id="contacto" style={{ background: "var(--ink-2)", padding: "clamp(48px, 7vw, 80px) 0 0", borderTop: "1px solid var(--line)" }}>
+      <div className="container">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10" style={{ paddingBottom: 40 }}>
+          <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 18, alignItems: "flex-start" }}>
+            <LogoSVG height={44} color="#F6F3EE" />
+            <p style={K({ fontWeight: 400, fontSize: 15, color: "var(--cream-70)", lineHeight: 1.6, maxWidth: 380 })}>
+              Radio en Temuco desde 1960. Grupo Radios Araucana y La Frontera: 95.9 FM y 1110 AM, en vivo y en digital.
             </p>
-            <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 16 })}>Desde 1960 · Más de 65 años en el aire</p>
-
-            <div style={{ marginBottom: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <p style={K({ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em" })}>Parte del grupo</p>
-              <a href="/frontera" aria-label="Visita el sitio de Radio La Frontera 1110 AM" style={{ display: "inline-block", textDecoration: "none" }}>
-                <img src="/frontera-logo-white.svg" alt="Radio La Frontera 1110 AM" loading="lazy" decoding="async" width="180" height="44" style={{ height: 44, width: "auto", display: "block", marginBottom: 8 }} />
-              </a>
-              <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 })}>Pionera en las comunicaciones del Sur de Chile desde 1939</p>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-              {SOC_LINKS.map(({ label, href, Icon }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer me"
-                  aria-label={`Radio Araucana en ${label}`}
-                  className="social-icon-btn"
-                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(41,98,58,0.5)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", textDecoration: "none" }}>
-                  <Icon />
-                </a>
+            <ul aria-label="Redes sociales" style={{ listStyle: "none", display: "flex", gap: 8 }}>
+              {SOC_LINKS.map(({ key, label, href, Icon }) => (
+                <li key={key}><a href={href} target="_blank" rel="noopener noreferrer me" className="icon-btn" aria-label={`Radio Araucana en ${label}`}><Icon /></a></li>
               ))}
-            </div>
-
-            <div style={{ borderTop: "1px solid #2d2d2d", paddingTop: 16, marginBottom: 6 }}>
-              <p style={K({ fontWeight: 600, fontSize: 13, color: "#52b870", marginBottom: 12 })}>Nuestras oficinas:</p>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>📞 {SETTINGS.adminPhone}</p>
-              <a href="/contacto" className="footer-link" style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", display: "block", marginBottom: 4, textDecoration: "none" })}>✉ Escríbenos por el formulario de contacto →</a>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 })}>🕘 {SETTINGS.adminHours}</p>
-              <p style={K({ fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 0 })}>📍 {SETTINGS.address}</p>
-            </div>
+            </ul>
+            <address style={K({ fontStyle: "normal", fontWeight: 400, fontSize: 14, color: "var(--cream-70)", lineHeight: 1.8 })}>
+              {SETTINGS.address}<br />
+              <a href={`tel:${(SETTINGS.adminPhone || "").replace(/\s/g, "")}`} className="footer-link" style={{ minHeight: 0 }}>{SETTINGS.adminPhone}</a> · {SETTINGS.adminHours}<br />
+              <a href="/contacto" className="footer-link" style={{ minHeight: 0, color: "var(--green)" }}>Escríbenos por el formulario de contacto →</a>
+            </address>
           </div>
 
-          <div className="grid grid-cols-2 gap-8">
+          <nav className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8" aria-label="Enlaces del sitio">
             {FOOTER_LINKS.map((g) => (
               <div key={g.title}>
-                <h4 style={K({ fontWeight: 500, fontSize: 13, color: "#fff", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 })}>{g.title}</h4>
-                {g.links.filter((l) => l.href !== "#noticias" || showNews).map((l) => {
-                  if (l.inactive) {
-                    return (
-                      <span key={l.label}
-                        style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.3)", marginBottom: 8, cursor: "default" })}>{l.label}</span>
-                    );
-                  }
-                  const href = l.whatsapp
-                    ? `https://wa.me/${SETTINGS.whatsappNumber}?text=${encodeURIComponent(l.whatsapp)}`
-                    : l.href;
-                  const extra = l.whatsapp ? { target: "_blank", rel: "noreferrer" } : {};
-                  return (
-                    <a key={l.label} href={href} className="footer-link" {...extra}
-                      style={K({ display: "block", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.6)", textDecoration: "none", marginBottom: 8 })}>{l.label}</a>
-                  );
-                })}
+                <h2 style={K({ fontWeight: 700, fontSize: 12, color: "var(--cream)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 10 })}>{g.title}</h2>
+                <ul style={{ listStyle: "none" }}>
+                  {g.links.map((l) => (
+                    <li key={l.label}><a href={l.href} className="footer-link" style={K({ fontSize: 15 })}>{l.label}</a></li>
+                  ))}
+                </ul>
               </div>
             ))}
-          </div>
+          </nav>
         </div>
 
-        <div style={{ borderTop: "1px solid #2d2d2d", padding: "20px 0", textAlign: "center" }}>
-          <p style={K({ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.4)" })}>
-            © 2026 Radios Araucana y La Frontera · Caupolicán 110, Temuco · Todos los derechos reservados
-          </p>
+        <div style={{ borderTop: "1px solid var(--line)", padding: "20px 0 22px", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <p style={K({ fontWeight: 400, fontSize: 13, color: "var(--cream-55)" })}>© 2026 Radios Araucana y La Frontera · Temuco, Chile</p>
+          <a href="/frontera" className="footer-link" style={{ minHeight: 0, fontSize: 13 }}>Radio La Frontera 1110 AM · desde 1939</a>
         </div>
       </div>
     </footer>
@@ -1210,10 +1263,8 @@ function Footer() {
 }
 
 /* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
-// WA_NUMBER and WA_OPTIONS are consumed via useSiteContent() inside WhatsAppWidget
-
 const SvgWhatsApp = ({ size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
   </svg>
 );
@@ -1222,84 +1273,53 @@ function WhatsAppWidget() {
   const { settings, whatsappOptions: WA_OPTIONS } = useSiteContent();
   const WA_NUMBER = settings.whatsappNumber;
   const [open, setOpen] = useState(false);
-
   const openChat = (opt) => {
     const number = opt.wa ?? WA_NUMBER;
-    const url = `https://wa.me/${number}?text=${encodeURIComponent(opt.msg)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/${number}?text=${encodeURIComponent(opt.msg)}`, "_blank", "noopener,noreferrer");
   };
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <>
-      <style>{`
-        @keyframes waPop {
-          from { opacity: 0; transform: scale(0.88) translateY(12px); }
-          to   { opacity: 1; transform: scale(1)    translateY(0);     }
-        }
-        .wa-panel { animation: waPop 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-        .wa-opt   { transition: background 150ms ease, transform 120ms ease; cursor: pointer; }
-        .wa-opt:hover { background: #f0fdf4 !important; transform: translateX(3px); }
-        .wa-fab   { transition: transform 180ms ease, box-shadow 180ms ease; }
-        .wa-fab:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(37,211,102,0.45) !important; }
-      `}</style>
-
-      {/* Panel */}
       {open && (
-        <div className="wa-panel" style={{
-          position: "fixed", bottom: 88, right: 20, zIndex: 9998,
-          width: 300, borderRadius: 12, overflow: "hidden",
-          boxShadow: "0 12px 48px rgba(0,0,0,0.22)",
-          fontFamily: "'Open Sans', sans-serif",
-        }}>
-          {/* Header */}
-          <div style={{ background: "#075E54", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="wa-panel" role="dialog" aria-label="Escríbenos por WhatsApp" style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9998, width: 300, borderRadius: 14, overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,0.4)", fontFamily: "var(--font)" }}>
+          <div style={{ background: "#075E54", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#128C7E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-                <SvgWhatsApp size={20} />
-              </div>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#128C7E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><SvgWhatsApp size={20} /></div>
               <div>
-                <p style={{ fontWeight: 700, fontSize: 14, color: "#fff", margin: 0, lineHeight: 1.2 }}>Radio Araucana 95.9</p>
-                <p style={{ fontWeight: 400, fontSize: 11, color: "rgba(255,255,255,0.7)", margin: 0 }}>Normalmente responde en minutos</p>
+                <p style={{ fontWeight: 700, fontSize: 14, color: "#fff", lineHeight: 1.2 }}>Radio Araucana 95.9</p>
+                <p style={{ fontWeight: 400, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>Normalmente responde en minutos</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>
+            <button onClick={() => setOpen(false)} aria-label="Cerrar" style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
           </div>
-
-          {/* Bubble intro */}
           <div style={{ background: "#ECE5DD", padding: "14px 16px 6px" }}>
             <div style={{ background: "#fff", borderRadius: "0 8px 8px 8px", padding: "10px 14px", display: "inline-block", boxShadow: "0 1px 2px rgba(0,0,0,0.1)", maxWidth: 240 }}>
-              <p style={{ fontWeight: 400, fontSize: 13, color: "#191919", margin: 0, lineHeight: 1.45 }}>
-                Hola 👋 ¿En qué podemos ayudarte hoy?
-              </p>
+              <p style={{ fontWeight: 400, fontSize: 13, color: "#191919", lineHeight: 1.45 }}>Hola, ¿en qué te ayudamos hoy?</p>
             </div>
           </div>
-
-          {/* Options */}
           <div style={{ background: "#ECE5DD", padding: "8px 16px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
             {WA_OPTIONS.map((opt, i) => (
-              <button key={i} className="wa-opt" onClick={() => openChat(opt)}
-                style={{ background: "#fff", border: "none", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, textAlign: "left", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", width: "100%" }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
+              <button key={i} className="wa-opt" onClick={() => openChat(opt)} style={{ background: "#fff", border: "none", borderRadius: 8, padding: "11px 14px", display: "flex", alignItems: "center", gap: 10, textAlign: "left", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", width: "100%", minHeight: 44 }}>
+                <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
                 <span style={{ fontWeight: 600, fontSize: 13, color: "#075E54" }}>{opt.label}</span>
               </button>
             ))}
           </div>
         </div>
       )}
-
-      {/* FAB */}
       {!open && (
-        <div style={{ position: "fixed", bottom: 88, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="hidden sm:block" style={{ background: "#191919", border: "1px solid #29623a", borderRadius: 6, padding: "6px 12px", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>
-            <p style={K({ fontWeight: 700, fontSize: 12, color: "#fff", margin: 0, whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
-            <p style={K({ fontWeight: 300, fontSize: 11, color: "#52b870", margin: 0, whiteSpace: "nowrap" })}>Escríbenos aquí →</p>
+        <div style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="hidden sm:block" aria-hidden="true" style={{ background: "var(--ink-3)", border: "1px solid var(--line-strong)", borderRadius: 10, padding: "8px 12px", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
+            <p style={K({ fontWeight: 700, fontSize: 12, color: "var(--cream)", whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
+            <p style={K({ fontWeight: 400, fontSize: 11, color: "var(--green)", whiteSpace: "nowrap" })}>Escríbenos por WhatsApp →</p>
           </div>
-          <button className="wa-fab" onClick={() => setOpen(true)} style={{
-            width: 56, height: 56, borderRadius: "50%", flexShrink: 0,
-            background: "#25D366", border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
-            boxShadow: "0 4px 18px rgba(37,211,102,0.35)",
-          }}>
+          <button className="wa-fab" onClick={() => setOpen(true)} aria-label="Escríbenos por WhatsApp" style={{ width: 56, height: 56, borderRadius: "50%", flexShrink: 0, background: "#25D366", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 6px 20px rgba(37,211,102,0.4)" }}>
             <SvgWhatsApp size={28} />
           </button>
         </div>
@@ -1308,177 +1328,52 @@ function WhatsAppWidget() {
   );
 }
 
-/* ─── Radio La Frontera Section ───────────────────────────────────────────── */
-function FronteraSection({ playing, toggle }) {
-  return (
-    <section id="frontera" style={{
-      background: "linear-gradient(160deg, #0d2410 0%, #1a3a1e 50%, #0a1f0d 100%)",
-      padding: "clamp(60px, 8vw, 100px) 24px",
-      position: "relative", overflow: "hidden",
-    }}>
-      {/* Subtle background texture */}
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 28px)", pointerEvents: "none" }} />
-
-      <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1 }}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-          {/* Left: info */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#7dbb5e" }} />
-              <span style={K({ fontWeight: 600, fontSize: 12, color: "#7dbb5e", textTransform: "uppercase", letterSpacing: "0.14em" })}>
-                TRANSMITIENDO EN VIVO · 1110 AM
-              </span>
-            </div>
-
-            <div>
-              <img src="/frontera-logo.svg" alt="Radio La Frontera — La Primera del Sur de Chile" loading="lazy" decoding="async" width="480" height="120" style={{ width: "100%", maxWidth: 480, height: "auto", display: "block" }} />
-            </div>
-
-            <p style={K({ fontWeight: 300, fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: 420 })}>
-              Fundada en octubre de 1939, Radio La Frontera A.M. es una de las radios más antiguas del sur de Chile. Décadas de historia acompañando a la Araucanía en el 1110 AM.
-            </p>
-
-            <button className="play-btn w-full sm:w-fit" onClick={toggle} style={K({
-              background: playing ? "#92BD55" : "transparent",
-              color: playing ? "#191919" : "#92BD55", fontWeight: 700, fontSize: 15,
-              padding: "20px 32px", borderRadius: 3,
-              border: "2px solid #92BD55",
-              cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              transition: "background 200ms ease, color 200ms ease",
-            })}>
-              {playing ? <Pause size={16} /> : <Play size={16} fill="#92BD55" />}
-              {playing ? "Escuchando La Frontera — pausar" : "Escuchar La Frontera 1110 AM"}
-            </button>
-          </div>
-
-          {/* Right: animated signal */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ position: "relative", width: 240, height: 240, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {[0, 0.6, 1.2].map((delay, i) => (
-                <div key={i} style={{
-                  position: "absolute", inset: 0, borderRadius: "50%",
-                  border: "1px solid rgba(125,187,94,0.5)",
-                  animation: `signalRing 2.8s ease-out ${delay}s infinite`,
-                }} />
-              ))}
-              <img
-                src="/frontera-listener.jpg"
-                alt="Oyente disfrutando Radio La Frontera 1110 AM"
-                width="180"
-                height="180"
-                style={{
-                  width: 180, height: 180, borderRadius: "50%",
-                  objectFit: "cover", objectPosition: "center top",
-                  border: "2px solid rgba(146,189,85,0.7)",
-                  boxShadow: "0 0 40px rgba(146,189,85,0.3)",
-                  display: "block",
-                }}
-              />
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── Streams ─────────────────────────────────────────────────────────────── */
-// STREAM URLs are consumed via useSiteContent() inside the App component
-
+/* ─── Floating audio player ───────────────────────────────────────────────── */
 function FloatingPlayer({ station, play }) {
   const [muted, setMuted] = useState(false);
-  const [copied, setCopied] = useState(false);
   const playing = station !== null;
   const isFrontera = station === "frontera";
-
-  const toggleMute = () => {
-    const audio = document.querySelector("audio");
-    if (audio) audio.muted = !muted;
-    setMuted(!muted);
-  };
-
+  const toggleMute = () => { const a = document.querySelector("audio"); if (a) a.muted = !muted; setMuted(!muted); };
   const toggle = () => play(isFrontera ? "frontera" : "araucana");
-
   const share = () => {
     const name = isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM";
-    const url = "https://radioaraucana.cl/";
-    const text = `Escucha ${name} en vivo: ${url}`;
+    const text = `Escucha ${name} en vivo: https://radioaraucana.cl/`;
+    if (navigator.share) { navigator.share({ title: name, text, url: "https://radioaraucana.cl/" }).catch(() => {}); return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noreferrer");
   };
-
-  const accentColor = isFrontera ? "#7dbb5e" : "#52b870";
-  const borderColor = isFrontera ? "#3a6e28" : "#29623a";
+  const accent = isFrontera ? "#9BD57A" : "var(--green)";
 
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "#191919", backgroundImage: "url(/mapuche.svg)", backgroundSize: "60px 60px", borderTop: `2px solid ${borderColor}`, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
-
-      {/* Info — oculto en móvil */}
-      <div className="hidden sm:flex" style={{ alignItems: "center", gap: 12 }}>
-        <div style={{ width: 72, height: 48, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>
-          {isFrontera
-            ? <img src="/frontera-logo-white.svg" alt="Radio La Frontera" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
-            : <LogoSVG height={32} color="#ffffff" />
-          }
+    <div role="region" aria-label="Reproductor de radio en vivo" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999, background: "rgba(17,19,17,.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: "1px solid var(--line-strong)", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 10, background: playing ? "rgba(82,184,112,.15)" : "rgba(246,243,238,.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 6 }}>
+          {isFrontera ? <img src="/frontera-logo-white.svg" alt="" width="32" height="32" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <LogoSVG height={26} color="#F6F3EE" />}
         </div>
-        <div>
-          <p style={K({ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.2 })}>
+        <div style={{ minWidth: 0 }}>
+          <p style={K({ fontWeight: 700, fontSize: 13, color: "var(--cream)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>
             {isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}
           </p>
-          <p style={K({ fontWeight: 300, fontSize: 11, color: "#9ca3af", lineHeight: 1.4 })}>
-            {isFrontera ? "La Primera del Sur de Chile" : "En vivo desde Temuco"}
-          </p>
-          <p style={K({ fontWeight: 600, fontSize: 10, color: accentColor, letterSpacing: "0.06em", textTransform: "uppercase" })}>
-            {playing ? "En vivo" : "Pausado"}
+          <p style={K({ fontWeight: 700, fontSize: 11, color: playing ? accent : "var(--cream-55)", letterSpacing: "0.1em", textTransform: "uppercase" })} aria-live="polite">
+            {playing ? "Al aire" : "En pausa"}
           </p>
         </div>
       </div>
 
-      {/* Nombre en móvil */}
-      <div className="flex sm:hidden" style={{ alignItems: "center", gap: 8 }}>
-        <div style={{ width: 56, height: 38, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-          {isFrontera
-            ? <img src="/frontera-logo-white.svg" alt="Radio La Frontera" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
-            : <LogoSVG height={26} color="#ffffff" />
-          }
-        </div>
-        <div>
-          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff" })}>{isFrontera ? "1110 AM" : "95.9 FM"}</span>
-          <p style={K({ fontWeight: 300, fontSize: 10, color: accentColor })}>{playing ? "En vivo" : "Pausado"}</p>
-        </div>
-      </div>
-
-      {/* Play + waveform */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Waveform color={playing ? accentColor : "#374151"} height={20} />
-        <button className="play-btn" onClick={toggle}
+        <span className="hidden sm:block"><Waveform color={playing ? accent : "#3a3f3a"} height={20} /></span>
+        <button className="btn btn-red" onClick={toggle} aria-pressed={playing}
           aria-label={playing ? `Pausar ${isFrontera ? "Radio La Frontera" : "Radio Araucana"}` : `Reproducir ${isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}`}
-          style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid #cc0000", background: playing ? "#cc0000" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          {playing ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" fill="#fff" />}
+          style={{ width: 52, height: 52, minHeight: 52, padding: 0, borderRadius: "50%", boxShadow: "0 8px 24px rgba(215,38,30,.35)" }}>
+          {playing ? <Pause size={22} aria-hidden="true" /> : <Play size={22} fill="#fff" aria-hidden="true" style={{ marginLeft: 3 }} />}
         </button>
-        <Waveform color={playing ? accentColor : "#374151"} height={20} />
+        <span className="hidden sm:block"><Waveform color={playing ? accent : "#3a3f3a"} height={20} /></span>
       </div>
 
-      {/* Mute + compartir */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative" }}>
-        <button onClick={toggleMute}
-          aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted}
-          style={{ background: "none", border: "none", cursor: "pointer", color: muted ? "#6b7280" : "#fff", display: "flex", alignItems: "center", padding: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button onClick={toggleMute} className="icon-btn" aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted} style={{ border: "none", color: muted ? "var(--cream-55)" : "var(--cream)" }}>
           {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
-        <div style={{ position: "relative" }}>
-          {copied && (
-            <div style={{ position: "absolute", bottom: 36, right: 0, background: "#29623a", borderRadius: 4, padding: "3px 8px", whiteSpace: "nowrap" }}>
-              <span style={K({ fontSize: 11, color: "#fff" })}>¡Link copiado!</span>
-            </div>
-          )}
-          <button onClick={share} aria-label="Compartir por WhatsApp"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
-            <Share2 size={20} color="#fff" />
-          </button>
-        </div>
+        <button onClick={share} className="icon-btn" aria-label="Compartir la radio" style={{ border: "none" }}><Share2 size={20} /></button>
       </div>
     </div>
   );
@@ -1487,66 +1382,66 @@ function FloatingPlayer({ station, play }) {
 /* ─── App ─────────────────────────────────────────────────────────────────── */
 function AppInner() {
   const { settings } = useSiteContent();
-  const STREAM_URL      = settings.streamAraucana;
+  const STREAM_URL = settings.streamAraucana;
   const STREAM_FRONTERA = settings.streamFrontera;
-
   const [station, setStation] = useState(null); // null | "araucana" | "frontera"
-  const audioRef = React.useRef(null);
+  const [modal, setModal] = useState(null); // { video, vertical }
+  const audioRef = useRef(null);
+  const yt = useYouTube();
 
   const play = (which) => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (station === which) {
-      audio.pause();
-      setStation(null);
-      return;
-    }
-    const url = which === "araucana" ? STREAM_URL : STREAM_FRONTERA;
+    if (station === which) { audio.pause(); setStation(null); return; }
     audio.pause();
-    audio.src = url;
+    audio.src = which === "araucana" ? STREAM_URL : STREAM_FRONTERA;
     audio.load();
     const p = audio.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
     setStation(which);
   };
+  const openVideo = useCallback((video, vertical) => setModal({ video, vertical }), []);
+  const closeVideo = useCallback(() => setModal(null), []);
+
+  const araucanaPlaying = station === "araucana";
+  const toggleAraucana = () => play("araucana");
 
   return (
     <>
+      <a href="#inicio" className="skip-link">Saltar al contenido</a>
       <audio ref={audioRef} preload="none" />
       <GlobalStyles />
-      <Navbar />
-      <main style={{ paddingBottom: 64 }}>
-        <Hero playing={station === "araucana"} toggle={() => play("araucana")} />
-        <NewsTicker />
+      <Header playing={araucanaPlaying} toggle={toggleAraucana} />
+      <main id="contenido" style={{ paddingBottom: 72 }}>
+        <Hero playing={araucanaPlaying} toggle={toggleAraucana} latest={yt.episodes[0]} />
+        <WeatherTicker />
+        <PodcastSection data={yt} onPlay={openVideo} />
+        <ReelsSection data={yt} onPlay={openVideo} />
         <NewsGrid />
-        <VideoSection />
-        <ProgramSchedule />
+        <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} />
+        <SocialSection />
         <RegionalStories />
         <FronteraSection playing={station === "frontera"} toggle={() => play("frontera")} />
-        <SocialFeeds />
-        <SponsorStrip />
+        <AboutSection />
         <Footer />
       </main>
       <FloatingPlayer station={station} play={play} />
       <WhatsAppWidget />
+      {modal && <VideoModal video={modal.video} vertical={modal.vertical} onClose={closeVideo} />}
     </>
   );
 }
 
 export default function App() {
   const [content, setContent] = useState(defaultContent);
-
   useEffect(() => {
     let alive = true;
     fetch("/api/content", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (alive && data && typeof data === "object" && data.settings) setContent(data);
-      })
-      .catch(() => { /* keep bundled defaults */ });
+      .then((data) => { if (alive && data && typeof data === "object" && data.settings) setContent(data); })
+      .catch(() => {});
     return () => { alive = false; };
   }, []);
-
   return (
     <SiteContentContext.Provider value={content}>
       <AppInner />

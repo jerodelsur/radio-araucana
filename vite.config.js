@@ -166,6 +166,11 @@ const devApiStub = () => ({
       await runHandler('/api/contacto/submit.js', req, res)
     })
 
+    server.middlewares.use('/api/youtube', async (req, res, next) => {
+      if (req.method !== 'GET') return next()
+      await runHandler('/api/youtube.js', req, res)
+    })
+
     // Acceso privado a la presentación: la ruta pública /propuesta la atiende
     // una sola función (GET = página/login, POST = validar clave).
     server.middlewares.use('/propuesta', async (req, res, next) => {

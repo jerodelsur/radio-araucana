@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- ─── SEO base ──────────────────────────────────────────────────────── -->
-    <title>Radio Araucana 95.9 FM — Radio en Temuco en vivo | La voz de La Araucanía</title>
-    <meta name="description" content="Radio en Temuco: escucha Radio Araucana 95.9 FM en vivo, la emisora histórica de Temuco y La Araucanía desde 1960. Noticias, deporte y cultura del sur de Chile, online 24/7." />
+    <title>Radio Araucana 95.9 FM — Radio en Temuco en vivo, podcast y reels | La voz de La Araucanía</title>
+    <meta name="description" content="Radio en Temuco: escucha Radio Araucana 95.9 FM en vivo, la primera FM de Chile, desde 1960. Podcast Araucana Digital, entrevistas en video, reels, noticias y deporte de La Araucanía, online 24/7." />
     <link rel="canonical" href="https://radioaraucana.cl/" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#191919" />
@@ -23,8 +23,8 @@
     <meta property="og:site_name" content="Radio Araucana FM 95.9" />
     <meta property="og:locale" content="es_CL" />
     <meta property="og:url" content="https://radioaraucana.cl/" />
-    <meta property="og:title" content="Radio Araucana 95.9 FM — Radio en Temuco en vivo" />
-    <meta property="og:description" content="La radio histórica de Temuco y La Araucanía desde 1960. Escucha en vivo 24/7: noticias, deporte y cultura del sur de Chile." />
+    <meta property="og:title" content="Radio Araucana 95.9 FM — Radio en Temuco, en vivo y en video" />
+    <meta property="og:description" content="La radio de Temuco, en vivo y en video. Desde 1960 en el 95.9 FM; hoy también podcast, entrevistas y reels sobre La Araucanía." />
     <meta property="og:image" content="https://radioaraucana.cl/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -47,6 +47,7 @@
     <link rel="preconnect" href="https://audio.streaminghd.cl" />
     <link rel="dns-prefetch" href="https://audio.streaminghd.cl" />
     <link rel="preconnect" href="https://api.open-meteo.com" />
+    <link rel="preconnect" href="https://i.ytimg.com" />
 
     <!-- Fuente Open Sans precargada (la app la usa via @import inline; este preload acelera el primer paint) -->
     <link
@@ -211,6 +212,23 @@
       }
     }
     </script>
+    <!-- ─── JSON-LD: PodcastSeries Araucana Digital ──────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "PodcastSeries",
+      "@id": "https://radioaraucana.cl/#podcast",
+      "name": "Araucana Digital",
+      "alternateName": "Araucana Digital Podcast",
+      "url": "https://radioaraucana.cl/#podcast",
+      "description": "Podcast en video de Radio Araucana 95.9 FM: entrevistas con las personas que mueven La Araucanía — deporte, cultura, negocios y política — grabadas en los estudios de Temuco y publicadas cada semana en YouTube.",
+      "inLanguage": "es-CL",
+      "image": "https://radioaraucana.cl/og-image.png",
+      "webFeed": "https://www.youtube.com/feeds/videos.xml?channel_id=UC1VJdF1eurA5mZ42diw83Zw",
+      "publisher": { "@id": "https://radioaraucana.cl/#organization" },
+      "sameAs": ["https://www.youtube.com/@araucanafm"]
+    }
+    </script>
   </head>
   <body>
     <!-- ─── Stub SEO oculto ────────────────────────────────────────────────
@@ -223,7 +241,7 @@
     ──────────────────────────────────────────────────────────────────────── -->
     <div id="seo-content" aria-hidden="true" style="display:none">
       <header>
-        <h1>Radio Araucana 95.9 FM — La radio de Temuco en vivo, desde 1960</h1>
+        <h1>Radio Araucana 95.9 FM — La radio de Temuco, en vivo y en video, desde 1960</h1>
         <p><strong>Radio en Temuco, Región de La Araucanía, Chile.</strong> Sintoniza el <strong>95.9 FM</strong> en Temuco o escucha online en <a href="https://radioaraucana.cl/stream">radioaraucana.cl/stream</a>. Una de las radios más escuchadas de Temuco y La Araucanía.</p>
       </header>
 
@@ -339,6 +357,8 @@
         <h2>Enlaces</h2>
         <ul>
           <li><a href="/">Inicio</a></li>
+          <li><a href="/#podcast">Podcast Araucana Digital</a></li>
+          <li><a href="/#reels">Reels y shorts</a></li>
           <li><a href="/sobre-nosotros">Sobre nosotros</a></li>
           <li><a href="/faq">Preguntas frecuentes</a></li>
           <li><a href="https://radioaraucana.cl/stream">Stream Radio Araucana 95.9 FM</a></li>

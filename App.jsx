@@ -354,16 +354,26 @@ function useYouTube() {
 }
 
 /* ─── Video modal (reproductor embebido) ──────────────────────────────────── */
-function VideoModal({ video, vertical = false, onClose }) {
+function VideoModal({ video, vertical = false, onClose, playlist = [], onNavigate }) {
   const closeRef = useRef(null);
   const boxRef = useRef(null);
+  const idx = playlist.findIndex((v) => v.id === video.id);
+  const prev = idx > 0 ? playlist[idx - 1] : null;          // más reciente
+  const next = idx >= 0 && idx < playlist.length - 1 ? playlist[idx + 1] : null; // anterior en el tiempo
+  // Las flechas leen prev/next desde un ref para que el efecto de foco y
+  // teclado se monte una sola vez y no vuelva a enfocar "Cerrar" al navegar.
+  const navRef = useRef({ prev: null, next: null, onNavigate: null });
+  useEffect(() => { navRef.current = { prev, next, onNavigate }; }, [prev, next, onNavigate]);
 
   useEffect(() => {
-    const prev = document.activeElement;
+    const prevFocus = document.activeElement;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKey = (e) => {
       if (e.key === "Escape") { onClose(); return; }
+      const nav = navRef.current;
+      if (e.key === "ArrowLeft" && nav.prev && nav.onNavigate) { nav.onNavigate(nav.prev); return; }
+      if (e.key === "ArrowRight" && nav.next && nav.onNavigate) { nav.onNavigate(nav.next); return; }
       if (e.key !== "Tab" || !boxRef.current) return;
       const f = boxRef.current.querySelectorAll('button, a[href], iframe, [tabindex]:not([tabindex="-1"])');
       if (!f.length) return;
@@ -372,10 +382,11 @@ function VideoModal({ video, vertical = false, onClose }) {
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); prev?.focus?.(); };
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); prevFocus?.focus?.(); };
   }, [onClose]);
 
   const title = cleanTitle(video.title);
+  const label = vertical ? "reel" : "capítulo";
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(8,10,9,.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}>
       <div ref={boxRef} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
@@ -393,6 +404,17 @@ function VideoModal({ video, vertical = false, onClose }) {
             allowFullScreen
           />
         </div>
+        {playlist.length > 1 && onNavigate && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => prev && onNavigate(prev)} disabled={!prev} aria-label={prev ? `${vertical ? "Reel" : "Capítulo"} más reciente: ${cleanTitle(prev.title)}` : `No hay ${label} más reciente`} style={{ opacity: prev ? 1 : .4, maxWidth: "48%" }}>
+              <ChevronLeft size={16} aria-hidden="true" /> <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>Más reciente</span>
+            </button>
+            <span className="meta" style={{ whiteSpace: "nowrap" }}>{idx + 1} / {playlist.length}</span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => next && onNavigate(next)} disabled={!next} aria-label={next ? `${vertical ? "Reel" : "Capítulo"} anterior: ${cleanTitle(next.title)}` : `No hay ${label} anterior`} style={{ opacity: next ? 1 : .4, maxWidth: "48%" }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{vertical ? "Siguiente reel" : "Capítulo anterior"}</span> <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <a href={video.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><SvgYoutube size={16} /> Ver en YouTube <ArrowUpRight size={14} /></a>
           <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="btn btn-red btn-sm">Suscribirse al canal</a>
@@ -765,8 +787,11 @@ function SectionHead({ id, kicker, title, lede, aside }) {
 function PodcastSection({ data, onPlay }) {
   const ref = useReveal();
   const { loading, episodes } = data;
+  const [expanded, setExpanded] = useState(false);
   const [featured, ...rest] = episodes;
-  const list = rest.slice(0, 5);
+  const PREVIEW = 5;
+  const list = expanded ? rest : rest.slice(0, PREVIEW);
+  const hidden = rest.length - list.length;
 
   return (
     <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
@@ -825,7 +850,12 @@ function PodcastSection({ data, onPlay }) {
                   </div>
                 </button>
               ))}
-              <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="footer-link" style={{ padding: "14px 14px 0", fontWeight: 700, fontSize: 14, color: "var(--green)" }}>Todos los capítulos en YouTube <ArrowUpRight size={15} aria-hidden="true" style={{ marginLeft: 6 }} /></a>
+              {hidden > 0 && (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(true)} aria-expanded={false} style={{ alignSelf: "flex-start", margin: "12px 14px 0" }}>
+                  Ver {hidden} {hidden === 1 ? "capítulo más" : "capítulos más"} <ChevronDown size={16} aria-hidden="true" />
+                </button>
+              )}
+              <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="footer-link" style={{ padding: "14px 14px 0", fontWeight: 700, fontSize: 14, color: "var(--green)" }}>Archivo completo en YouTube <ArrowUpRight size={15} aria-hidden="true" style={{ marginLeft: 6 }} /></a>
             </div>
           </div>
         )}
@@ -1402,6 +1432,7 @@ function AppInner() {
   };
   const openVideo = useCallback((video, vertical) => setModal({ video, vertical }), []);
   const closeVideo = useCallback(() => setModal(null), []);
+  const navigateVideo = useCallback((v) => setModal((m) => ({ video: v, vertical: Boolean(m?.vertical) })), []);
 
   const araucanaPlaying = station === "araucana";
   const toggleAraucana = () => play("araucana");
@@ -1427,7 +1458,15 @@ function AppInner() {
       </main>
       <FloatingPlayer station={station} play={play} />
       <WhatsAppWidget />
-      {modal && <VideoModal video={modal.video} vertical={modal.vertical} onClose={closeVideo} />}
+      {modal && (
+        <VideoModal
+          video={modal.video}
+          vertical={modal.vertical}
+          onClose={closeVideo}
+          playlist={modal.vertical ? yt.shorts : yt.episodes}
+          onNavigate={navigateVideo}
+        />
+      )}
     </>
   );
 }

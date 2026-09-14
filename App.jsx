@@ -912,7 +912,8 @@ function ReelsSection({ data, onPlay }) {
             : shorts.map((s) => (
               <div key={s.id} role="listitem" style={{ display: "contents" }}>
                 <button className="reel-card" onClick={() => onPlay(s, true)} aria-label={`Reproducir reel: ${cleanTitle(s.title)}`}>
-                  <img src={s.thumb} alt="" width="405" height="720" loading="lazy" decoding="async" />
+                  <img src={s.thumb} alt="" width="405" height="720" loading="lazy" decoding="async"
+                    onError={(e) => { if (s.thumbFallback && e.currentTarget.src !== s.thumbFallback) e.currentTarget.src = s.thumbFallback; }} />
                   <div className="scrim" aria-hidden="true" />
                   <div style={{ position: "absolute", top: 14, left: 14 }}><span className="play-ring" aria-hidden="true"><Play size={18} fill="currentColor" /></span></div>
                   <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 16 }}>

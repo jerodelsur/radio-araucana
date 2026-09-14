@@ -5,9 +5,12 @@
 // Fuente: el feed Atom público del canal (sin API key ni cuota). Trae los 15
 // videos más recientes con título, fecha, miniatura, descripción y vistas.
 //
-// Un video es "short" si YouTube publica su miniatura vertical
-// (i.ytimg.com/vi/<id>/oardefault.jpg responde 200; para videos horizontales
-// responde 404). Como apoyo se mira también "#shorts" en el título.
+// Un video es "short" si YouTube publica alguna de sus miniaturas verticales
+// (i.ytimg.com/vi/<id>/oar2.jpg a 1080×1920, o oardefault.jpg; para videos
+// horizontales ambas responden 404). No todos los shorts tienen las dos: hay
+// shorts con oar2 y sin oardefault, así que se prueban en orden y se guarda
+// cuál existe para usarla como miniatura. Como apoyo se mira también
+// "#shorts" en el título.
 //
 // Cache: CDN 30 min + stale-while-revalidate 24 h, así el feed se consulta
 // unas pocas veces por hora aunque la portada reciba mucho tráfico. La
@@ -19,7 +22,8 @@ const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_
 
 export const config = { runtime: "nodejs" };
 
-const shortCache = new Map(); // videoId -> boolean
+const shortCache = new Map(); // videoId -> { short: boolean, thumb: string|null }
+const VERTICAL_THUMBS = ["oar2.jpg", "oardefault.jpg"];
 
 function decode(s = "") {
   return s
@@ -48,17 +52,18 @@ function parseFeed(xml) {
   }).filter((v) => v.id && v.title);
 }
 
-async function isShort(video) {
+async function classify(video) {
   if (shortCache.has(video.id)) return shortCache.get(video.id);
-  let result = /#shorts?\b/i.test(video.title);
-  if (!result) {
+  let thumb = null;
+  for (const name of VERTICAL_THUMBS) {
     try {
-      const r = await fetch(`https://i.ytimg.com/vi/${video.id}/oardefault.jpg`, { method: "HEAD" });
-      result = r.status === 200;
+      const r = await fetch(`https://i.ytimg.com/vi/${video.id}/${name}`, { method: "HEAD" });
+      if (r.status === 200) { thumb = `https://i.ytimg.com/vi/${video.id}/${name}`; break; }
     } catch {
-      result = false;
+      // sin red hacia i.ytimg.com: seguimos con el siguiente candidato
     }
   }
+  const result = { short: Boolean(thumb) || /#shorts?\b/i.test(video.title), thumb };
   shortCache.set(video.id, result);
   return result;
 }
@@ -77,21 +82,22 @@ export default async function handler(req, res) {
     const xml = await r.text();
     const videos = parseFeed(xml);
 
-    const flags = await Promise.all(videos.map(isShort));
+    const kinds = await Promise.all(videos.map(classify));
     const episodes = [];
     const shorts = [];
     videos.forEach((v, i) => {
+      const { short, thumb } = kinds[i];
+      // Para un short sin miniatura vertical, hqdefault trae el cuadro
+      // vertical centrado sobre 16:9; la tarjeta lo recorta con object-fit.
+      const vertical = thumb || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
       const item = {
         ...v,
         url: `https://www.youtube.com/watch?v=${v.id}`,
-        thumb: flags[i]
-          ? `https://i.ytimg.com/vi/${v.id}/oardefault.jpg`
-          : `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
-        thumbHd: flags[i]
-          ? `https://i.ytimg.com/vi/${v.id}/oardefault.jpg`
-          : `https://i.ytimg.com/vi/${v.id}/maxresdefault.jpg`,
+        thumb: short ? vertical : `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+        thumbHd: short ? vertical : `https://i.ytimg.com/vi/${v.id}/maxresdefault.jpg`,
+        thumbFallback: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
       };
-      if (flags[i]) {
+      if (short) {
         item.url = `https://www.youtube.com/shorts/${v.id}`;
         shorts.push(item);
       } else {

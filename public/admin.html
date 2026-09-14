@@ -453,7 +453,7 @@
       news: "Las 4 noticias más recientes que aparecen en la portada.",
       programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
       regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
-      videos: "Repeticiones (capítulos guardados de YouTube) en la grilla 'Últimos videos' de la portada.",
+      videos: "Lista de videos de YouTube para elegir el \"video destacado\" del reproductor de la portada. La sección Podcast y los Reels se llenan solos desde el canal de YouTube; esta lista solo se muestra como respaldo si el canal no responde.",
       whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
     })[key] || "";
   }
@@ -587,7 +587,7 @@
       cardHeader(`Video ${idx + 1}`, idx, list),
       textField("Título", item.title, (v) => { item.title = v; markDirty(); }),
       textField("URL de YouTube", item.youtube, (v) => { item.youtube = v; markDirty(); }, "url",
-        "Pega el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente y al clickear el card, abre el video en YouTube."),
+        "Pega el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente. Los videos de esta lista se pueden elegir como \"video destacado\" en Configuración."),
       el("div", { class: "field-row" },
         textField("Programa / categoría (opcional)", item.programa, (v) => { item.programa = v; markDirty(); }, "text",
           "Ej: «Trenzando Voces». Aparece como etiqueta sobre la portada."),

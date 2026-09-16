@@ -101,6 +101,27 @@
   .body-row textarea{flex:1}
   .body-row .icon-btn{flex-shrink:0}
 
+  /* ─── ORDEN DE VIDEOS ─── */
+  .yt-cols{display:grid;grid-template-columns:3fr 2fr;gap:24px;align-items:start}
+  @media (max-width:900px){.yt-cols{grid-template-columns:1fr}}
+  .yt-col-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .yt-col-title{font-size:13px;font-weight:600;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em}
+  .yt-reset{background:none;border:none;color:var(--bone-dim);font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
+  .yt-reset:hover{color:var(--bone)}
+  .yt-list{display:flex;flex-direction:column;gap:6px}
+  .yt-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+  .yt-row.is-hidden{opacity:.45}
+  .yt-pos{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
+  .yt-thumb{width:72px;height:40px;border-radius:4px;object-fit:cover;background:rgba(255,255,255,.04);flex-shrink:0}
+  .yt-thumb.vertical{width:30px;height:52px}
+  .yt-info{flex:1;min-width:0}
+  .yt-title{font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .yt-meta{font-size:11px;color:var(--muted);margin-top:2px}
+  .yt-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;margin-right:6px;background:rgba(125,187,94,.15);color:var(--green-bright)}
+  .yt-badge.warn{background:rgba(212,160,23,.15);color:var(--gold)}
+  .yt-actions{display:flex;gap:4px;flex-shrink:0}
+  .yt-actions .icon-btn{width:28px;height:28px;font-size:13px}
+
   /* ─── TOAST ─── */
   #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--card);border:1px solid var(--border);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transition:transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
   #toast.visible{transform:translateX(-50%) translateY(0)}
@@ -246,6 +267,7 @@
     { id: "news",     label: "Noticias",       render: () => renderList("news", newsCard, renderNewsToggle()) },
     { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
+    { id: "ytOrder",  label: "Orden de videos", render: renderYouTubeOrder },
     { id: "videos",   label: "Videos",         render: () => renderList("videos", videoCard) },
     { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
   ];
@@ -437,6 +459,139 @@
       el("p", { class: "field-hint" },
         "Enciéndelo solo cuando exista un proceso que actualice las noticias todos los días. Las noticias de abajo se guardan igual aunque esté apagado."),
     );
+  }
+
+  /* ───────── Orden de videos (settings.youtubeOrder) ───────── */
+  // Guarda { episodes: [{id,title,published}], shorts: [...], hidden: [id] }.
+  // En la portada, los videos que no están en la lista guardada (publicados
+  // después de ordenar) van primero por fecha; luego el orden guardado; los
+  // ocultos no se muestran. Misma lógica que applyYouTubeOrder en App.jsx.
+  let ytFeed = null; // { episodes, shorts } | { error }
+  let ytLoading = false;
+
+  function loadYtFeed() {
+    if (ytLoading) return;
+    ytLoading = true;
+    fetch("/api/youtube", { cache: "no-store" })
+      .then((r) => r.json().then((d) => (r.ok ? d : Promise.reject(new Error(d.error || `HTTP ${r.status}`)))))
+      .then((d) => { ytFeed = { episodes: d.episodes || [], shorts: d.shorts || [] }; })
+      .catch((err) => { ytFeed = { error: err.message }; })
+      .finally(() => { ytLoading = false; if (currentTab === "ytOrder") renderBody(); });
+  }
+
+  function ytOrderState() {
+    const o = content.settings.youtubeOrder;
+    return o && typeof o === "object" ? o : null;
+  }
+
+  // Lista completa tal como la verá el admin: nuevos primero, luego guardados.
+  // Incluye los ocultos (atenuados) para poder volver a mostrarlos.
+  function ytMergedList(kind) {
+    const feedItems = ytFeed[kind] || [];
+    const saved = ytOrderState()?.[kind] || [];
+    const byId = new Map(feedItems.map((v) => [v.id, v]));
+    const savedIds = new Set(saved.map((x) => x.id));
+    const fresh = feedItems.filter((v) => !savedIds.has(v.id)).map((v) => ({ ...v, _new: saved.length > 0 }));
+    const kept = saved.map((x) => byId.get(x.id) || { ...x, _gone: true });
+    return [...fresh, ...kept];
+  }
+
+  function ytCommit(kind, list) {
+    const o = ytOrderState() || {};
+    o[kind] = list.map((v) => ({ id: v.id, title: v.title || "", published: v.published || "" }));
+    if (!Array.isArray(o.hidden)) o.hidden = [];
+    content.settings.youtubeOrder = o;
+    markDirty();
+    renderBody();
+  }
+
+  function ytColumn(kind, label, vertical) {
+    const list = ytMergedList(kind);
+    const hidden = new Set(ytOrderState()?.hidden || []);
+    const fmt = (iso) => {
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+    };
+    const move = (from, to) => {
+      const next = list.slice();
+      const [it] = next.splice(from, 1);
+      next.splice(to, 0, it);
+      ytCommit(kind, next);
+    };
+    let visiblePos = 0;
+    const rows = list.map((v, i) => {
+      const isHidden = hidden.has(v.id);
+      const pos = isHidden ? "–" : String(++visiblePos);
+      const thumb = el("img", { class: "yt-thumb" + (vertical ? " vertical" : ""), alt: "", loading: "lazy",
+        src: v.thumb || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg` });
+      return el("div", { class: "yt-row" + (isHidden ? " is-hidden" : "") },
+        el("span", { class: "yt-pos" }, pos),
+        thumb,
+        el("div", { class: "yt-info" },
+          el("div", { class: "yt-title", title: v.title }, v.title || v.id),
+          el("div", { class: "yt-meta" },
+            v._new ? el("span", { class: "yt-badge" }, "Nuevo") : null,
+            v._gone ? el("span", { class: "yt-badge warn", title: "Ya no está entre los últimos 15 del canal; se sigue mostrando con los datos guardados." }, "Antiguo") : null,
+            isHidden ? el("span", { class: "yt-badge warn" }, "Oculto") : null,
+            fmt(v.published)),
+        ),
+        el("div", { class: "yt-actions" },
+          el("button", { class: "icon-btn", title: "Poner primero", disabled: i === 0 ? "" : null, onClick: () => move(i, 0) }, "⤒"),
+          el("button", { class: "icon-btn", title: "Subir", disabled: i === 0 ? "" : null, onClick: () => move(i, i - 1) }, "↑"),
+          el("button", { class: "icon-btn", title: "Bajar", disabled: i === list.length - 1 ? "" : null, onClick: () => move(i, i + 1) }, "↓"),
+          el("button", { class: "icon-btn", title: isHidden ? "Mostrar en la portada" : "Ocultar de la portada", onClick: () => {
+            const o = ytOrderState() || {};
+            const h = new Set(o.hidden || []);
+            if (isHidden) h.delete(v.id); else h.add(v.id);
+            o.hidden = [...h];
+            content.settings.youtubeOrder = o;
+            ytCommit(kind, list);
+          } }, isHidden ? "◌" : "●"),
+          v._gone ? el("button", { class: "icon-btn danger", title: "Quitar de la lista", onClick: () => {
+            ytCommit(kind, list.filter((x) => x.id !== v.id));
+          } }, "×") : null,
+        ),
+      );
+    });
+    const hasOrder = (ytOrderState()?.[kind] || []).length > 0;
+    return el("div", null,
+      el("div", { class: "yt-col-head" },
+        el("span", { class: "yt-col-title" }, label),
+        hasOrder ? el("button", { class: "yt-reset", onClick: () => {
+          if (!confirm(`¿Volver a ordenar ${label.toLowerCase()} por fecha?`)) return;
+          const o = ytOrderState();
+          const ids = new Set(list.map((x) => x.id));
+          o[kind] = [];
+          o.hidden = (o.hidden || []).filter((id) => !ids.has(id));
+          markDirty();
+          renderBody();
+        } }, "Volver a orden por fecha") : el("span", { class: "yt-meta" }, "Por fecha (automático)"),
+      ),
+      list.length ? el("div", { class: "yt-list" }, rows) : el("p", { class: "field-hint" }, "No hay videos en el canal."),
+    );
+  }
+
+  function renderYouTubeOrder() {
+    const panel = el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, "Orden de videos en la portada"),
+      el("p", { class: "panel-sub" },
+        "El primer capítulo es el que aparece grande en la sección Podcast; los reels se muestran en el orden de esta lista. Los videos que subas después de ordenar aparecen primero (marcados «Nuevo») hasta que los muevas. ● = visible, ◌ = oculto. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+    );
+    if (!ytFeed) {
+      loadYtFeed();
+      panel.appendChild(el("p", { class: "field-hint" }, "Cargando videos del canal…"));
+      return panel;
+    }
+    if (ytFeed.error) {
+      panel.appendChild(el("p", { class: "field-hint", style: "color:#f87171" }, `No se pudo leer el canal de YouTube (${ytFeed.error}).`));
+      panel.appendChild(el("button", { class: "btn btn-ghost", onClick: () => { ytFeed = null; renderBody(); } }, "Reintentar"));
+      return panel;
+    }
+    panel.appendChild(el("div", { class: "yt-cols" },
+      ytColumn("episodes", "Capítulos (videos largos)", false),
+      ytColumn("shorts", "Reels / Shorts", true),
+    ));
+    return panel;
   }
 
   function panelTitleFor(key) {

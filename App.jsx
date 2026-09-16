@@ -341,8 +341,11 @@ function applyYouTubeOrder(items, saved = [], hidden = [], vertical = false) {
     published: s.published || "",
     views: 0,
     url: vertical ? `https://www.youtube.com/shorts/${s.id}` : `https://www.youtube.com/watch?v=${s.id}`,
-    thumb: `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
-    thumbHd: vertical ? `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg` : `https://i.ytimg.com/vi/${s.id}/maxresdefault.jpg`,
+    // En un short, hqdefault es la miniatura diseñada que se subió a YouTube;
+    // oar2 es un cuadro del video, igual que en los reels que vienen del feed.
+    thumb: vertical ? `https://i.ytimg.com/vi/${s.id}/oar2.jpg` : `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
+    thumbHd: vertical ? `https://i.ytimg.com/vi/${s.id}/oar2.jpg` : `https://i.ytimg.com/vi/${s.id}/maxresdefault.jpg`,
+    thumbFallback: `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
   })).filter(Boolean);
   return [...fresh, ...ordered].filter((v) => !hidden.includes(v.id));
 }

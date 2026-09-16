@@ -12,9 +12,11 @@
 // cuál existe para usarla como miniatura. Como apoyo se mira también
 // "#shorts" en el título.
 //
-// Cache: CDN 30 min + stale-while-revalidate 24 h, así el feed se consulta
-// unas pocas veces por hora aunque la portada reciba mucho tráfico. La
-// clasificación de shorts se memoriza en el lambda (un video no cambia de tipo).
+// Cache: CDN 5 min + stale-while-revalidate 10 min. Un capítulo recién
+// publicado aparece en la portada en pocos minutos y el feed se consulta a lo
+// más una vez cada 5 min por región del CDN, aunque la portada reciba mucho
+// tráfico. La clasificación de shorts se memoriza en el lambda (un video no
+// cambia de tipo).
 
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UC1VJdF1eurA5mZ42diw83Zw";
 const CHANNEL_URL = "https://www.youtube.com/@araucanafm";
@@ -105,7 +107,7 @@ export default async function handler(req, res) {
       }
     });
 
-    res.setHeader("Cache-Control", "public, s-maxage=1800, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     return res.status(200).json({
       updatedAt: new Date().toISOString(),
       channel: { id: CHANNEL_ID, url: CHANNEL_URL },

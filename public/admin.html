@@ -531,7 +531,8 @@
       const isHidden = hidden.has(v.id);
       const pos = isHidden ? "–" : String(++visiblePos);
       const thumb = el("img", { class: "yt-thumb" + (vertical ? " vertical" : ""), alt: "", loading: "lazy",
-        src: v.thumb || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg` });
+        src: v.thumb || `https://i.ytimg.com/vi/${v.id}/${vertical ? "oar2" : "hqdefault"}.jpg`,
+        onError: (e) => { const fb = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`; if (e.currentTarget.src !== fb) e.currentTarget.src = fb; } });
       return el("div", { class: "yt-row" + (isHidden ? " is-hidden" : "") },
         el("span", { class: "yt-pos" }, pos),
         thumb,

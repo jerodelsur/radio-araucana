@@ -2,8 +2,12 @@
 // Público: últimos videos del canal de YouTube de Radio Araucana, separados en
 // capítulos (podcast / entrevistas) y shorts (reels verticales).
 //
-// Fuente: el feed Atom público del canal (sin API key ni cuota). Trae los 15
-// videos más recientes con título, fecha, miniatura, descripción y vistas.
+// Fuente: feeds Atom públicos (sin API key ni cuota). YouTube expone para cada
+// canal UC<x> dos listas automáticas: UULF<x> (solo videos largos) y UUSH<x>
+// (solo shorts). Se leen ambas en paralelo, así los capítulos no quedan
+// desplazados cuando se suben muchos reels seguidos: hay hasta 15 de cada tipo.
+// Si esas listas fallan, se cae al feed general del canal (15 videos
+// mezclados) y se clasifica cada uno.
 //
 // Un video es "short" si YouTube publica alguna de sus miniaturas verticales
 // (i.ytimg.com/vi/<id>/oar2.jpg a 1080×1920, o oardefault.jpg; para videos
@@ -12,15 +16,20 @@
 // cuál existe para usarla como miniatura. Como apoyo se mira también
 // "#shorts" en el título.
 //
+// El orden manual que se define en /admin (settings.youtubeOrder) se aplica en
+// el cliente; este endpoint entrega los videos por fecha.
+//
 // Cache: CDN 5 min + stale-while-revalidate 10 min. Un capítulo recién
-// publicado aparece en la portada en pocos minutos y el feed se consulta a lo
-// más una vez cada 5 min por región del CDN, aunque la portada reciba mucho
+// publicado aparece en la portada en pocos minutos y los feeds se consultan a
+// lo más una vez cada 5 min por región del CDN, aunque la portada reciba mucho
 // tráfico. La clasificación de shorts se memoriza en el lambda (un video no
 // cambia de tipo).
 
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UC1VJdF1eurA5mZ42diw83Zw";
 const CHANNEL_URL = "https://www.youtube.com/@araucanafm";
 const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+const PLAYLIST_FEED = (prefix) =>
+  `https://www.youtube.com/feeds/videos.xml?playlist_id=${prefix}${CHANNEL_ID.replace(/^UC/, "")}`;
 
 export const config = { runtime: "nodejs" };
 
@@ -70,6 +79,14 @@ async function classify(video) {
   return result;
 }
 
+async function fetchFeed(url) {
+  const r = await fetch(url, {
+    headers: { "user-agent": "Mozilla/5.0 (compatible; radioaraucana.cl feed reader)" },
+  });
+  if (!r.ok) throw new Error(`feed ${r.status}`);
+  return parseFeed(await r.text());
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -77,14 +94,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(FEED_URL, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; radioaraucana.cl feed reader)" },
-    });
-    if (!r.ok) throw new Error(`feed ${r.status}`);
-    const xml = await r.text();
-    const videos = parseFeed(xml);
+    let longs, shortsRaw;
+    try {
+      [longs, shortsRaw] = await Promise.all([fetchFeed(PLAYLIST_FEED("UULF")), fetchFeed(PLAYLIST_FEED("UUSH"))]);
+    } catch (err) {
+      console.warn("[/api/youtube] listas UULF/UUSH no disponibles, uso el feed del canal:", err?.message ?? err);
+    }
 
-    const kinds = await Promise.all(videos.map(classify));
+    let kinds;
+    let videos;
+    if (longs && shortsRaw && longs.length + shortsRaw.length > 0) {
+      videos = [...longs, ...shortsRaw];
+      // Los largos ya vienen clasificados; a los shorts solo les buscamos la
+      // miniatura vertical.
+      kinds = await Promise.all(videos.map((v, i) =>
+        i < longs.length ? { short: false, thumb: null } : classify(v).then((k) => ({ short: true, thumb: k.thumb }))));
+    } else {
+      videos = await fetchFeed(FEED_URL);
+      kinds = await Promise.all(videos.map(classify));
+    }
+
     const episodes = [];
     const shorts = [];
     videos.forEach((v, i) => {

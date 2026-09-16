@@ -321,11 +321,38 @@ function useReveal() {
 }
 
 /* ─── YouTube data (podcast + shorts) ─────────────────────────────────────── */
+// Orden manual definido en /admin (settings.youtubeOrder):
+//   { episodes: [{ id, title, published }], shorts: [...], hidden: [id] }
+// Los videos que aún no están en la lista guardada (publicados después de
+// ordenar) van primero, por fecha; después va el orden guardado. Un video
+// guardado que ya salió del feed (más antiguo que los últimos 15) se sigue
+// mostrando con los datos guardados. Los ocultos no aparecen.
+// La misma lógica vive en public/admin.html (applyOrder): mantenerlas iguales.
+function applyYouTubeOrder(items, saved = [], hidden = [], vertical = false) {
+  if (!Array.isArray(saved) || saved.length === 0) {
+    return hidden.length ? items.filter((v) => !hidden.includes(v.id)) : items;
+  }
+  const byId = new Map(items.map((v) => [v.id, v]));
+  const savedIds = new Set(saved.map((s) => s.id));
+  const fresh = items.filter((v) => !savedIds.has(v.id));
+  const ordered = saved.map((s) => byId.get(s.id) || (s.id && {
+    id: s.id,
+    title: s.title || "",
+    published: s.published || "",
+    views: 0,
+    url: vertical ? `https://www.youtube.com/shorts/${s.id}` : `https://www.youtube.com/watch?v=${s.id}`,
+    thumb: `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
+    thumbHd: vertical ? `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg` : `https://i.ytimg.com/vi/${s.id}/maxresdefault.jpg`,
+  })).filter(Boolean);
+  return [...fresh, ...ordered].filter((v) => !hidden.includes(v.id));
+}
+
 function useYouTube() {
-  const { videos } = useSiteContent();
+  const { videos, settings } = useSiteContent();
   const videosRef = useRef(videos);
   useEffect(() => { videosRef.current = videos; }, [videos]);
-  const [state, setState] = useState({ loading: true, episodes: [], shorts: [], fromFallback: false });
+  const [raw, setState] = useState({ loading: true, episodes: [], shorts: [], fromFallback: false });
+  const order = settings?.youtubeOrder;
 
   // Una sola consulta por visita: el fallback lee los videos del admin desde
   // el ref para no relanzar el fetch cuando /api/content actualiza el contexto.
@@ -350,7 +377,15 @@ function useYouTube() {
     return () => { alive = false; };
   }, []);
 
-  return state;
+  return useMemo(() => {
+    if (raw.loading || raw.fromFallback || !order) return raw;
+    const hidden = Array.isArray(order.hidden) ? order.hidden : [];
+    return {
+      ...raw,
+      episodes: applyYouTubeOrder(raw.episodes, order.episodes, hidden, false),
+      shorts: applyYouTubeOrder(raw.shorts, order.shorts, hidden, true),
+    };
+  }, [raw, order]);
 }
 
 /* ─── Video modal (reproductor embebido) ──────────────────────────────────── */
@@ -792,6 +827,8 @@ function PodcastSection({ data, onPlay }) {
   const PREVIEW = 5;
   const list = expanded ? rest : rest.slice(0, PREVIEW);
   const hidden = rest.length - list.length;
+  // Con orden manual el primero puede no ser el más nuevo: la etiqueta lo dice.
+  const featuredIsLatest = Boolean(featured) && episodes.every((e) => !e.published || e.published <= (featured.published || ""));
 
   return (
     <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
@@ -825,7 +862,7 @@ function PodcastSection({ data, onPlay }) {
                   onError={(e) => { if (featured.thumb && e.currentTarget.src !== featured.thumb) e.currentTarget.src = featured.thumb; }} />
                 <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
                 <div style={{ position: "absolute", top: 18, left: 18 }}>
-                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>Último capítulo</span>
+                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>{featuredIsLatest ? "Último capítulo" : "Capítulo destacado"}</span>
                 </div>
                 <div style={{ position: "absolute", right: 20, bottom: 20 }}>
                   <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>

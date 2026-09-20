@@ -270,20 +270,6 @@ function Mosaic({ seed = 7, opacity = 0.35, style, drift = true, mask = "linear-
   );
 }
 
-const fmtViews = (n) => {
-  if (!n) return "";
-  const v = new Intl.NumberFormat("es-CL", { notation: "compact", maximumFractionDigits: 1 }).format(n);
-  return `${v} vistas`;
-};
-const fmtDate = (iso) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const days = Math.round((Date.now() - d.getTime()) / 86400000);
-  if (days <= 0) return "hoy";
-  if (days < 7) return new Intl.RelativeTimeFormat("es-CL", { numeric: "auto" }).format(-days, "day");
-  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: days > 300 ? "numeric" : undefined }).format(d);
-};
 const cleanTitle = (t = "") => t.replace(/#shorts?/gi, "").replace(/\|\s*Araucana Digital\s*$/i, "").replace(/\s{2,}/g, " ").trim();
 
 // Extract YouTube videoId from common URL formats
@@ -320,75 +306,47 @@ function useReveal() {
   return ref;
 }
 
-/* ─── YouTube data (podcast + shorts) ─────────────────────────────────────── */
-// Orden manual definido en /admin (settings.youtubeOrder):
-//   { episodes: [{ id, title, published }], shorts: [...], hidden: [id] }
-// Los videos que aún no están en la lista guardada (publicados después de
-// ordenar) van primero, por fecha; después va el orden guardado. Un video
-// guardado que ya salió del feed (más antiguo que los últimos 15) se sigue
-// mostrando con los datos guardados. Los ocultos no aparecen.
-// La misma lógica vive en public/admin.html (applyOrder): mantenerlas iguales.
-function applyYouTubeOrder(items, saved = [], hidden = [], vertical = false) {
-  if (!Array.isArray(saved) || saved.length === 0) {
-    return hidden.length ? items.filter((v) => !hidden.includes(v.id)) : items;
-  }
-  const byId = new Map(items.map((v) => [v.id, v]));
-  const savedIds = new Set(saved.map((s) => s.id));
-  const fresh = items.filter((v) => !savedIds.has(v.id));
-  const ordered = saved.map((s) => byId.get(s.id) || (s.id && {
-    id: s.id,
-    title: s.title || "",
-    published: s.published || "",
-    views: 0,
-    url: vertical ? `https://www.youtube.com/shorts/${s.id}` : `https://www.youtube.com/watch?v=${s.id}`,
+/* ─── Podcast y reels (lista manual de /admin) ────────────────────────────── */
+// content.videos es la lista completa y ordenada a mano en /admin → «Podcast y
+// reels»: [{ youtube, title, kind }], donde kind "short" es un reel vertical y
+// cualquier otro valor (o ninguno) es un capítulo. El orden de la lista es el
+// orden de la portada: el primer capítulo es el destacado grande.
+//
+// Antes esto salía de /api/youtube, que leía los feeds Atom del canal. YouTube
+// los dio de baja (404 para cualquier canal, sep 2026), así que la lista pasó a
+// ser manual: no depende de ningún servicio externo y la portada no hace un
+// fetch extra. Sin feed no hay fecha ni vistas, y tampoco tendría sentido
+// mostrarlas: el orden es editorial, no cronológico.
+function toVideoItem(v, vertical) {
+  const id = getYouTubeId(v?.youtube);
+  if (!id) return null;
+  return {
+    id,
+    title: v.title || "",
+    url: vertical ? `https://www.youtube.com/shorts/${id}` : `https://www.youtube.com/watch?v=${id}`,
     // En un short, hqdefault es la miniatura diseñada que se subió a YouTube;
-    // oar2 es un cuadro del video, igual que en los reels que vienen del feed.
-    thumb: vertical ? `https://i.ytimg.com/vi/${s.id}/oar2.jpg` : `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
-    thumbHd: vertical ? `https://i.ytimg.com/vi/${s.id}/oar2.jpg` : `https://i.ytimg.com/vi/${s.id}/maxresdefault.jpg`,
-    thumbFallback: `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
-  })).filter(Boolean);
-  return [...fresh, ...ordered].filter((v) => !hidden.includes(v.id));
+    // oar2 es un cuadro del propio video, que es lo que se quiere en la fila
+    // vertical. Si el video no tiene oar2, la tarjeta cae a hqdefault.
+    thumb: vertical ? `https://i.ytimg.com/vi/${id}/oar2.jpg` : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    thumbHd: vertical ? `https://i.ytimg.com/vi/${id}/oar2.jpg` : `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`,
+    thumbFallback: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+  };
 }
 
 function useYouTube() {
-  const { videos, settings } = useSiteContent();
-  const videosRef = useRef(videos);
-  useEffect(() => { videosRef.current = videos; }, [videos]);
-  const [raw, setState] = useState({ loading: true, episodes: [], shorts: [], fromFallback: false });
-  const order = settings?.youtubeOrder;
-
-  // Una sola consulta por visita: el fallback lee los videos del admin desde
-  // el ref para no relanzar el fetch cuando /api/content actualiza el contexto.
-  useEffect(() => {
-    let alive = true;
-    const fallback = () => {
-      const eps = (videosRef.current || []).map((v) => {
-        const id = getYouTubeId(v.youtube);
-        return id ? { id, title: v.title, url: v.youtube, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, thumbHd: `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`, published: "", views: 0 } : null;
-      }).filter(Boolean);
-      if (alive) setState({ loading: false, episodes: eps, shorts: [], fromFallback: true });
-    };
-    fetch("/api/youtube")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!alive) return;
-        if (data && Array.isArray(data.episodes) && (data.episodes.length || data.shorts?.length)) {
-          setState({ loading: false, episodes: data.episodes, shorts: data.shorts || [], fromFallback: false });
-        } else fallback();
-      })
-      .catch(fallback);
-    return () => { alive = false; };
-  }, []);
-
+  const content = useSiteContent();
+  const videos = content.videos;
+  // `loaded` lo pone App cuando llega /api/content: mientras tanto se ven los
+  // esqueletos y no los videos del bundle, que pueden estar desactualizados.
+  const loading = !content.loaded;
   return useMemo(() => {
-    if (raw.loading || raw.fromFallback || !order) return raw;
-    const hidden = Array.isArray(order.hidden) ? order.hidden : [];
+    const list = Array.isArray(videos) ? videos : [];
     return {
-      ...raw,
-      episodes: applyYouTubeOrder(raw.episodes, order.episodes, hidden, false),
-      shorts: applyYouTubeOrder(raw.shorts, order.shorts, hidden, true),
+      loading,
+      episodes: list.filter((v) => v?.kind !== "short").map((v) => toVideoItem(v, false)).filter(Boolean),
+      shorts: list.filter((v) => v?.kind === "short").map((v) => toVideoItem(v, true)).filter(Boolean),
     };
-  }, [raw, order]);
+  }, [videos, loading]);
 }
 
 /* ─── Video modal (reproductor embebido) ──────────────────────────────────── */
@@ -824,14 +782,19 @@ function SectionHead({ id, kicker, title, lede, aside }) {
 
 function PodcastSection({ data, onPlay }) {
   const ref = useReveal();
+  const { settings } = useSiteContent();
   const { loading, episodes } = data;
   const [expanded, setExpanded] = useState(false);
-  const [featured, ...rest] = episodes;
+  // El capítulo grande se marca con ★ en /admin (settings.featuredEpisode), sin
+  // depender del orden de la lista: así se puede promocionar un capítulo
+  // antiguo arriba y dejar los recientes en la columna. Sin marca —o si el
+  // marcado ya no está en la lista— vuelve a ser el primero.
+  const pickedId = getYouTubeId(settings?.featuredEpisode);
+  const featured = (pickedId && episodes.find((e) => e.id === pickedId)) || episodes[0];
+  const rest = featured ? episodes.filter((e) => e.id !== featured.id) : [];
   const PREVIEW = 5;
   const list = expanded ? rest : rest.slice(0, PREVIEW);
   const hidden = rest.length - list.length;
-  // Con orden manual el primero puede no ser el más nuevo: la etiqueta lo dice.
-  const featuredIsLatest = Boolean(featured) && episodes.every((e) => !e.published || e.published <= (featured.published || ""));
 
   return (
     <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
@@ -865,7 +828,7 @@ function PodcastSection({ data, onPlay }) {
                   onError={(e) => { if (featured.thumb && e.currentTarget.src !== featured.thumb) e.currentTarget.src = featured.thumb; }} />
                 <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
                 <div style={{ position: "absolute", top: 18, left: 18 }}>
-                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>{featuredIsLatest ? "Último capítulo" : "Capítulo destacado"}</span>
+                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>Capítulo destacado</span>
                 </div>
                 <div style={{ position: "absolute", right: 20, bottom: 20 }}>
                   <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
@@ -873,7 +836,7 @@ function PodcastSection({ data, onPlay }) {
               </button>
               <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
                 <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(featured.title)}</p>
-                <p className="meta">{[fmtDate(featured.published), fmtViews(featured.views), "Araucana Digital"].filter(Boolean).join(" · ")}</p>
+                <p className="meta">Araucana Digital</p>
               </div>
             </div>
 
@@ -885,8 +848,7 @@ function PodcastSection({ data, onPlay }) {
                     <img src={ep.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)", marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(ep.title)}</p>
-                    <p className="meta">{[fmtDate(ep.published), fmtViews(ep.views)].filter(Boolean).join(" · ")}</p>
+                    <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(ep.title)}</p>
                   </div>
                 </button>
               ))}
@@ -957,8 +919,7 @@ function ReelsSection({ data, onPlay }) {
                   <div className="scrim" aria-hidden="true" />
                   <div style={{ position: "absolute", top: 14, left: 14 }}><span className="play-ring" aria-hidden="true"><Play size={18} fill="currentColor" /></span></div>
                   <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 16 }}>
-                    <p style={K({ fontWeight: 700, fontSize: 14, lineHeight: 1.3, color: "#fff", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 6 })}>{cleanTitle(s.title)}</p>
-                    <p className="meta" style={{ color: "rgba(255,255,255,.7)" }}>{fmtViews(s.views) || fmtDate(s.published)}</p>
+                    <p style={K({ fontWeight: 700, fontSize: 14, lineHeight: 1.3, color: "#fff", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(s.title)}</p>
                   </div>
                 </button>
               </div>
@@ -1516,10 +1477,16 @@ export default function App() {
   const [content, setContent] = useState(defaultContent);
   useEffect(() => {
     let alive = true;
+    // `loaded` distingue el contenido real del bundle inicial; sólo vive en
+    // memoria (el admin guarda lo que devuelve /api/content, no esta copia).
     fetch("/api/content", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (alive && data && typeof data === "object" && data.settings) setContent(data); })
-      .catch(() => {});
+      .then((data) => {
+        if (!alive) return;
+        const ok = data && typeof data === "object" && data.settings;
+        setContent(ok ? { ...data, loaded: true } : (c) => ({ ...c, loaded: true }));
+      })
+      .catch(() => { if (alive) setContent((c) => ({ ...c, loaded: true })); });
     return () => { alive = false; };
   }, []);
   return (

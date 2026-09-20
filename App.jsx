@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
 import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import defaultContent from "./src/content/site.json";
 
@@ -805,15 +805,36 @@ function PodcastSection({ data, onPlay }) {
   const PREVIEW = 5;
   const list = expanded ? rest : rest.slice(0, PREVIEW);
   const hidden = rest.length - list.length;
-  // Al plegar, la lista se acorta de golpe y el lector queda flotando bajo la
-  // sección: se deja el propio botón a la vista, que es donde está su atención.
-  // El scroll suave y su excepción por prefers-reduced-motion vienen del CSS.
+  // Al plegar, la lista pierde 19 tarjetas de golpe y todo lo que hay debajo
+  // sube: sin corregir nada, el botón que acabas de tocar se va fuera de la
+  // pantalla. Se ancla midiendo su posición antes y después del cambio y
+  // compensando la diferencia, así queda exactamente bajo el cursor.
   const toggleRef = useRef(null);
+  const anchorRef = useRef(null);
   const toggleList = () => {
-    const plegando = expanded;
+    // Sólo al plegar: al expandir, el botón baja pero el contenido nuevo es el
+    // que se quiere ver, y moverlo sería quitárselo de encima.
+    anchorRef.current = expanded ? (toggleRef.current?.getBoundingClientRect().top ?? null) : null;
     setExpanded(!expanded);
-    if (plegando) requestAnimationFrame(() => toggleRef.current?.scrollIntoView({ block: "nearest" }));
   };
+  // useLayoutEffect y no requestAnimationFrame: corre con el DOM ya
+  // actualizado y antes de pintar, así el ajuste no se ve como un salto.
+  useLayoutEffect(() => {
+    const antes = anchorRef.current;
+    anchorRef.current = null;
+    if (antes == null || !toggleRef.current) return;
+    const delta = toggleRef.current.getBoundingClientRect().top - antes;
+    // "instant" ignora el scroll-behavior: smooth global; acá se quiere que el
+    // botón no se mueva, no una animación.
+    if (delta) window.scrollBy({ top: delta, behavior: "instant" });
+    // Cerca del tope de la página no queda cuánto desplazar y el navegador
+    // recorta el ajuste: si con eso el botón se salió de la pantalla, se lo
+    // trae de vuelta (scrollMarginTop lo deja bajo el header, no debajo).
+    const caja = toggleRef.current.getBoundingClientRect();
+    if (caja.top < 0 || caja.bottom > window.innerHeight) {
+      toggleRef.current.scrollIntoView({ block: "nearest", behavior: "instant" });
+    }
+  }, [expanded]);
 
   return (
     <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>

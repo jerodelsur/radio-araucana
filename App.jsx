@@ -23,6 +23,7 @@ const SOC_LINKS = [
   { key: "facebook",  label: "Facebook",  handle: "Radio Araucana", cta: "Seguir",      href: "https://www.facebook.com/share/1aK6itN6zP/?mibextid=wwXIfr", Icon: SvgFacebook, what: "Noticias regionales y transmisiones" },
 ];
 const YT_CHANNEL = "https://www.youtube.com/@araucanafm";
+const IG_PROFILE = "https://www.instagram.com/araucanaradio";
 
 /* ─── Official brand logo SVG (from araucanayfrontera.cl) ─────────────────── */
 const LogoSVG = ({ height = 40, color = "#ffffff" }) => (
@@ -196,6 +197,15 @@ const GlobalStyles = () => (
     .reel-card:hover img { transform: scale(1.05); }
     .reel-card .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,14,11,.92) 0%, rgba(10,14,11,.2) 50%, rgba(10,14,11,.15) 100%); }
     .reel-card .play-ring { width: 44px; height: 44px; }
+    /* Última tarjeta de la fila: el salto a Instagram. Misma silueta que un
+       reel para que pertenezca a la fila, con el degradado de la marca
+       apagado sobre el fondo del sitio para que invite sin gritar. */
+    .reel-cta { display: flex; flex-direction: column; justify-content: space-between; padding: 18px; text-decoration: none; }
+    .reel-cta::before { content: ""; position: absolute; inset: 0; background: radial-gradient(125% 95% at 18% 108%, #f77737 0%, #e1306c 34%, #833ab4 64%, transparent 84%); opacity: .5; transition: opacity .5s var(--ease); }
+    .reel-cta:hover::before { opacity: .78; }
+    .reel-cta > * { position: relative; z-index: 1; }
+    .reel-cta .ig-ring { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); transition: background .3s var(--ease), transform .3s var(--ease); }
+    .reel-cta:hover .ig-ring { background: rgba(255,255,255,.26); transform: scale(1.08); }
 
     .prog-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 18px; align-items: center; padding: 18px 16px; border-top: 1px solid var(--line); border-radius: 0; transition: background 160ms var(--ease); }
     .prog-row:last-child { border-bottom: 1px solid var(--line); }
@@ -897,7 +907,7 @@ function ReelsSection({ data, onPlay }) {
           id="reels-title"
           kicker="Reels y Shorts"
           title="Un minuto de La Araucanía."
-          lede="Los momentos que quedan: frases, ideas y datos de cada entrevista, en vertical para ver desde el teléfono."
+          lede="Los momentos que quedan: frases, ideas y datos de cada entrevista, en vertical para ver desde el teléfono. El día a día va en Instagram."
           aside={<>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="icon-btn" onClick={() => scrollBy(-1)} disabled={!canPrev} aria-label="Reels anteriores"><ChevronLeft size={20} /></button>
@@ -924,10 +934,24 @@ function ReelsSection({ data, onPlay }) {
                 </button>
               </div>
             ))}
+          {/* Cierra la fila: cuando se acabaron los reels es el momento de más
+              intención para saltar al perfil. */}
+          {!loading && shorts.length > 0 && (
+            <div role="listitem" style={{ display: "contents" }}>
+              <a href={IG_PROFILE} target="_blank" rel="noreferrer" className="reel-card reel-cta"
+                aria-label="Ver todos los reels en Instagram, @araucanaradio">
+                <span className="ig-ring" aria-hidden="true"><SvgInstagram size={21} /></span>
+                <div>
+                  <p style={K({ fontWeight: 800, fontSize: 19, lineHeight: 1.12, letterSpacing: "-0.01em", color: "#fff", marginBottom: 8 })}>Todos los reels en Instagram</p>
+                  <p style={K({ fontWeight: 600, fontSize: 13, color: "rgba(255,255,255,.85)", display: "flex", alignItems: "center", gap: 4 })}>@araucanaradio <ArrowUpRight size={15} aria-hidden="true" /></p>
+                </div>
+              </a>
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          <a href="https://www.instagram.com/araucanaradio" target="_blank" rel="noreferrer" className="btn btn-cream btn-sm"><SvgInstagram size={16} /> Seguir en Instagram</a>
+          <a href={IG_PROFILE} target="_blank" rel="noreferrer" className="btn btn-cream btn-sm"><SvgInstagram size={16} /> Seguir en Instagram</a>
           <a href={`${YT_CHANNEL}/shorts`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><SvgYoutube size={16} /> Todos los shorts</a>
         </div>
       </div>

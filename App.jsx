@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
-import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import defaultContent from "./src/content/site.json";
 
 /* ─── Editable content ──────────────────────────────────────────────────────
@@ -795,6 +795,15 @@ function PodcastSection({ data, onPlay }) {
   const PREVIEW = 5;
   const list = expanded ? rest : rest.slice(0, PREVIEW);
   const hidden = rest.length - list.length;
+  // Al plegar, la lista se acorta de golpe y el lector queda flotando bajo la
+  // sección: se deja el propio botón a la vista, que es donde está su atención.
+  // El scroll suave y su excepción por prefers-reduced-motion vienen del CSS.
+  const toggleRef = useRef(null);
+  const toggleList = () => {
+    const plegando = expanded;
+    setExpanded(!expanded);
+    if (plegando) requestAnimationFrame(() => toggleRef.current?.scrollIntoView({ block: "nearest" }));
+  };
 
   return (
     <section id="podcast" aria-labelledby="podcast-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
@@ -852,9 +861,11 @@ function PodcastSection({ data, onPlay }) {
                   </div>
                 </button>
               ))}
-              {hidden > 0 && (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(true)} aria-expanded={false} style={{ alignSelf: "flex-start", margin: "12px 14px 0" }}>
-                  Ver {hidden} {hidden === 1 ? "capítulo más" : "capítulos más"} <ChevronDown size={16} aria-hidden="true" />
+              {(hidden > 0 || expanded) && (
+                <button ref={toggleRef} type="button" className="btn btn-ghost btn-sm" onClick={toggleList} aria-expanded={expanded} style={{ alignSelf: "flex-start", margin: "12px 14px 0", scrollMarginTop: 96, scrollMarginBottom: 24 }}>
+                  {expanded
+                    ? <>Ver menos <ChevronUp size={16} aria-hidden="true" /></>
+                    : <>Ver {hidden} {hidden === 1 ? "capítulo más" : "capítulos más"} <ChevronDown size={16} aria-hidden="true" /></>}
                 </button>
               )}
               <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="footer-link" style={{ padding: "14px 14px 0", fontWeight: 700, fontSize: 14, color: "var(--green)" }}>Archivo completo en YouTube <ArrowUpRight size={15} aria-hidden="true" style={{ marginLeft: 6 }} /></a>

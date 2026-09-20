@@ -62,6 +62,7 @@
 
   /* ─── CONTENT ─── */
   .adm-body{padding:28px 24px 60px;max-width:1100px;width:100%;margin:0 auto;flex:1}
+  .adm-body.wide{max-width:1400px}
   .panel{display:none}
   .panel.active{display:block}
   .panel-title{font-size:18px;font-weight:600;margin-bottom:6px}
@@ -101,29 +102,40 @@
   .body-row textarea{flex:1}
   .body-row .icon-btn{flex-shrink:0}
 
-  /* ─── ORDEN DE VIDEOS ─── */
+  /* ─── PODCAST Y REELS ─── */
   .yt-cols{display:grid;grid-template-columns:3fr 2fr;gap:24px;align-items:start}
   @media (max-width:900px){.yt-cols{grid-template-columns:1fr}}
   .yt-col-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
   .yt-col-title{font-size:13px;font-weight:600;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em}
-  .yt-reset{background:none;border:none;color:var(--bone-dim);font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
-  .yt-reset:hover{color:var(--bone)}
   .yt-list{display:flex;flex-direction:column;gap:6px}
   .yt-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
-  .yt-row.is-hidden{opacity:.45}
+  .yt-row.dragging{opacity:.35}
+  .yt-row.drop-before{box-shadow:inset 0 2px 0 0 var(--green-bright)}
+  .yt-row.drop-after{box-shadow:inset 0 -2px 0 0 var(--green-bright)}
+  .yt-grip{flex-shrink:0;color:var(--muted);font-size:15px;line-height:1;cursor:grab;user-select:none}
+  .yt-row.dragging .yt-grip{cursor:grabbing}
   .yt-pos{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
-  .yt-thumb{width:72px;height:40px;border-radius:4px;object-fit:cover;background:rgba(255,255,255,.04);flex-shrink:0}
-  .yt-thumb.vertical{width:30px;height:52px}
+  .yt-thumb{width:60px;height:34px;border-radius:4px;object-fit:cover;background:rgba(255,255,255,.04);flex-shrink:0}
+  .yt-thumb.vertical{width:26px;height:46px}
   .yt-info{flex:1;min-width:0}
-  .yt-title{font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .yt-meta{font-size:11px;color:var(--muted);margin-top:2px}
-  .yt-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;margin-right:6px;background:rgba(125,187,94,.15);color:var(--green-bright)}
-  .yt-badge.warn{background:rgba(212,160,23,.15);color:var(--gold)}
-  .yt-add{display:flex;gap:6px;margin-bottom:10px}
+  .yt-title-input{width:100%;background:transparent;border:1px solid transparent;border-radius:4px;color:var(--bone);font-size:13px;padding:3px 5px;font-family:inherit}
+  .yt-title-input:hover{border-color:var(--border)}
+  .yt-title-input:focus{border-color:var(--green);background:rgba(0,0,0,.25);outline:none}
+  .yt-add{display:flex;gap:6px;margin-bottom:16px}
   .yt-add input{flex:1;min-width:0}
   .yt-add .btn{flex-shrink:0}
-  .yt-actions{display:flex;gap:4px;flex-shrink:0}
-  .yt-actions .icon-btn{width:28px;height:28px;font-size:13px}
+  .yt-actions{display:flex;gap:3px;flex-shrink:0}
+  .yt-actions .icon-btn{width:26px;height:26px;font-size:13px}
+  .yt-actions .icon-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(212,160,23,.1)}
+  .yt-picked{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+  .yt-picked-title{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .yt-empty{font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:16px;text-align:center}
+  /* En el teléfono los 6 botones no dejan ancho para el título: la fila se
+     parte y el título baja a su propia línea. */
+  @media (max-width:640px){
+    .yt-row{flex-wrap:wrap;row-gap:6px}
+    .yt-info{order:10;flex-basis:100%}
+  }
 
   /* ─── TOAST ─── */
   #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--card);border:1px solid var(--border);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transition:transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
@@ -236,9 +248,10 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       dirty = false;
-      $("#status").textContent = "Guardado ✓";
+      // En `vite dev` el guardado es un stub: no se toca el blob de producción.
+      $("#status").textContent = data.dev ? "Dev: no guardado" : "Guardado ✓";
       $("#status").className = "adm-status ok";
-      toast("Guardado correctamente", "ok");
+      toast(data.dev ? "Modo dev: los cambios NO se guardaron" : "Guardado correctamente", "ok");
     } catch (err) {
       $("#status").textContent = "Error";
       $("#status").className = "adm-status err";
@@ -270,8 +283,7 @@
     { id: "news",     label: "Noticias",       render: () => renderList("news", newsCard, renderNewsToggle()) },
     { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
-    { id: "ytOrder",  label: "Orden de videos", render: renderYouTubeOrder },
-    { id: "videos",   label: "Videos",         render: () => renderList("videos", videoCard) },
+    { id: "podcast",  label: "Podcast y reels", render: renderPodcast, wide: true },
     { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
   ];
   let currentTab = "settings";
@@ -291,6 +303,7 @@
   function renderBody() {
     const tab = TABS.find((t) => t.id === currentTab);
     const body = $("#body");
+    body.className = "adm-body" + (tab.wide ? " wide" : "");
     body.innerHTML = "";
     body.appendChild(tab.render());
   }
@@ -352,37 +365,25 @@
     return el("div", null, toggle, typeField, sourceField);
   }
 
-  // Selector de "Video destacado cuando no hay vivo": elige, entre los videos
-  // ya cargados en la pestaña Videos, cuál se muestra en el reproductor de
-  // la portada mientras el toggle de arriba esté apagado.
+  // "Video destacado cuando no hay vivo": se elige con ▶ en la pestaña
+  // «Podcast y reels» (settings.offlineVideo guarda su URL). Acá sólo se
+  // muestra cuál quedó marcado, para no tener dos lugares donde editarlo.
   function renderOfflineVideoPicker() {
     const current = content.settings.offlineVideo ?? "";
-    const videos = content.videos || [];
-
-    const options = [["", "— Ninguno: placeholder \"No hay transmisión\" —"]];
-    videos.forEach((v) => {
-      if (!v.youtube) return;
-      const title = v.title || v.youtube;
-      const label = title.length > 70 ? `${title.slice(0, 70)}…` : title;
-      options.push([v.youtube, label]);
-    });
-    if (current && !options.some(([v]) => v === current)) {
-      options.push([current, "(URL actual, ya no está en la lista de Videos)"]);
-    }
-
-    const select = el("select", {
-      onchange: (e) => { content.settings.offlineVideo = e.target.value; markDirty(); } });
-    options.forEach(([v, label]) => {
-      const o = el("option", { value: v }, label);
-      if (v === current) o.setAttribute("selected", "");
-      select.appendChild(o);
-    });
+    const id = ytIdFromUrl(current);
+    const match = id ? (content.videos || []).find((v) => ytIdFromUrl(v.youtube) === id) : null;
 
     return el("div", { class: "field" },
       el("label", { class: "field-label" }, "Video destacado cuando no hay vivo"),
-      select,
+      el("div", { class: "yt-picked" },
+        id ? el("img", { class: "yt-thumb", alt: "", loading: "lazy", src: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` }) : null,
+        el("span", { class: "yt-picked-title" },
+          id ? (match?.title || current) : "Ninguno — el reproductor muestra «No hay transmisión»"),
+        id ? el("button", { class: "icon-btn danger", title: "Quitar el video del reproductor",
+          onClick: () => { content.settings.offlineVideo = ""; markDirty(); renderBody(); } }, "×") : null,
+      ),
       el("p", { class: "field-hint" },
-        "Se muestra en el reproductor de la portada cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Los videos se administran en la pestaña Videos."),
+        "Se muestra en el reproductor de la portada cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Se elige con el botón ▶ en la pestaña «Podcast y reels»."),
     );
   }
 
@@ -464,176 +465,242 @@
     );
   }
 
-  /* ───────── Orden de videos (settings.youtubeOrder) ───────── */
-  // Guarda { episodes: [{id,title,published}], shorts: [...], hidden: [id] }.
-  // En la portada, los videos que no están en la lista guardada (publicados
-  // después de ordenar) van primero por fecha; luego el orden guardado; los
-  // ocultos no se muestran. Misma lógica que applyYouTubeOrder en App.jsx.
-  let ytFeed = null; // { episodes, shorts } | { error }
-  let ytLoading = false;
-
-  function loadYtFeed() {
-    if (ytLoading) return;
-    ytLoading = true;
-    fetch("/api/youtube", { cache: "no-store" })
-      .then((r) => r.json().then((d) => (r.ok ? d : Promise.reject(new Error(d.error || `HTTP ${r.status}`)))))
-      .then((d) => { ytFeed = { episodes: d.episodes || [], shorts: d.shorts || [] }; })
-      .catch((err) => { ytFeed = { error: err.message }; })
-      .finally(() => { ytLoading = false; if (currentTab === "ytOrder") renderBody(); });
-  }
+  /* ───────── Podcast y reels (content.videos) ───────── */
+  // content.videos es la lista completa y ordenada a mano que muestra la
+  // portada: [{ youtube, title, kind }], donde kind "short" es un reel vertical
+  // y cualquier otro valor (o ninguno) es un capítulo. El orden del array es el
+  // orden de la portada.
+  //
+  // Antes la portada leía el canal por /api/youtube (los feeds Atom de YouTube)
+  // y esta pestaña sólo guardaba un orden encima, en settings.youtubeOrder.
+  // YouTube dio de baja esos feeds en septiembre de 2026 —devuelven 404 para
+  // cualquier canal—, así que la lista pasó a ser manual. migrateVideos()
+  // rearma content.videos desde los datos viejos la primera vez que se abre.
 
   function ytIdFromUrl(url) {
     const m = String(url || "").trim().match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
     return m ? m[1] : null;
   }
 
-  function ytOrderState() {
-    const o = content.settings.youtubeOrder;
-    return o && typeof o === "object" ? o : null;
+  function ytUrl(id, short) {
+    return short ? `https://www.youtube.com/shorts/${id}` : `https://youtu.be/${id}`;
   }
 
-  // Lista completa tal como la verá el admin: nuevos primero, luego guardados.
-  // Incluye los ocultos (atenuados) para poder volver a mostrarlos.
-  function ytMergedList(kind) {
-    const feedItems = ytFeed[kind] || [];
-    const saved = ytOrderState()?.[kind] || [];
-    const byId = new Map(feedItems.map((v) => [v.id, v]));
-    const savedIds = new Set(saved.map((x) => x.id));
-    const fresh = feedItems.filter((v) => !savedIds.has(v.id)).map((v) => ({ ...v, _new: saved.length > 0 }));
-    const kept = saved.map((x) => byId.get(x.id) || { ...x, _gone: true });
-    return [...fresh, ...kept];
+  // Migración de un solo uso: mezcla la lista vieja de la pestaña «Videos» con
+  // settings.youtubeOrder (que era donde vivían el orden de los capítulos y los
+  // reels). Corre en memoria al abrir la pestaña; se persiste con el Guardar
+  // siguiente. Devuelve true sólo la primera vez.
+  function migrateVideos() {
+    const order = content.settings?.youtubeOrder;
+    if (!order || typeof order !== "object") return false;
+
+    const legacy = Array.isArray(content.videos) ? content.videos : [];
+    const legacyTitle = new Map();
+    legacy.forEach((v) => {
+      const id = ytIdFromUrl(v.youtube);
+      if (id && !legacyTitle.has(id)) legacyTitle.set(id, v.title || "");
+    });
+
+    const hidden = new Set(Array.isArray(order.hidden) ? order.hidden : []);
+    const seen = new Set();
+    const take = (saved, kind) => (Array.isArray(saved) ? saved : []).reduce((out, s) => {
+      if (!s?.id || seen.has(s.id) || hidden.has(s.id)) return out;
+      seen.add(s.id);
+      out.push({ youtube: ytUrl(s.id, kind === "short"), title: s.title || legacyTitle.get(s.id) || "", kind });
+      return out;
+    }, []);
+
+    const episodes = take(order.episodes, "episode");
+    const reels = take(order.shorts, "short");
+    // Los capítulos que sólo estaban en la pestaña «Videos» (más antiguos que
+    // la ventana del feed) van al final, en el orden en que estaban ahí.
+    legacy.forEach((v) => {
+      const id = ytIdFromUrl(v.youtube);
+      if (!id || seen.has(id) || hidden.has(id)) return;
+      seen.add(id);
+      episodes.push({ youtube: ytUrl(id, false), title: v.title || "", kind: "episode" });
+    });
+
+    content.videos = [...episodes, ...reels];
+    delete content.settings.youtubeOrder;
+    return true;
   }
 
-  function ytCommit(kind, list) {
-    const o = ytOrderState() || {};
-    o[kind] = list.map((v) => ({ id: v.id, title: v.title || "", published: v.published || "" }));
-    if (!Array.isArray(o.hidden)) o.hidden = [];
-    content.settings.youtubeOrder = o;
+  const ytList = (kind) => (content.videos || []).filter((v) => (kind === "short" ? v.kind === "short" : v.kind !== "short"));
+
+  // Reescribe content.videos dejando el otro grupo intacto. El array queda
+  // normalizado como [capítulos…, reels…]; la portada filtra por kind, así que
+  // lo único que importa es el orden dentro de cada grupo.
+  function ytSetList(kind, list) {
+    const other = ytList(kind === "short" ? "episode" : "short");
+    content.videos = kind === "short" ? [...other, ...list] : [...list, ...other];
     markDirty();
     renderBody();
   }
 
-  function ytColumn(kind, label, vertical) {
-    const list = ytMergedList(kind);
-    const hidden = new Set(ytOrderState()?.hidden || []);
-    const fmt = (iso) => {
-      const d = new Date(iso);
-      return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
-    };
-    const move = (from, to) => {
-      const next = list.slice();
-      const [it] = next.splice(from, 1);
-      next.splice(to, 0, it);
-      ytCommit(kind, next);
-    };
-    let visiblePos = 0;
-    const rows = list.map((v, i) => {
-      const isHidden = hidden.has(v.id);
-      const pos = isHidden ? "–" : String(++visiblePos);
-      const thumb = el("img", { class: "yt-thumb" + (vertical ? " vertical" : ""), alt: "", loading: "lazy",
-        src: v.thumb || `https://i.ytimg.com/vi/${v.id}/${vertical ? "oar2" : "hqdefault"}.jpg`,
-        onError: (e) => { const fb = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`; if (e.currentTarget.src !== fb) e.currentTarget.src = fb; } });
-      return el("div", { class: "yt-row" + (isHidden ? " is-hidden" : "") },
-        el("span", { class: "yt-pos" }, pos),
-        thumb,
-        el("div", { class: "yt-info" },
-          el("div", { class: "yt-title", title: v.title }, v.title || v.id),
-          el("div", { class: "yt-meta" },
-            v._new ? el("span", { class: "yt-badge" }, "Nuevo") : null,
-            v._gone ? el("span", { class: "yt-badge warn", title: "No está entre los últimos 15 del canal (agregado por link o más antiguo); se muestra con los datos guardados." }, "Antiguo") : null,
-            isHidden ? el("span", { class: "yt-badge warn" }, "Oculto") : null,
-            fmt(v.published)),
-        ),
-        el("div", { class: "yt-actions" },
-          el("button", { class: "icon-btn", title: "Poner primero", disabled: i === 0 ? "" : null, onClick: () => move(i, 0) }, "⤒"),
-          el("button", { class: "icon-btn", title: "Subir", disabled: i === 0 ? "" : null, onClick: () => move(i, i - 1) }, "↑"),
-          el("button", { class: "icon-btn", title: "Bajar", disabled: i === list.length - 1 ? "" : null, onClick: () => move(i, i + 1) }, "↓"),
-          el("button", { class: "icon-btn", title: isHidden ? "Mostrar en la portada" : "Ocultar de la portada", onClick: () => {
-            const o = ytOrderState() || {};
-            const h = new Set(o.hidden || []);
-            if (isHidden) h.delete(v.id); else h.add(v.id);
-            o.hidden = [...h];
-            content.settings.youtubeOrder = o;
-            ytCommit(kind, list);
-          } }, isHidden ? "◌" : "●"),
-          v._gone ? el("button", { class: "icon-btn danger", title: "Quitar de la lista", onClick: () => {
-            ytCommit(kind, list.filter((x) => x.id !== v.id));
-          } }, "×") : null,
-        ),
-      );
-    });
-    // Agregar un video por link: sirve para traer videos más antiguos que los
-    // últimos 15 del canal. El título y la orientación salen del oEmbed público
-    // de YouTube (responde con CORS, no requiere clave).
-    const addInput = el("input", { type: "url", placeholder: vertical ? "Pega el link de un reel o short" : "Pega el link de un capítulo" });
-    const addBtn = el("button", { class: "btn btn-ghost" }, "Agregar");
-    const addVideo = async () => {
-      const id = ytIdFromUrl(addInput.value);
+  // Un solo campo para las dos columnas: el oEmbed público de YouTube (sin
+  // clave) entrega el tamaño real cuando se le pasa la URL /shorts/, así que un
+  // alto mayor que el ancho identifica al reel y el video cae solo en su
+  // columna, siempre arriba de todo.
+  function ytAddBox() {
+    const input = el("input", { id: "ytAddInput", type: "url", placeholder: "Pega el link de YouTube de un capítulo o un reel" });
+    const btn = el("button", { class: "btn btn-ghost" }, "Agregar");
+
+    const add = async () => {
+      const id = ytIdFromUrl(input.value);
       if (!id) { toast("No reconozco ese link de YouTube", "err"); return; }
-      if (list.some((x) => x.id === id)) { toast("Ese video ya está en la lista", "err"); return; }
-      addBtn.disabled = true;
+      if ((content.videos || []).some((v) => ytIdFromUrl(v.youtube) === id)) { toast("Ese video ya está en la lista", "err"); return; }
+      btn.disabled = true;
+      btn.textContent = "Buscando…";
       try {
-        // Con la URL /shorts/ el oEmbed entrega el tamaño real (vertical para
-        // un short); con /watch?v= siempre responde 16:9.
         const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/shorts/${id}`)}`);
         if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? "el video es privado o no permite insertarse" : "no existe o no está disponible");
         const info = await r.json();
-        const isVertical = Number(info.height) > Number(info.width);
-        if (isVertical !== vertical) {
-          toast(isVertical ? "Ese video es un reel: agrégalo en la columna Reels" : "Ese video es horizontal: agrégalo en Capítulos", "err");
-          return;
-        }
-        ytCommit(kind, [{ id, title: info.title || "", published: "" }, ...list]);
-        toast("Video agregado arriba. Muévelo donde quieras y guarda.", "ok");
+        const short = Number(info.height) > Number(info.width);
+        const kind = short ? "short" : "episode";
+        ytSetList(kind, [{ youtube: ytUrl(id, short), title: info.title || "", kind }, ...ytList(kind)]);
+        toast(short ? "Reel agregado arriba de todo" : "Capítulo agregado arriba de todo", "ok");
+        $("#ytAddInput")?.focus();
       } catch (err) {
         toast(`No se pudo agregar: ${err.message}`, "err");
-      } finally {
-        addBtn.disabled = false;
+        btn.disabled = false;
+        btn.textContent = "Agregar";
       }
     };
-    addBtn.addEventListener("click", addVideo);
-    addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addVideo(); });
 
-    const hasOrder = (ytOrderState()?.[kind] || []).length > 0;
+    btn.addEventListener("click", add);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
+    return el("div", { class: "yt-add" }, input, btn);
+  }
+
+  function ytColumn(kind, label) {
+    const short = kind === "short";
+    const list = ytList(kind);
+
+    const move = (from, to) => {
+      if (from === to || to < 0 || to >= list.length) return;
+      const next = list.slice();
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      ytSetList(kind, next);
+    };
+
+    const rows = list.map((v, i) => {
+      const id = ytIdFromUrl(v.youtube) || "";
+      const isFeatured = !short && id && ytIdFromUrl(content.settings.featuredEpisode) === id;
+      const isPlayer = !short && id && ytIdFromUrl(content.settings.offlineVideo) === id;
+      const pick = (key, on) => {
+        content.settings[key] = on ? "" : v.youtube;
+        markDirty();
+        renderBody();
+      };
+
+      return el("div", { class: "yt-row", draggable: "true", "data-i": String(i) },
+        el("span", { class: "yt-grip", title: "Arrastra para reordenar" }, "⠿"),
+        el("span", { class: "yt-pos" }, String(i + 1)),
+        el("img", { class: "yt-thumb" + (short ? " vertical" : ""), alt: "", loading: "lazy",
+          // En un reel, oar2 es un cuadro del video; hqdefault sería la
+          // miniatura diseñada que se subió a YouTube.
+          src: `https://i.ytimg.com/vi/${id}/${short ? "oar2" : "hqdefault"}.jpg`,
+          onError: (e) => { const fb = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`; if (e.currentTarget.src !== fb) e.currentTarget.src = fb; } }),
+        el("div", { class: "yt-info" },
+          el("input", { class: "yt-title-input", type: "text", value: v.title || "", placeholder: id,
+            title: v.title || id,
+            oninput: (e) => { v.title = e.target.value; markDirty(); } }),
+        ),
+        el("div", { class: "yt-actions" },
+          short ? null : el("button", { class: "icon-btn" + (isFeatured ? " on" : ""),
+            title: isFeatured ? "Es el capítulo grande de la sección Podcast — clic para quitarlo" : "Poner como capítulo grande de la sección Podcast",
+            onClick: () => pick("featuredEpisode", isFeatured) }, isFeatured ? "★" : "☆"),
+          short ? null : el("button", { class: "icon-btn" + (isPlayer ? " on" : ""),
+            title: isPlayer ? "Es el video del reproductor del header — clic para quitarlo" : "Poner en el reproductor del header (cuando no hay vivo)",
+            onClick: () => pick("offlineVideo", isPlayer) }, "▶"),
+          el("button", { class: "icon-btn", title: "Poner primero", disabled: i === 0 ? "" : null, onClick: () => move(i, 0) }, "⤒"),
+          el("button", { class: "icon-btn", title: "Subir", disabled: i === 0 ? "" : null, onClick: () => move(i, i - 1) }, "↑"),
+          el("button", { class: "icon-btn", title: "Bajar", disabled: i === list.length - 1 ? "" : null, onClick: () => move(i, i + 1) }, "↓"),
+          el("button", { class: "icon-btn danger", title: "Quitar de la portada", onClick: () => {
+            if (!confirm(`¿Quitar «${v.title || id}» de la portada?`)) return;
+            if (isFeatured) content.settings.featuredEpisode = "";
+            if (isPlayer) content.settings.offlineVideo = "";
+            ytSetList(kind, list.filter((x) => x !== v));
+          } }, "×"),
+        ),
+      );
+    });
+
+    const listEl = list.length
+      ? el("div", { class: "yt-list" }, rows)
+      : el("p", { class: "yt-empty" }, short ? "Sin reels todavía. Pega el link de uno arriba." : "Sin capítulos todavía. Pega el link de uno arriba.");
+
+    // Drag & drop nativo, delegado en el contenedor: la fila se suelta antes o
+    // después de aquella sobre la que se está, según de qué lado del centro
+    // quedó el cursor. En táctil no hay dragstart; para eso están ↑ y ↓.
+    if (list.length) {
+      let from = null;
+      const clear = () => listEl.querySelectorAll(".yt-row").forEach((r) => r.classList.remove("drop-before", "drop-after"));
+      const target = (e) => {
+        const row = e.target.closest?.(".yt-row");
+        if (!row) return null;
+        const box = row.getBoundingClientRect();
+        return { row, index: Number(row.dataset.i), before: e.clientY < box.top + box.height / 2 };
+      };
+
+      listEl.addEventListener("dragstart", (e) => {
+        // Escribir el título o tocar un botón no debe arrastrar la fila.
+        if (e.target.closest("input, button")) { e.preventDefault(); return; }
+        const row = e.target.closest(".yt-row");
+        if (!row) return;
+        from = Number(row.dataset.i);
+        row.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", String(from)); // Firefox lo exige
+      });
+      listEl.addEventListener("dragend", () => {
+        from = null;
+        clear();
+        listEl.querySelectorAll(".yt-row").forEach((r) => r.classList.remove("dragging"));
+      });
+      listEl.addEventListener("dragover", (e) => {
+        if (from === null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        clear();
+        const t = target(e);
+        if (t && t.index !== from) t.row.classList.add(t.before ? "drop-before" : "drop-after");
+      });
+      listEl.addEventListener("dragleave", (e) => { if (!listEl.contains(e.relatedTarget)) clear(); });
+      listEl.addEventListener("drop", (e) => {
+        if (from === null) return;
+        e.preventDefault();
+        const t = target(e);
+        if (!t) return;
+        // Al sacar la fila de su posición, todo lo que venía después corre uno.
+        let to = t.before ? t.index : t.index + 1;
+        if (to > from) to -= 1;
+        move(from, to);
+      });
+    }
+
     return el("div", null,
       el("div", { class: "yt-col-head" },
         el("span", { class: "yt-col-title" }, label),
-        hasOrder ? el("button", { class: "yt-reset", onClick: () => {
-          if (!confirm(`¿Volver a ordenar ${label.toLowerCase()} por fecha?`)) return;
-          const o = ytOrderState();
-          const ids = new Set(list.map((x) => x.id));
-          o[kind] = [];
-          o.hidden = (o.hidden || []).filter((id) => !ids.has(id));
-          markDirty();
-          renderBody();
-        } }, "Volver a orden por fecha") : el("span", { class: "yt-meta" }, "Por fecha (automático)"),
+        el("span", { class: "yt-meta" }, `${list.length} ${list.length === 1 ? "video" : "videos"}`),
       ),
-      el("div", { class: "yt-add" }, addInput, addBtn),
-      list.length ? el("div", { class: "yt-list" }, rows) : el("p", { class: "field-hint" }, "No hay videos en el canal."),
+      listEl,
     );
   }
 
-  function renderYouTubeOrder() {
-    const panel = el("div", { class: "panel active" },
-      el("h2", { class: "panel-title" }, "Orden de videos en la portada"),
+  function renderPodcast() {
+    return el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, "Podcast y reels"),
       el("p", { class: "panel-sub" },
-        "El primer capítulo es el que aparece grande en la sección Podcast; los reels se muestran en el orden de esta lista. Los videos que subas después de ordenar aparecen primero (marcados «Nuevo») hasta que los muevas. Para sumar un video más antiguo, pega su link en «Agregar». ● = visible, ◌ = oculto. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ★ marca el capítulo grande de la sección Podcast y ▶ el video del reproductor del header, para promocionar dos videos distintos. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+      ytAddBox(),
+      el("div", { class: "yt-cols" },
+        ytColumn("episode", "Capítulos"),
+        ytColumn("short", "Reels"),
+      ),
     );
-    if (!ytFeed) {
-      loadYtFeed();
-      panel.appendChild(el("p", { class: "field-hint" }, "Cargando videos del canal…"));
-      return panel;
-    }
-    if (ytFeed.error) {
-      panel.appendChild(el("p", { class: "field-hint", style: "color:#f87171" }, `No se pudo leer el canal de YouTube (${ytFeed.error}).`));
-      panel.appendChild(el("button", { class: "btn btn-ghost", onClick: () => { ytFeed = null; renderBody(); } }, "Reintentar"));
-      return panel;
-    }
-    panel.appendChild(el("div", { class: "yt-cols" },
-      ytColumn("episodes", "Capítulos (videos largos)", false),
-      ytColumn("shorts", "Reels / Shorts", true),
-    ));
-    return panel;
   }
 
   function panelTitleFor(key) {
@@ -641,7 +708,6 @@
       news: "Noticias",
       programs: "Programación",
       regions: "Destinos / Historias regionales",
-      videos: "Videos",
       whatsappOptions: "Mensajes pre-armados de WhatsApp",
     })[key] || key;
   }
@@ -650,7 +716,6 @@
       news: "Las 4 noticias más recientes que aparecen en la portada.",
       programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
       regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
-      videos: "Lista de videos de YouTube para elegir el \"video destacado\" del reproductor de la portada. La sección Podcast y los Reels se llenan solos desde el canal de YouTube; esta lista solo se muestra como respaldo si el canal no responde.",
       whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
     })[key] || "";
   }
@@ -779,28 +844,6 @@
   }
   regionCard.empty = () => ({ name: "", sub: "", img: "", body: [""] });
 
-  function videoCard(item, idx, list) {
-    return el("div", { class: "item-card" },
-      cardHeader(`Video ${idx + 1}`, idx, list),
-      textField("Título", item.title, (v) => { item.title = v; markDirty(); }),
-      textField("URL de YouTube", item.youtube, (v) => { item.youtube = v; markDirty(); }, "url",
-        "Pega el link completo (youtube.com/watch?v=… o youtu.be/…). El sitio toma la portada de YouTube automáticamente. Los videos de esta lista se pueden elegir como \"video destacado\" en Configuración."),
-      el("div", { class: "field-row" },
-        textField("Programa / categoría (opcional)", item.programa, (v) => { item.programa = v; markDirty(); }, "text",
-          "Ej: «Trenzando Voces». Aparece como etiqueta sobre la portada."),
-        textField("Fecha (opcional)", item.fecha, (v) => { item.fecha = v; markDirty(); }, "text",
-          "Texto libre, ej: «12 jun 2025»."),
-      ),
-      el("div", { class: "field-row" },
-        textField("Duración (ej. 24:18)", item.dur, (v) => { item.dur = v; markDirty(); }),
-        textField("Vistas (ej. 12.4K vistas)", item.views, (v) => { item.views = v; markDirty(); }),
-      ),
-      textField("Fondo (solo si NO hay URL de YouTube)", item.bg, (v) => { item.bg = v; markDirty(); }, "text",
-        "Gradiente CSS o color sólido. Solo se usa cuando el video no tiene URL de YouTube."),
-    );
-  }
-  videoCard.empty = () => ({ title: "", youtube: "", programa: "", fecha: "", dur: "", views: "", bg: "linear-gradient(135deg,#0f2d1a,#29623a)" });
-
   function waCard(item, idx, list) {
     return el("div", { class: "item-card" },
       cardHeader(`Mensaje ${idx + 1}`, idx, list),
@@ -827,6 +870,13 @@
     $("#status").className = "adm-status ok";
     renderTabs();
     renderBody();
+    // Al cargar y no al abrir la pestaña: así la lista nueva se persiste con
+    // cualquier Guardar, aunque el cambio haya sido en otra sección.
+    if (migrateVideos()) {
+      markDirty();
+      renderBody();
+      setTimeout(() => toast("Importé tus capítulos y reels a la lista nueva. Revísala en «Podcast y reels» y guarda.", "ok"), 600);
+    }
   }
 
   async function attemptLogin() {

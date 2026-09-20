@@ -166,9 +166,23 @@ const devApiStub = () => ({
       await runHandler('/api/contacto/submit.js', req, res)
     })
 
-    server.middlewares.use('/api/youtube', async (req, res, next) => {
+    // /admin en local. `content.js` cae solo a src/content/site.json cuando no
+    // hay token de Blob, así que el panel abre con el contenido del bundle.
+    server.middlewares.use('/api/content', async (req, res, next) => {
       if (req.method !== 'GET') return next()
-      await runHandler('/api/youtube.js', req, res)
+      await runHandler('/api/content.js', req, res)
+    })
+
+    // Guardar SÍ escribiría el blob de producción, así que en dev no se llama
+    // al handler real: se responde `dev: true` y el panel avisa que no persiste.
+    // Sin ADMIN_PASSWORD local el login tampoco podría probarse; acá cualquier
+    // clave entra, lo que es inofensivo porque esto sólo corre en `vite dev`.
+    server.middlewares.use('/api/admin/save', (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      console.warn('[dev-api] /api/admin/save: en dev no se guarda nada (el blob es el de producción)')
+      res.statusCode = 200
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ ok: true, dev: true }))
     })
 
     // Acceso privado a la presentación: la ruta pública /propuesta la atiende

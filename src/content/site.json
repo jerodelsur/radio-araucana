@@ -10,6 +10,7 @@
     "adminHours": "Lunes a Viernes, 9:00 a 18:00 hrs.",
     "liveStreamUrl": "",
     "offlineVideo": "",
+    "featuredEpisode": "",
     "newsEnabled": false,
     "liveVideo": {
       "enabled": false,
@@ -47,30 +48,18 @@
   "videos": [
     {
       "title": "Trenzando Voces | Fernanda Cid – Movimiento, Migración y Bienestar en La Araucanía",
-      "dur": "",
-      "views": "",
-      "bg": "linear-gradient(135deg, #0f2d1a, #1a3a5c)",
-      "youtube": "https://youtu.be/DMR8KsuAGEY"
+      "youtube": "https://youtu.be/DMR8KsuAGEY",
+      "kind": "episode"
     },
     {
       "title": "Trenzando Voces | Camila Pérez – Ballet en Temuco y vocación transformadora",
-      "dur": "",
-      "views": "",
-      "bg": "linear-gradient(135deg, #2d1a0f, #5c4033)",
-      "youtube": "https://youtu.be/BA67hV5tEk0"
+      "youtube": "https://youtu.be/BA67hV5tEk0",
+      "kind": "episode"
     },
     {
       "title": "Trenzando Voces | Germinè Feuillé – Sanar escribiendo desde Haití a Temuco",
-      "dur": "",
-      "views": "",
-      "bg": "linear-gradient(135deg, #1d4a2b, #29623a)",
-      "youtube": "https://youtu.be/MjJRCWYT4e4"
-    },
-    {
-      "title": "Entrevistas políticas: los protagonistas de la Araucanía en Radio Araucana",
-      "dur": "",
-      "views": "7.1K vistas",
-      "bg": "linear-gradient(135deg, #1a1a1a, #2d2d2d)"
+      "youtube": "https://youtu.be/MjJRCWYT4e4",
+      "kind": "episode"
     }
   ],
   "programs": [

@@ -130,10 +130,12 @@
   .yt-picked{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
   .yt-picked-title{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .yt-empty{font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:16px;text-align:center}
-  .yt-extra{display:flex;gap:6px;margin-top:4px}
-  .yt-extra input,.yt-extra select{font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.2);border:1px solid var(--border);color:var(--bone);font-family:inherit;min-width:0}
-  .yt-extra input{flex:1}
-  .yt-extra select{flex:0 0 auto}
+  .yt-extra{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .yt-extra input,.yt-extra select{font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.2);border:1px solid var(--border);color:var(--bone);font-family:inherit}
+  /* width:auto anula el width:100% general de inputs y selects: con él, el
+     select se comía la fila y el campo de serie quedaba en cero. */
+  .yt-extra input{flex:1 1 140px;width:auto;min-width:140px}
+  .yt-extra select{flex:0 0 auto;width:auto}
   .yt-destacado{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px}
   .yt-destacado-head{flex-basis:100%;display:flex;gap:8px;align-items:center;font-size:13px}
   .yt-destacado-star{color:var(--gold)}

@@ -130,6 +130,17 @@
   .yt-picked{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
   .yt-picked-title{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .yt-empty{font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:16px;text-align:center}
+  .yt-extra{display:flex;gap:6px;margin-top:4px}
+  .yt-extra input,.yt-extra select{font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.2);border:1px solid var(--border);color:var(--bone);font-family:inherit;min-width:0}
+  .yt-extra input{flex:1}
+  .yt-extra select{flex:0 0 auto}
+  .yt-destacado{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px}
+  .yt-destacado-head{flex-basis:100%;display:flex;gap:8px;align-items:center;font-size:13px}
+  .yt-destacado-star{color:var(--gold)}
+  .yt-destacado-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);flex:1;min-width:220px}
+  .yt-destacado-field input{font-size:13px}
+  .yt-hint{font-size:11px;color:var(--muted)}
+  .yt-note{font-size:12px;color:var(--muted);margin:0 0 16px}
   /* En el teléfono los 6 botones no dejan ancho para el título: la fila se
      parte y el título baja a su propia línea. */
   @media (max-width:640px){
@@ -378,12 +389,12 @@
       el("div", { class: "yt-picked" },
         id ? el("img", { class: "yt-thumb", alt: "", loading: "lazy", src: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` }) : null,
         el("span", { class: "yt-picked-title" },
-          id ? (match?.title || current) : "Ninguno — el reproductor muestra «No hay transmisión»"),
+          id ? (match?.title || current) : "Ninguno fijado: va solo el capítulo más nuevo de «Podcast y reels»"),
         id ? el("button", { class: "icon-btn danger", title: "Quitar el video del reproductor",
           onClick: () => { content.settings.offlineVideo = ""; markDirty(); renderBody(); } }, "×") : null,
       ),
       el("p", { class: "field-hint" },
-        "Se muestra en el reproductor de la portada cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Se elige con el botón ▶ en la pestaña «Podcast y reels»."),
+        "Se muestra en el reproductor de la portada cuando el toggle \"En vivo ahora\" está apagado. Al encender el vivo, la señal reemplaza el video automáticamente. Se fija con el botón ▶ en la pestaña «Podcast y reels»; si no fijas ninguno, sale solo el capítulo más nuevo."),
     );
   }
 
@@ -467,9 +478,11 @@
 
   /* ───────── Podcast y reels (content.videos) ───────── */
   // content.videos es la lista completa y ordenada a mano que muestra la
-  // portada: [{ youtube, title, kind }], donde kind "short" es un reel vertical
-  // y cualquier otro valor (o ninguno) es un capítulo. El orden del array es el
-  // orden de la portada.
+  // portada: [{ youtube, title, kind, serie?, tema?, added? }], donde kind
+  // "short" es un reel vertical y cualquier otro valor (o ninguno) es un
+  // capítulo. El orden del array es el orden de la portada. `serie` agrupa
+  // capítulos, `tema` se muestra bajo el título y `added` es el día en que se
+  // pegó el link (AAAA-MM-DD, hora de Chile).
   //
   // Antes la portada leía el canal por /api/youtube (los feeds Atom de YouTube)
   // y esta pestaña sólo guardaba un orden encima, en settings.youtubeOrder.
@@ -484,6 +497,20 @@
 
   function ytUrl(id, short) {
     return short ? `https://www.youtube.com/shorts/${id}` : `https://youtu.be/${id}`;
+  }
+
+  // Temas que la portada muestra bajo el título de cada capítulo.
+  const TEMAS = ["Política", "Deporte", "Cultura", "Negocios", "Sociedad"];
+
+  // Hoy en Chile como AAAA-MM-DD: la fecha en que se agrega un video (para el
+  // «Estreno de hoy» del header) y la que se compara con «Destacar hasta».
+  const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
+
+  // Serie del capítulo que apunta una URL (la del ★), o "" si no tiene.
+  function serieDe(url) {
+    const id = ytIdFromUrl(url);
+    const v = id ? (content.videos || []).find((x) => ytIdFromUrl(x.youtube) === id) : null;
+    return (v?.serie || "").trim();
   }
 
   // Migración de un solo uso: mezcla la lista vieja de la pestaña «Videos» con
@@ -558,7 +585,7 @@
         const info = await r.json();
         const short = Number(info.height) > Number(info.width);
         const kind = short ? "short" : "episode";
-        ytSetList(kind, [{ youtube: ytUrl(id, short), title: info.title || "", kind }, ...ytList(kind)]);
+        ytSetList(kind, [{ youtube: ytUrl(id, short), title: info.title || "", kind, added: hoyChile() }, ...ytList(kind)]);
         toast(short ? "Reel agregado arriba de todo" : "Capítulo agregado arriba de todo", "ok");
         $("#ytAddInput")?.focus();
       } catch (err) {
@@ -590,7 +617,14 @@
       const isFeatured = !short && id && ytIdFromUrl(content.settings.featuredEpisode) === id;
       const isPlayer = !short && id && ytIdFromUrl(content.settings.offlineVideo) === id;
       const pick = (key, on) => {
+        const serieAntes = serieDe(content.settings.featuredEpisode);
         content.settings[key] = on ? "" : v.youtube;
+        // La fecha de término y el «próximo capítulo» son de ese destacado: si el
+        // ★ pasa a otra serie (o a un capítulo suelto), no se arrastran.
+        if (key === "featuredEpisode" && (on || !serieAntes || serieAntes !== serieDe(v.youtube))) {
+          delete content.settings.featuredUntil;
+          delete content.settings.featuredSeriesNext;
+        }
         markDirty();
         renderBody();
       };
@@ -607,6 +641,21 @@
           el("input", { class: "yt-title-input", type: "text", value: v.title || "", placeholder: id,
             title: v.title || id,
             oninput: (e) => { v.title = e.target.value; markDirty(); } }),
+          short ? null : el("div", { class: "yt-extra" },
+            el("input", { class: "yt-serie", type: "text", list: "yt-series", value: v.serie || "",
+              placeholder: "Serie (opcional)", "aria-label": "Serie",
+              title: "Los capítulos con la misma serie se muestran juntos en la portada",
+              oninput: (e) => { const s = e.target.value.trim(); if (s) v.serie = s; else delete v.serie; markDirty(); },
+              // El recuadro del ★ muestra la serie del destacado: sólo esa fila
+              // redibuja al salir del campo (redibujar siempre le quitaría el
+              // foco al campo de la fila siguiente).
+              onchange: () => { if (isFeatured) renderBody(); } }),
+            el("select", { class: "yt-tema", "aria-label": "Tema", title: "Se muestra bajo el título en la portada",
+              onchange: (e) => { if (e.target.value) v.tema = e.target.value; else delete v.tema; markDirty(); } },
+              el("option", { value: "" }, "Sin tema"),
+              TEMAS.map((t) => el("option", { value: t, selected: v.tema === t ? "" : null }, t)),
+            ),
+          ),
         ),
         el("div", { class: "yt-actions" },
           short ? null : el("button", { class: "icon-btn" + (isFeatured ? " on" : ""),
@@ -620,7 +669,11 @@
           el("button", { class: "icon-btn", title: "Bajar", disabled: i === list.length - 1 ? "" : null, onClick: () => move(i, i + 1) }, "↓"),
           el("button", { class: "icon-btn danger", title: "Quitar de la portada", onClick: () => {
             if (!confirm(`¿Quitar «${v.title || id}» de la portada?`)) return;
-            if (isFeatured) content.settings.featuredEpisode = "";
+            if (isFeatured) {
+              content.settings.featuredEpisode = "";
+              delete content.settings.featuredUntil;
+              delete content.settings.featuredSeriesNext;
+            }
             if (isPlayer) content.settings.offlineVideo = "";
             ytSetList(kind, list.filter((x) => x !== v));
           } }, "×"),
@@ -647,7 +700,7 @@
 
       listEl.addEventListener("dragstart", (e) => {
         // Escribir el título o tocar un botón no debe arrastrar la fila.
-        if (e.target.closest("input, button")) { e.preventDefault(); return; }
+        if (e.target.closest("input, button, select")) { e.preventDefault(); return; }
         const row = e.target.closest(".yt-row");
         if (!row) return;
         from = Number(row.dataset.i);
@@ -690,12 +743,44 @@
     );
   }
 
+  // El ★ y sus dos opciones: hasta cuándo se destaca y, si es una serie, el
+  // próximo capítulo que se anuncia al final de su fila en la portada.
+  function ytDestacadoBox() {
+    const s = content.settings;
+    const id = ytIdFromUrl(s.featuredEpisode);
+    const ep = id ? ytList("episode").find((v) => ytIdFromUrl(v.youtube) === id) : null;
+    if (!ep) {
+      return el("p", { class: "yt-note" },
+        "Sin ★: el capítulo grande de la sección Podcast es el más nuevo después del que está arriba en el header.");
+    }
+    const serie = (ep.serie || "").trim();
+    return el("div", { class: "yt-destacado" },
+      el("div", { class: "yt-destacado-head" },
+        el("span", { class: "yt-destacado-star", "aria-hidden": "true" }, "★"),
+        el("span", null, serie ? `Destacada: la serie «${serie}», completa en una sola tarjeta` : `Destacado: ${ep.title || id}`),
+      ),
+      el("label", { class: "yt-destacado-field" }, "Destacar hasta",
+        el("input", { type: "date", value: s.featuredUntil || "",
+          onchange: (e) => { if (e.target.value) s.featuredUntil = e.target.value; else delete s.featuredUntil; markDirty(); } }),
+        el("span", { class: "yt-hint" }, "Opcional. Pasado ese día, el destacado vuelve solo al capítulo más nuevo."),
+      ),
+      serie ? el("label", { class: "yt-destacado-field" }, "Próximo capítulo de la serie",
+        el("input", { type: "text", value: s.featuredSeriesNext || "", placeholder: "Ej.: Viernes 25 · 12:30",
+          oninput: (e) => { const t = e.target.value.trim(); if (t) s.featuredSeriesNext = t; else delete s.featuredSeriesNext; markDirty(); } }),
+        el("span", { class: "yt-hint" }, "Opcional. Se anuncia al final de la fila de la serie. Bórralo cuando se publique."),
+      ) : null,
+    );
+  }
+
   function renderPodcast() {
+    const series = [...new Set(ytList("episode").map((v) => (v.serie || "").trim()).filter(Boolean))];
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Podcast y reels"),
       el("p", { class: "panel-sub" },
-        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ★ marca el capítulo grande de la sección Podcast y ▶ el video del reproductor del header, para promocionar dos videos distintos. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ marca el capítulo grande de la sección Podcast, que nunca repite el de arriba. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       ytAddBox(),
+      ytDestacadoBox(),
+      el("datalist", { id: "yt-series" }, series.map((s) => el("option", { value: s }))),
       el("div", { class: "yt-cols" },
         ytColumn("episode", "Capítulos"),
         ytColumn("short", "Reels"),

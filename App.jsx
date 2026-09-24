@@ -182,6 +182,29 @@ const GlobalStyles = () => (
     .ep-card .thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
     .ep-card:hover .thumb img { transform: scale(1.05); }
     @media (max-width: 480px) { .ep-card { grid-template-columns: 112px 1fr; gap: 12px; padding: 10px; } }
+    .ep-tema { font-weight: 700; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--green); }
+    /* Una serie en la lista: la miniatura con dos capas detrás, como una pila. */
+    .ep-card .thumb.thumb-pila { overflow: visible; margin: 8px 8px 0 0; }
+    .ep-card .thumb.thumb-pila img { border-radius: 8px; box-shadow: 4px -4px 0 -1px #2c302c, 8px -8px 0 -2px #222622; }
+
+    .tag-lima { display: inline-block; background: var(--lime); color: #111; font-weight: 800; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; }
+    .tag-oscura { display: inline-block; background: rgba(10,14,11,.78); color: var(--cream); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; padding: 7px 11px; border-radius: 6px; }
+
+    /* Serie destacada: capítulos en una fila que se desliza, como la de reels. */
+    .serie-fila { position: relative; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .serie-fila::-webkit-scrollbar { display: none; }
+    .serie-cap { flex: 0 0 auto; width: clamp(160px, 15vw, 200px); display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); background: transparent; color: var(--cream); text-align: left; cursor: pointer; scroll-snap-align: start; font-family: var(--font); transition: border-color 160ms var(--ease), background 160ms var(--ease); }
+    .serie-cap:hover { border-color: rgba(180,227,86,.6); }
+    .serie-cap[aria-pressed="true"] { border-color: var(--lime); background: rgba(180,227,86,.08); }
+    .serie-cap-thumb { display: block; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #0e1a12; }
+    .serie-cap-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .serie-cap-texto { font-weight: 700; font-size: 13px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .serie-cap-num { font-weight: 800; color: var(--cream-55); font-variant-numeric: tabular-nums; margin-right: 4px; }
+    .serie-cap[aria-pressed="true"] .serie-cap-num { color: var(--lime); }
+    .serie-cap-proximo { cursor: default; border-style: dashed; border-color: var(--line-strong); }
+    .serie-cap-proximo:hover { border-color: var(--line-strong); }
+    .serie-cap-proximo .serie-cap-thumb { display: flex; align-items: center; justify-content: center; padding: 0 10px; text-align: center; background: rgba(246,243,238,.04); color: var(--cream-70); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+    .serie-cap-proximo .serie-cap-texto { color: var(--cream-70); }
 
     .feature-card { position: relative; display: block; border-radius: 18px; overflow: hidden; background: #0e1a12; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--line); text-align: left; width: 100%; color: inherit; padding: 0; }
     .feature-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease); }
@@ -320,7 +343,8 @@ function useReveal() {
 // content.videos es la lista completa y ordenada a mano en /admin → «Podcast y
 // reels»: [{ youtube, title, kind }], donde kind "short" es un reel vertical y
 // cualquier otro valor (o ninguno) es un capítulo. El orden de la lista es el
-// orden de la portada: el primer capítulo es el destacado grande.
+// orden de la portada: los links nuevos entran arriba, así que el primer
+// capítulo es el más nuevo (ver repartirCapitulos).
 //
 // Antes esto salía de /api/youtube, que leía los feeds Atom del canal. YouTube
 // los dio de baja (404 para cualquier canal, sep 2026), así que la lista pasó a
@@ -340,7 +364,71 @@ function toVideoItem(v, vertical) {
     thumb: vertical ? `https://i.ytimg.com/vi/${id}/oar2.jpg` : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     thumbHd: vertical ? `https://i.ytimg.com/vi/${id}/oar2.jpg` : `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`,
     thumbFallback: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    // Opcionales, desde /admin: la serie agrupa sus capítulos en una sola
+    // tarjeta o fila, el tema se muestra bajo el título y `added` es el día
+    // en que se pegó el link (para el «Estreno de hoy» del header).
+    serie: typeof v.serie === "string" ? v.serie.trim() : "",
+    tema: typeof v.tema === "string" ? v.tema.trim() : "",
+    added: typeof v.added === "string" ? v.added : "",
   };
+}
+
+// Hoy en Chile como AAAA-MM-DD (el formato sueco da justo eso), para comparar
+// con las fechas que guarda /admin sin depender de la zona del navegador.
+const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
+
+// Cada lugar de la portada tiene un solo rol, así ningún capítulo sale dos veces:
+// - Arriba (reproductor del header): el ▶ fijado en /admin o, si no hay, el
+//   capítulo más nuevo, que es el primero de la lista. Con el vivo encendido
+//   la señal ocupa ese lugar y no hay capítulo arriba.
+// - Destacado (sección Podcast): el ★, salvo que haya vencido o sea el mismo
+//   de arriba; si no, el siguiente de la lista. Si es parte de una serie, se
+//   muestra la serie completa.
+// - La lista: todo lo demás, con cada otra serie reducida a una sola fila.
+function repartirCapitulos(episodes, settings, loading) {
+  const buscar = (url) => {
+    const id = getYouTubeId(url);
+    return id ? episodes.find((e) => e.id === id) || null : null;
+  };
+  const live = Boolean(settings.liveVideo?.enabled);
+  const fijadoId = getYouTubeId(settings.offlineVideo);
+  // Mientras llega /api/content la lista es la del bundle, que puede estar
+  // vieja: sin ▶ fijado todavía no se elige nada.
+  const arriba = live ? null : fijadoId ? buscar(settings.offlineVideo) : loading ? null : episodes[0] || null;
+  const arribaId = live ? null : fijadoId || arriba?.id || null;
+
+  const vencido = Boolean(settings.featuredUntil) && hoyChile() > settings.featuredUntil;
+  const marcado = vencido ? null : buscar(settings.featuredEpisode);
+  const featured = (marcado && marcado.id !== arribaId ? marcado : null)
+    || episodes.find((e) => e.id !== arribaId) || null;
+
+  const serie = featured?.serie || "";
+  // La lista va del más nuevo al más antiguo; la serie se numera al revés.
+  const capitulos = serie ? episodes.filter((e) => e.serie === serie).reverse() : [];
+  const fuera = new Set([arribaId, ...(serie ? capitulos.map((c) => c.id) : [featured?.id])].filter(Boolean));
+
+  const items = [];
+  const grupos = new Map();
+  for (const e of episodes) {
+    if (fuera.has(e.id)) continue;
+    if (!e.serie) { items.push({ tipo: "capitulo", key: e.id, ep: e }); continue; }
+    let g = grupos.get(e.serie);
+    if (!g) {
+      g = { tipo: "serie", key: `serie:${e.serie}`, serie: e.serie, capitulos: [] };
+      grupos.set(e.serie, g);
+      items.push(g);
+    }
+    g.capitulos.push(e);
+  }
+
+  let arribaLabel = "Señal 95.9 FM";
+  if (live) arribaLabel = "En vivo ahora";
+  else if (arriba?.added && arriba.added === hoyChile()) arribaLabel = "Estreno de hoy";
+  else if (arriba && !fijadoId) arribaLabel = "Último capítulo";
+  else if (arribaId || getYouTubeId(settings.liveStreamUrl)) arribaLabel = "Video destacado";
+
+  const proximo = serie && typeof settings.featuredSeriesNext === "string" ? settings.featuredSeriesNext.trim() : "";
+  return { live, arriba, arribaId, arribaLabel, featured, serie, capitulos, proximo, items };
 }
 
 function useYouTube() {
@@ -548,7 +636,9 @@ function LiveOffline({ message = "Sin transmisión de video en este momento" }) 
   );
 }
 
-const LivePlaceholder = () => {
+// `videoId` es el capítulo que le toca arriba según repartirCapitulos: el ▶
+// fijado en /admin o, si no hay, el más nuevo de la lista.
+const LivePlaceholder = ({ videoId, label }) => {
   const { settings } = useSiteContent();
   const lv = settings.liveVideo || {};
   if (lv.enabled) {
@@ -556,10 +646,10 @@ const LivePlaceholder = () => {
     if ((lv.type === "hls" || !lv.type) && lv.hlsUrl) return <HlsPlayer key={lv.hlsUrl} src={lv.hlsUrl} />;
   }
   if (!lv.enabled) {
-    const ytId = getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl);
+    const ytId = videoId || getYouTubeId(settings.liveStreamUrl);
     if (ytId) {
       return (
-        <iframe title="Video destacado" src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`}
+        <iframe title={label || "Video destacado"} src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
       );
@@ -567,12 +657,6 @@ const LivePlaceholder = () => {
   }
   return <LiveOffline />;
 };
-
-function liveState(settings) {
-  const live = Boolean(settings.liveVideo?.enabled);
-  const hasVideo = !live && Boolean(getYouTubeId(settings.offlineVideo) || getYouTubeId(settings.liveStreamUrl));
-  return { live, hasVideo, label: live ? "En vivo ahora" : hasVideo ? "Video destacado" : "Señal 95.9 FM" };
-}
 
 /* ─── Header ──────────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
@@ -641,12 +725,11 @@ function Header({ playing, toggle }) {
 }
 
 /* ─── Hero ────────────────────────────────────────────────────────────────── */
-function Hero({ playing, toggle, latest }) {
-  const { programs: PROGRAMS, settings } = useSiteContent();
+function Hero({ playing, toggle, latest, portada }) {
+  const { programs: PROGRAMS } = useSiteContent();
   useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
   const progIdx = getCurrentProgram(PROGRAMS);
   const currentProg = progIdx >= 0 ? PROGRAMS[progIdx] : null;
-  const ls = liveState(settings);
 
   return (
     <section id="inicio" aria-labelledby="hero-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink)", padding: "clamp(44px, 7vw, 96px) 0 clamp(40px, 6vw, 72px)" }}>
@@ -710,12 +793,12 @@ function Hero({ playing, toggle, latest }) {
           <div className="lg:col-span-6 fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}>
             <span aria-hidden="true" style={K({ position: "absolute", top: "-0.55em", right: -6, fontWeight: 800, fontSize: "clamp(56px, 7vw, 104px)", lineHeight: 1, letterSpacing: "-0.04em", color: "transparent", WebkitTextStroke: "1.5px rgba(180,227,86,0.35)", pointerEvents: "none", userSelect: "none", zIndex: 0 })}>95.9</span>
             <div style={{ position: "relative", zIndex: 1, aspectRatio: "16/9", borderRadius: 18, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(246,243,238,.1)", background: "#0d1a12" }}>
-              <LivePlaceholder />
+              <LivePlaceholder videoId={portada.arribaId} label={portada.arribaLabel} />
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: ls.live ? "#ff5a52" : "var(--green)" }} />
-                <span className="meta" style={{ color: "var(--cream-70)", textTransform: "none", letterSpacing: 0, fontSize: 13, fontWeight: 600 }}>{ls.label}</span>
+                <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: portada.live ? "#ff5a52" : portada.arribaLabel === "Estreno de hoy" ? "var(--lime)" : "var(--green)" }} />
+                <span className="meta" style={{ color: "var(--cream-70)", textTransform: "none", letterSpacing: 0, fontSize: 13, fontWeight: 600 }}>{portada.arribaLabel}</span>
               </div>
               <span className="meta">Radio Araucana · Temuco</span>
             </div>
@@ -790,21 +873,23 @@ function SectionHead({ id, kicker, title, lede, aside }) {
   );
 }
 
-function PodcastSection({ data, onPlay }) {
+function PodcastSection({ data, portada, onPlay }) {
   const ref = useReveal();
-  const { settings } = useSiteContent();
-  const { loading, episodes } = data;
+  const { loading } = data;
+  // Qué va en el destacado y qué en la lista lo decide repartirCapitulos, para
+  // que nada repita el capítulo que ya está arriba en el header.
+  const { featured, serie, capitulos, proximo, items, arribaId } = portada;
   const [expanded, setExpanded] = useState(false);
-  // El capítulo grande se marca con ★ en /admin (settings.featuredEpisode), sin
-  // depender del orden de la lista: así se puede promocionar un capítulo
-  // antiguo arriba y dejar los recientes en la columna. Sin marca —o si el
-  // marcado ya no está en la lista— vuelve a ser el primero.
-  const pickedId = getYouTubeId(settings?.featuredEpisode);
-  const featured = (pickedId && episodes.find((e) => e.id === pickedId)) || episodes[0];
-  const rest = featured ? episodes.filter((e) => e.id !== featured.id) : [];
+  const [abiertas, setAbiertas] = useState(() => new Set()); // series de la lista desplegadas
+  const alternarSerie = (nombre) => setAbiertas((antes) => {
+    const s = new Set(antes);
+    if (s.has(nombre)) s.delete(nombre); else s.add(nombre);
+    return s;
+  });
   const PREVIEW = 5;
-  const list = expanded ? rest : rest.slice(0, PREVIEW);
-  const hidden = rest.length - list.length;
+  const list = expanded ? items : items.slice(0, PREVIEW);
+  // Lo plegado se cuenta en capítulos y no en filas: una serie son varios.
+  const hidden = items.slice(list.length).reduce((n, it) => n + (it.tipo === "serie" ? it.capitulos.length : 1), 0);
   // Al plegar, la lista pierde 19 tarjetas de golpe y todo lo que hay debajo
   // sube: sin corregir nada, el botón que acabas de tocar se va fuera de la
   // pantalla. Se ancla midiendo su posición antes y después del cambio y
@@ -844,7 +929,7 @@ function PodcastSection({ data, onPlay }) {
           id="podcast-title"
           kicker="Araucana Digital · Podcast"
           title="Las conversaciones de La Araucanía, en video."
-          lede="Entrevistas completas con las personas que mueven la región: deporte, cultura, negocios y política. Un capítulo nuevo cada semana en YouTube."
+          lede="Entrevistas completas con las personas que mueven la región: deporte, cultura, negocios y política. Una entrevista nueva cada día, de lunes a viernes."
           aside={<>
             <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Ver todos los capítulos <ArrowUpRight size={15} aria-hidden="true" /></a>
             <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="btn btn-red btn-sm"><SvgYoutube size={16} /> Suscribirse</a>
@@ -863,35 +948,16 @@ function PodcastSection({ data, onPlay }) {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             <div className="lg:col-span-7">
-              <button className="feature-card" onClick={() => onPlay(featured, false)} aria-label={`Reproducir: ${cleanTitle(featured.title)}`}>
-                <img src={featured.thumbHd || featured.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
-                  onError={(e) => { if (featured.thumb && e.currentTarget.src !== featured.thumb) e.currentTarget.src = featured.thumb; }} />
-                <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
-                <div style={{ position: "absolute", top: 18, left: 18 }}>
-                  <span style={K({ background: "var(--lime)", color: "#111", fontWeight: 800, fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", padding: "6px 10px", borderRadius: 6 })}>Capítulo destacado</span>
-                </div>
-                <div style={{ position: "absolute", right: 20, bottom: 20 }}>
-                  <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
-                </div>
-              </button>
-              <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-                <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(featured.title)}</p>
-                <p className="meta">Araucana Digital</p>
-              </div>
+              {serie
+                ? <SerieDestacada key={serie} serie={serie} capitulos={capitulos} evitarId={arribaId} proximo={proximo} onPlay={onPlay} />
+                : <CapituloDestacado ep={featured} onPlay={onPlay} />}
             </div>
 
             <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <p className="meta" style={{ padding: "0 14px 10px", color: "var(--cream-55)" }}>Capítulos anteriores</p>
-              {list.map((ep) => (
-                <button key={ep.id} className="ep-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
-                  <div className="thumb">
-                    <img src={ep.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(ep.title)}</p>
-                  </div>
-                </button>
-              ))}
+              <p className="meta" style={{ padding: "0 14px 10px", color: "var(--cream-55)" }}>Más capítulos</p>
+              {list.map((it) => (it.tipo === "serie"
+                ? <FilaSerie key={it.key} grupo={it} abierta={abiertas.has(it.serie)} onToggle={() => alternarSerie(it.serie)} onPlay={onPlay} />
+                : <FilaCapitulo key={it.key} ep={it.ep} onPlay={onPlay} />))}
               {(hidden > 0 || expanded) && (
                 <button ref={toggleRef} type="button" className="btn btn-ghost btn-sm" onClick={toggleList} aria-expanded={expanded} style={{ alignSelf: "flex-start", margin: "12px 14px 0", scrollMarginTop: 96, scrollMarginBottom: 24 }}>
                   {expanded
@@ -905,6 +971,160 @@ function PodcastSection({ data, onPlay }) {
         )}
       </div>
     </section>
+  );
+}
+
+// El capítulo grande cuando el destacado no es parte de una serie.
+function CapituloDestacado({ ep, onPlay }) {
+  return (
+    <>
+      <button className="feature-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
+        <img src={ep.thumbHd || ep.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
+          onError={(e) => { if (ep.thumb && e.currentTarget.src !== ep.thumb) e.currentTarget.src = ep.thumb; }} />
+        <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
+        <div style={{ position: "absolute", top: 18, left: 18 }}>
+          <span className="tag-lima">Capítulo destacado</span>
+        </div>
+        <div style={{ position: "absolute", right: 20, bottom: 20 }}>
+          <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
+        </div>
+      </button>
+      <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+        <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(ep.title)}</p>
+        <p className="meta">{ep.tema ? `Araucana Digital · ${ep.tema}` : "Araucana Digital"}</p>
+      </div>
+    </>
+  );
+}
+
+// Una serie destacada ocupa un solo lugar: el capítulo elegido en grande y
+// todos sus capítulos en una fila que se desliza, del primero al último. Se
+// abre en el más nuevo que no esté ya arriba en el header, y si /admin anuncia
+// el próximo, la fila termina en él.
+function SerieDestacada({ serie, capitulos, evitarId, proximo, onPlay }) {
+  const porDefecto = capitulos.slice().reverse().find((c) => c.id !== evitarId) || capitulos[capitulos.length - 1];
+  const [elegidoId, setElegidoId] = useState(null);
+  const elegido = capitulos.find((c) => c.id === elegidoId) || porDefecto;
+  const numero = capitulos.indexOf(elegido) + 1;
+  const filaRef = useRef(null);
+  const [puedeAtras, setPuedeAtras] = useState(false);
+  const [puedeAdelante, setPuedeAdelante] = useState(false);
+
+  const medir = useCallback(() => {
+    const el = filaRef.current; if (!el) return;
+    setPuedeAtras(el.scrollLeft > 8);
+    setPuedeAdelante(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+  useEffect(() => {
+    const el = filaRef.current; if (!el) return;
+    // Parte mostrando el capítulo elegido, que es de los más nuevos. Con
+    // scrollLeft y no con scrollIntoView, que además movería la página en vertical.
+    const activo = el.querySelector('[aria-pressed="true"]');
+    el.scrollLeft = activo ? Math.max(0, activo.offsetLeft - 2) : el.scrollWidth;
+    medir();
+    el.addEventListener("scroll", medir, { passive: true });
+    window.addEventListener("resize", medir);
+    return () => { el.removeEventListener("scroll", medir); window.removeEventListener("resize", medir); };
+  }, [medir, capitulos.length]);
+  const deslizar = (dir) => { const el = filaRef.current; if (el) el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.8), behavior: "smooth" }); };
+  const dos = (n) => String(n).padStart(2, "0");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <span className="tag-lima">Serie</span>
+        <span style={K({ fontWeight: 800, fontSize: 18, color: "var(--cream)" })}>{serie}</span>
+        <span style={K({ fontSize: 14, color: "var(--cream-55)" })}>
+          {capitulos.length} {capitulos.length === 1 ? "capítulo publicado" : "capítulos publicados"}
+        </span>
+      </div>
+
+      <button className="feature-card" onClick={() => onPlay(elegido, false)} aria-label={`Reproducir: ${cleanTitle(elegido.title)}`}>
+        <img src={elegido.thumbHd || elegido.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
+          onError={(e) => { if (elegido.thumb && e.currentTarget.src !== elegido.thumb) e.currentTarget.src = elegido.thumb; }} />
+        <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
+        <div style={{ position: "absolute", top: 18, left: 18 }}>
+          <span className="tag-oscura">Capítulo {numero}</span>
+        </div>
+        <div style={{ position: "absolute", right: 20, bottom: 20 }}>
+          <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
+        </div>
+      </button>
+      <div style={{ padding: "4px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+        <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(elegido.title)}</p>
+        <p className="meta">Araucana Digital · {serie}</p>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
+        <p className="meta" style={{ color: "var(--cream-55)" }}>Capítulos de la serie</p>
+        {(puedeAtras || puedeAdelante) && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="icon-btn" onClick={() => deslizar(-1)} disabled={!puedeAtras} aria-label="Capítulos anteriores de la serie"><ChevronLeft size={18} /></button>
+            <button className="icon-btn" onClick={() => deslizar(1)} disabled={!puedeAdelante} aria-label="Capítulos siguientes de la serie"><ChevronRight size={18} /></button>
+          </div>
+        )}
+      </div>
+      <div ref={filaRef} className="serie-fila" role="list" aria-label={`Capítulos de ${serie}`}>
+        {capitulos.map((c, i) => (
+          <div key={c.id} role="listitem" style={{ display: "contents" }}>
+            <button className="serie-cap" aria-pressed={c.id === elegido.id} onClick={() => setElegidoId(c.id)}
+              aria-label={`Capítulo ${i + 1}: ${cleanTitle(c.title)}`}>
+              <span className="serie-cap-thumb"><img src={c.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" /></span>
+              <span className="serie-cap-texto"><span className="serie-cap-num">{dos(i + 1)}</span> {cleanTitle(c.title)}</span>
+            </button>
+          </div>
+        ))}
+        {proximo && (
+          <div role="listitem" className="serie-cap serie-cap-proximo">
+            <span className="serie-cap-thumb">{proximo}</span>
+            <span className="serie-cap-texto"><span className="serie-cap-num">{dos(capitulos.length + 1)}</span> Próximo capítulo</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilaCapitulo({ ep, onPlay }) {
+  return (
+    <button className="ep-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
+      <div className="thumb">
+        <img src={ep.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" />
+      </div>
+      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{cleanTitle(ep.title)}</p>
+        {ep.tema && <span className="ep-tema">{ep.tema}</span>}
+      </div>
+    </button>
+  );
+}
+
+// Una serie que no es la destacada ocupa una sola fila de la lista, con sus
+// capítulos adentro: así una serie de seis no empuja todo lo demás.
+function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
+  const n = grupo.capitulos.length;
+  const panelId = `serie-${grupo.serie.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <div>
+      <button className="ep-card" onClick={onToggle} aria-expanded={abierta} aria-controls={panelId}>
+        <div className="thumb thumb-pila">
+          <img src={grupo.capitulos[0].thumb} alt="" width="480" height="270" loading="lazy" decoding="async" />
+        </div>
+        <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span className="ep-tema">Serie</span>
+          <p style={K({ fontWeight: 700, fontSize: 15, lineHeight: 1.3, color: "var(--cream)" })}>{grupo.serie}</p>
+          <span style={K({ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--cream-55)" })}>
+            {n} {n === 1 ? "capítulo" : "capítulos"}
+            <ChevronDown size={15} aria-hidden="true" style={{ transition: "transform 200ms var(--ease)", transform: abierta ? "rotate(180deg)" : "none" }} />
+          </span>
+        </div>
+      </button>
+      {abierta && (
+        <div id={panelId} style={{ marginLeft: 22, paddingLeft: 8, borderLeft: "1px solid var(--line)" }}>
+          {grupo.capitulos.map((ep) => <FilaCapitulo key={ep.id} ep={ep} onPlay={onPlay} />)}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1476,6 +1696,7 @@ function AppInner() {
   const [modal, setModal] = useState(null); // { video, vertical }
   const audioRef = useRef(null);
   const yt = useYouTube();
+  const portada = useMemo(() => repartirCapitulos(yt.episodes, settings, yt.loading), [yt.episodes, settings, yt.loading]);
 
   const play = (which) => {
     const audio = audioRef.current;
@@ -1502,9 +1723,9 @@ function AppInner() {
       <GlobalStyles />
       <Header playing={araucanaPlaying} toggle={toggleAraucana} />
       <main id="contenido" style={{ paddingBottom: 72 }}>
-        <Hero playing={araucanaPlaying} toggle={toggleAraucana} latest={yt.episodes[0]} />
+        <Hero playing={araucanaPlaying} toggle={toggleAraucana} latest={yt.episodes[0]} portada={portada} />
         <WeatherTicker />
-        <PodcastSection data={yt} onPlay={openVideo} />
+        <PodcastSection data={yt} portada={portada} onPlay={openVideo} />
         <ReelsSection data={yt} onPlay={openVideo} />
         <NewsGrid />
         <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} />

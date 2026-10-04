@@ -949,7 +949,7 @@ function PodcastSection({ data, portada, onPlay }) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             <div className="lg:col-span-7">
               {serie
-                ? <SerieDestacada key={serie} serie={serie} capitulos={capitulos} evitarId={arribaId} proximo={proximo} onPlay={onPlay} />
+                ? <SerieDestacada key={serie} serie={serie} capitulos={capitulos} inicialId={featured.id} evitarId={arribaId} proximo={proximo} onPlay={onPlay} />
                 : <CapituloDestacado ep={featured} onPlay={onPlay} />}
             </div>
 
@@ -999,10 +999,11 @@ function CapituloDestacado({ ep, onPlay }) {
 
 // Una serie destacada ocupa un solo lugar: el capítulo elegido en grande y
 // todos sus capítulos en una fila que se desliza, del primero al último. Se
-// abre en el más nuevo que no esté ya arriba en el header, y si /admin anuncia
-// el próximo, la fila termina en él.
-function SerieDestacada({ serie, capitulos, evitarId, proximo, onPlay }) {
-  const porDefecto = capitulos.slice().reverse().find((c) => c.id !== evitarId) || capitulos[capitulos.length - 1];
+// abre en el capítulo con ★ en /admin; si no hay, en el más nuevo que no esté
+// ya arriba en el header. Si /admin anuncia el próximo, la fila termina en él.
+function SerieDestacada({ serie, capitulos, inicialId, evitarId, proximo, onPlay }) {
+  const porDefecto = capitulos.find((c) => c.id === inicialId)
+    || capitulos.slice().reverse().find((c) => c.id !== evitarId) || capitulos[capitulos.length - 1];
   const [elegidoId, setElegidoId] = useState(null);
   const elegido = capitulos.find((c) => c.id === elegidoId) || porDefecto;
   const numero = capitulos.indexOf(elegido) + 1;

@@ -483,10 +483,15 @@ function useYouTube() {
   const loading = !content.loaded;
   return useMemo(() => {
     const list = Array.isArray(videos) ? videos : [];
+    const reels = list.filter((v) => v?.kind === "short").map((v) => toVideoItem(v, true)).filter(Boolean);
+    // La fila de reels muestra sólo los marcados «Destacado» en /admin (el
+    // mismo campo `peso` de los capítulos). Si no hay ninguno marcado, van
+    // todos, para que la sección no desaparezca.
+    const destacados = reels.filter((r) => r.peso);
     return {
       loading,
       episodes: list.filter((v) => v?.kind !== "short").map((v) => toVideoItem(v, false)).filter(Boolean),
-      shorts: list.filter((v) => v?.kind === "short").map((v) => toVideoItem(v, true)).filter(Boolean),
+      shorts: destacados.length ? destacados : reels,
     };
   }, [videos, loading]);
 }

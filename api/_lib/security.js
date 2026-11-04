@@ -33,6 +33,13 @@ export function rateLimit(req, { key = "global", limit = 5, windowMs = 60_000 } 
   return bucket.count <= limit;
 }
 
+// Mira si un bucket ya llegó al tope, sin sumarle un intento. Sirve para
+// cortar antes de revisar una clave cuando ya hubo demasiados intentos.
+export function rateLimited(req, { key = "global", limit = 5, windowMs = 60_000 } = {}) {
+  const bucket = buckets.get(`${key}:${clientIp(req)}`);
+  return Boolean(bucket) && Date.now() - bucket.start < windowMs && bucket.count >= limit;
+}
+
 export function tooManyRequests(res) {
   res.setHeader("Retry-After", "60");
   return res.status(429).json({

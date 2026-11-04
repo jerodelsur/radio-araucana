@@ -17,6 +17,7 @@ const ALLOWED_KEYS = new Set([
   "regions",
   "whatsappOptions",
   "frontera",
+  "cuadritos",
 ]);
 
 const REQUIRED_SETTINGS = [
@@ -84,7 +85,7 @@ export default async function handler(req, res) {
   }
 
   // Arrays must be arrays (when present)
-  for (const arr of ["news", "videos", "programs", "regions", "whatsappOptions"]) {
+  for (const arr of ["news", "videos", "programs", "regions", "whatsappOptions", "cuadritos"]) {
     if (arr in clean && !Array.isArray(clean[arr])) {
       return badRequest(res, `${arr} must be an array`);
     }

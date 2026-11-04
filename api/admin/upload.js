@@ -6,7 +6,7 @@
 // Returns: { url: "https://...blob.vercel-storage.com/..." }
 
 import { put } from "@vercel/blob";
-import { rateLimit, tooManyRequests, safeEqual } from "../_lib/security.js";
+import { rateLimit, rateLimited, tooManyRequests, safeEqual } from "../_lib/security.js";
 
 // Sin image/svg+xml: un SVG puede llevar <script> y el Blob lo serviría tal
 // cual (stored XSS en el dominio público del store). Los logos del sitio son
@@ -76,9 +76,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  // Mismo bucket "admin" que save.js: frena fuerza bruta contra el Bearer.
-  if (!rateLimit(req, { key: "admin", limit: 20 })) return tooManyRequests(res);
-  if (!authOk(req)) return unauthorized(res);
+  // Los intentos con clave mala cuentan en el mismo bucket "admin" que
+  // save.js (20 por minuto), que es lo que frena la fuerza bruta contra el
+  // Bearer: con el bucket lleno se corta antes de mirar la clave, así que
+  // tampoco pasa una clave correcta adivinada en el intento 21. Con la clave
+  // correcta el tope es más alto, porque un carrusel «En cuadritos» son 8–10
+  // láminas que se suben seguidas.
+  if (rateLimited(req, { key: "admin", limit: 20 })) return tooManyRequests(res);
+  if (!authOk(req)) {
+    rateLimit(req, { key: "admin", limit: 20 });
+    return unauthorized(res);
+  }
+  if (!rateLimit(req, { key: "admin-upload", limit: 80 })) return tooManyRequests(res);
 
   const contentType = (req.headers["content-type"] || "").split(";")[0].trim();
   if (!ALLOWED_MIME.has(contentType)) {

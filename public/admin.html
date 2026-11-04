@@ -160,6 +160,27 @@
     .yt-info{order:10;flex-basis:100%}
   }
 
+  /* ─── EN CUADRITOS ─── */
+  .cq-nuevo{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
+  .cq-sub{font-size:13px;font-weight:600;color:var(--green-bright);text-transform:uppercase;letter-spacing:.08em;margin:0}
+  .cq-zona{border:1.5px dashed var(--border);border-radius:10px;padding:18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;transition:border-color .15s,background .15s}
+  .cq-zona.sobre{border-color:var(--green-bright);background:rgba(125,187,94,.06)}
+  .cq-zona p{margin:0;font-size:13px;color:var(--bone-dim)}
+  .cq-file{display:none}
+  .cq-archivos{flex-basis:100%;font-size:12px;color:var(--muted)}
+  .cq-campos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+  .cq-campo{display:flex;flex-direction:column;min-width:0}
+  .cq-campo.cq-ancho{grid-column:1/-1}
+  .cq-acciones{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .cq-progreso{font-size:13px;color:var(--green-bright);margin:0}
+  .cq-fila{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
+  .cq-thumb{width:64px;height:80px;border-radius:5px;object-fit:cover;background:rgba(255,255,255,.04);flex-shrink:0}
+  .cq-datos{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .cq-datos input,.cq-datos textarea{font-size:13px;padding:6px 8px}
+  .cq-datos textarea{min-height:52px}
+  .cq-dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+  @media (max-width:760px){.cq-campos,.cq-dos{grid-template-columns:minmax(0,1fr)}.cq-fila{flex-wrap:wrap}.cq-datos{flex-basis:calc(100% - 76px)}}
+
   /* ─── TOAST ─── */
   #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--card);border:1px solid var(--border);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transition:transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
   #toast.visible{transform:translateX(-50%) translateY(0)}
@@ -307,6 +328,7 @@
     { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
     { id: "podcast",  label: "Podcast y reels", render: renderPodcast, wide: true },
+    { id: "cuadritos", label: "En cuadritos",  render: renderCuadritos, wide: true },
     { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
   ];
   let currentTab = "settings";
@@ -960,6 +982,165 @@
     );
   }
 
+  /* ───────── En cuadritos (content.cuadritos) ───────── */
+  // Los carruseles de noticias de la portada: [{ titulo, fuente, texto,
+  // instagram, laminas: [url], added }], los nuevos arriba. Las láminas se
+  // achican en el navegador a JPG de 600 × 750 antes de subirlas (un PNG de
+  // 1080 × 1350 pesa 0,5 MB; el JPG, unos 60–80 KB) y se suben una por una.
+  const LAMINA_ANCHO = 600, LAMINA_ALTO = 750, LAMINA_CALIDAD = 0.72;
+
+  async function achicarLamina(file) {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, LAMINA_ANCHO / bmp.width, LAMINA_ALTO / bmp.height);
+    const w = Math.round(bmp.width * s), h = Math.round(bmp.height * s);
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close?.();
+    const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", LAMINA_CALIDAD));
+    if (!blob) throw new Error("no se pudo convertir la imagen");
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  }
+
+  // La primera vez que se abre el panel con esta pestaña, la lista no existe:
+  // se cargan los carruseles de octubre que vienen en el sitio.
+  async function semillaCuadritos() {
+    if (Array.isArray(content.cuadritos)) return 0;
+    try {
+      const r = await fetch("/cuadritos/semilla.json", { cache: "no-store" });
+      const lista = r.ok ? await r.json() : null;
+      if (!Array.isArray(lista)) return 0;
+      content.cuadritos = lista;
+      return lista.length;
+    } catch { return 0; }
+  }
+
+  function renderCuadritos() {
+    if (!Array.isArray(content.cuadritos)) content.cuadritos = [];
+    const lista = content.cuadritos;
+
+    // Formulario para un carrusel nuevo. Lo escrito sobrevive a los redibujos
+    // de la pestaña mientras no se agregue.
+    const nuevo = renderCuadritos.borrador || (renderCuadritos.borrador = { titulo: "", fuente: "", instagram: "", texto: "", archivos: [] });
+    const campo = (k, etiqueta, ayuda, ph, multi) => el("label", { class: "cq-campo" + (multi ? " cq-ancho" : "") },
+      el("span", { class: "field-label" }, etiqueta),
+      multi
+        ? el("textarea", { rows: "4", placeholder: ph, oninput: (e) => { nuevo[k] = e.target.value; } }, nuevo[k])
+        : el("input", { type: k === "instagram" ? "url" : "text", value: nuevo[k], placeholder: ph, oninput: (e) => { nuevo[k] = e.target.value; } }),
+      ayuda ? el("span", { class: "field-hint" }, ayuda) : null,
+    );
+    const resumen = el("p", { class: "cq-archivos" }, nuevo.archivos.length
+      ? `${nuevo.archivos.length} láminas: ${nuevo.archivos.map((f) => f.name).join(", ")}`
+      : "Ninguna lámina elegida todavía.");
+    const elegir = (files) => {
+      const imgs = [...files].filter((f) => /^image\/(png|jpe?g|webp)$/.test(f.type));
+      if (!imgs.length) { toast("Elige las láminas en PNG o JPG", "err"); return; }
+      // En el orden del nombre: 01.png, 02.png… como salen de la carpeta.
+      nuevo.archivos = imgs.sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }));
+      renderBody();
+    };
+    const input = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp", multiple: "", class: "cq-file",
+      onchange: (e) => elegir(e.target.files) });
+    const zona = el("div", { class: "cq-zona" },
+      el("p", null, el("strong", null, "Arrastra aquí las láminas"), " del carrusel (01.png, 02.png…) o "),
+      el("button", { class: "btn btn-ghost", type: "button", onClick: () => input.click() }, "Elegir archivos"),
+      input,
+      resumen,
+    );
+    zona.addEventListener("dragover", (e) => { e.preventDefault(); zona.classList.add("sobre"); });
+    zona.addEventListener("dragleave", () => zona.classList.remove("sobre"));
+    zona.addEventListener("drop", (e) => { e.preventDefault(); zona.classList.remove("sobre"); elegir(e.dataTransfer.files); });
+
+    const progreso = el("p", { class: "cq-progreso", "aria-live": "polite" });
+    const boton = el("button", { class: "btn", type: "button" }, "Subir y agregar arriba");
+    boton.addEventListener("click", async () => {
+      if (!nuevo.archivos.length) { toast("Primero elige las láminas", "err"); return; }
+      if (!nuevo.titulo.trim()) { toast("Ponle un título corto al carrusel", "err"); return; }
+      boton.disabled = true;
+      const urls = [];
+      try {
+        for (let i = 0; i < nuevo.archivos.length; i++) {
+          progreso.textContent = `Subiendo lámina ${i + 1} de ${nuevo.archivos.length}…`;
+          const jpg = await achicarLamina(nuevo.archivos[i]);
+          const base = (nuevo.titulo.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "cuadritos");
+          urls.push(await uploadImage(new File([jpg], `cuadritos-${base}-${String(i + 1).padStart(2, "0")}.jpg`, { type: "image/jpeg" })));
+        }
+      } catch (err) {
+        progreso.textContent = "";
+        boton.disabled = false;
+        toast(`No se pudo subir la lámina ${urls.length + 1}: ${err.message}`, "err");
+        return;
+      }
+      const item = { titulo: nuevo.titulo.trim(), fuente: nuevo.fuente.trim(), texto: nuevo.texto.trim(), instagram: nuevo.instagram.trim(), laminas: urls, added: hoyChile() };
+      for (const k of ["fuente", "texto", "instagram"]) if (!item[k]) delete item[k];
+      content.cuadritos = [item, ...lista];
+      renderCuadritos.borrador = null;
+      markDirty();
+      renderBody();
+      toast("Carrusel agregado arriba. Recuerda Guardar.", "ok");
+    });
+
+    const form = el("div", { class: "cq-nuevo" },
+      el("h3", { class: "cq-sub" }, "Agregar un carrusel"),
+      zona,
+      el("div", { class: "cq-campos" },
+        campo("titulo", "Título", "Corto: va bajo la portada y en el visor.", "Ej.: Presupuesto 2027 del GORE"),
+        campo("fuente", "Medio de origen", "Se muestra como «📰 Información de …».", "Ej.: El Austral de Temuco"),
+        campo("instagram", "Link del post en Instagram", "Opcional. Sin link, el botón lleva al perfil.", "https://www.instagram.com/p/…"),
+        campo("texto", "Texto", "Opcional. El gancho y el primer párrafo del pie; una línea en blanco separa párrafos.", "Así se distribuye el presupuesto regional…", true),
+      ),
+      el("div", { class: "cq-acciones" }, boton, progreso),
+    );
+
+    const mover = (from, to) => {
+      if (to < 0 || to >= lista.length) return;
+      const next = lista.slice();
+      const [it] = next.splice(from, 1);
+      next.splice(to, 0, it);
+      content.cuadritos = next;
+      markDirty();
+      renderBody();
+    };
+    const editar = (c, k) => (e) => { const t = e.target.value.trim(); if (t) c[k] = t; else delete c[k]; markDirty(); };
+    const filas = lista.map((c, i) => el("div", { class: "cq-fila" },
+      el("img", { class: "cq-thumb", src: c.laminas?.[0] || "", alt: "", loading: "lazy" }),
+      el("div", { class: "cq-datos" },
+        el("input", { type: "text", value: c.titulo || "", placeholder: "Título", "aria-label": "Título", oninput: editar(c, "titulo") }),
+        el("div", { class: "cq-dos" },
+          el("input", { type: "text", value: c.fuente || "", placeholder: "Medio de origen", "aria-label": "Medio de origen", oninput: editar(c, "fuente") }),
+          el("input", { type: "url", value: c.instagram || "", placeholder: "Link del post en Instagram", "aria-label": "Link del post en Instagram", oninput: editar(c, "instagram") }),
+        ),
+        el("textarea", { rows: "2", placeholder: "Texto (opcional)", "aria-label": "Texto", oninput: editar(c, "texto") }, c.texto || ""),
+        el("span", { class: "yt-hint" }, `${(c.laminas || []).length} láminas${c.added ? ` · agregado el ${c.added}` : ""}`),
+      ),
+      el("div", { class: "yt-actions" },
+        el("button", { class: "icon-btn", title: "Poner primero", disabled: i === 0 ? "" : null, onClick: () => mover(i, 0) }, "⤒"),
+        el("button", { class: "icon-btn", title: "Subir", disabled: i === 0 ? "" : null, onClick: () => mover(i, i - 1) }, "↑"),
+        el("button", { class: "icon-btn", title: "Bajar", disabled: i === lista.length - 1 ? "" : null, onClick: () => mover(i, i + 1) }, "↓"),
+        el("button", { class: "icon-btn danger", title: "Quitar de la portada", onClick: () => {
+          if (!confirm(`¿Quitar «${c.titulo || "este carrusel"}» de la portada?`)) return;
+          content.cuadritos = lista.filter((x) => x !== c);
+          markDirty();
+          renderBody();
+        } }, "×"),
+      ),
+    ));
+
+    return el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, "En cuadritos"),
+      el("p", { class: "panel-sub" },
+        "Los carruseles de noticias que se ven en la portada, en el orden de esta lista. Arrastra las láminas de la carpeta «carrusel», ponle título y medio, y se agrega arriba de todo. Las láminas se achican solas antes de subirse. Sin ningún carrusel, la sección no aparece. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+      form,
+      el("div", { class: "yt-col-head", style: "margin-top:28px" },
+        el("span", { class: "yt-col-title" }, "En la portada"),
+        el("span", { class: "yt-meta" }, `${lista.length} ${lista.length === 1 ? "carrusel" : "carruseles"}`),
+      ),
+      lista.length ? el("div", { class: "yt-list" }, filas) : el("p", { class: "yt-empty" }, "Sin carruseles. Agrega uno arriba."),
+    );
+  }
+
   function panelTitleFor(key) {
     return ({
       news: "Noticias",
@@ -1142,6 +1323,12 @@
       markDirty();
       renderBody();
       setTimeout(() => toast(`Completé frase, invitado y cargo de ${completadas} ${completadas === 1 ? "entrevista destacada" : "entrevistas destacadas"} desde el título. Revísalos en «Podcast y reels» y guarda.`, "ok"), 900);
+    }
+    const sembrados = await semillaCuadritos();
+    if (sembrados) {
+      markDirty();
+      renderBody();
+      setTimeout(() => toast(`Cargué ${sembrados} carruseles de octubre en «En cuadritos». Revísalos y guarda.`, "ok"), completadas ? 3600 : 900);
     }
   }
 

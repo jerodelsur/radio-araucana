@@ -185,6 +185,18 @@ const devApiStub = () => ({
       res.end(JSON.stringify({ ok: true, dev: true }))
     })
 
+    // Subir imágenes tampoco toca el blob de producción en dev: devuelve la
+    // imagen como data: URL, así el panel y la portada se pueden probar igual.
+    server.middlewares.use('/api/admin/upload', async (req, res, next) => {
+      if (req.method !== 'POST') return next()
+      const chunks = []
+      for await (const c of req) chunks.push(c)
+      const tipo = (req.headers['content-type'] || 'image/jpeg').split(';')[0]
+      res.statusCode = 200
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ url: `data:${tipo};base64,${Buffer.concat(chunks).toString('base64')}`, dev: true }))
+    })
+
     // Acceso privado a la presentación: la ruta pública /propuesta la atiende
     // una sola función (GET = página/login, POST = validar clave).
     server.middlewares.use('/propuesta', async (req, res, next) => {

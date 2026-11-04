@@ -1,6 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
 import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import defaultContent from "./src/content/site.json";
+// Los carruseles «En cuadritos» de octubre de 2026, con sus láminas en
+// public/cuadritos/. Se muestran mientras el contenido guardado desde /admin
+// no tenga todavía la lista `cuadritos`; /admin los carga desde el mismo
+// archivo la primera vez que se abre.
+import cuadritosSemilla from "./public/cuadritos/semilla.json";
 
 /* ─── Editable content ──────────────────────────────────────────────────────
    Runtime content is fetched from /api/content (which reads from Vercel Blob
@@ -229,6 +234,36 @@ const GlobalStyles = () => (
 
     .reel-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 18px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .reel-row::-webkit-scrollbar { display: none; }
+    /* En cuadritos: portadas 4:5 en la misma fila deslizable que los reels. */
+    .cuad-card { flex: 0 0 auto; width: clamp(200px, 21vw, 260px); display: flex; flex-direction: column; gap: 10px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; scroll-snap-align: start; font-family: var(--font); }
+    .cuad-img { position: relative; display: block; aspect-ratio: 4/5; border-radius: 14px; overflow: hidden; background: #0e1a12; border: 1px solid var(--line); }
+    .cuad-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+    .cuad-card:hover .cuad-img img { transform: scale(1.03); }
+    .cuad-n { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 5px; background: rgba(10,14,11,.8); color: var(--cream); font-weight: 700; font-size: 11px; letter-spacing: .06em; padding: 4px 8px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+    .cuad-txt { display: flex; flex-direction: column; gap: 3px; padding: 0 2px; }
+    .cuad-txt strong { font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--cream); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cuad-txt span { font-weight: 600; font-size: 12px; color: var(--cream-55); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .cuad-cierre { flex: 0 0 auto; width: clamp(200px, 21vw, 260px); aspect-ratio: 4/5; border-radius: 14px; border: 1.5px dashed var(--line-strong); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; text-align: center; color: var(--cream); text-decoration: none; scroll-snap-align: start; transition: border-color 160ms var(--ease); }
+    .cuad-cierre:hover { border-color: var(--lime); }
+    .cuad-cierre strong { font-weight: 800; font-size: 17px; line-height: 1.25; }
+    .cuad-cierre span { font-size: 13px; color: var(--cream-55); }
+    .cuad-visor { position: fixed; inset: 0; z-index: 10000; background: rgba(8,10,9,.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px 16px; overflow-y: auto; }
+    .cuad-visor-caja { position: relative; width: 100%; max-width: 1040px; display: grid; grid-template-columns: auto minmax(0, 340px); gap: 28px; align-items: center; justify-content: center; }
+    .cuad-cerrar { position: fixed; top: 16px; right: 16px; z-index: 1; background: rgba(246,243,238,.1); }
+    .cuad-lamina { position: relative; height: min(82vh, 760px); aspect-ratio: 4/5; max-width: 100%; border-radius: 16px; overflow: hidden; background: #0e1a12; box-shadow: 0 40px 90px rgba(0,0,0,.6); touch-action: pan-y; }
+    .cuad-lamina img { width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+    .cuad-flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(10,14,11,.75); color: var(--cream); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .cuad-flecha:disabled { opacity: 0; pointer-events: none; }
+    .cuad-prev { left: 10px; } .cuad-next { right: 10px; }
+    .cuad-puntos { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 5px; }
+    .cuad-puntos i { display: block; width: 6px; height: 6px; border-radius: 50%; background: rgba(246,243,238,.35); transition: width .2s var(--ease), background .2s var(--ease); }
+    .cuad-puntos i.on { width: 18px; border-radius: 3px; background: var(--lime); }
+    .cuad-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    @media (max-width: 860px) {
+      .cuad-visor { align-items: flex-start; padding-top: 72px; }
+      .cuad-visor-caja { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+      .cuad-lamina { height: auto; width: 100%; }
+    }
     .reel-card { position: relative; flex: 0 0 auto; width: clamp(190px, 22vw, 250px); aspect-ratio: 9/16; border-radius: 16px; overflow: hidden; background: #0e1a12; scroll-snap-align: start; cursor: pointer; border: 1px solid var(--line); padding: 0; text-align: left; color: inherit; }
     .reel-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
     .reel-card:hover img { transform: scale(1.05); }
@@ -722,7 +757,12 @@ function Header({ playing, toggle }) {
   const [open, setOpen] = useState(false);
   const { settings, news } = useSiteContent();
   const showNews = newsVisible(settings, news);
-  const links = NAV_LINKS.filter((l) => l.href !== "#noticias" || showNews);
+  const hayCuadritos = useCuadritos().length > 0;
+  // «Noticias» lleva a los carruseles «En cuadritos»; si no hay, a la sección
+  // vieja de noticias cuando está encendida, y si tampoco, no aparece.
+  const links = NAV_LINKS
+    .map((l) => (l.href !== "#noticias" ? l : hayCuadritos ? { ...l, href: "#cuadritos" } : showNews ? l : null))
+    .filter(Boolean);
 
   useEffect(() => {
     if (!open) return;
@@ -1343,6 +1383,170 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
   );
 }
 
+/* ─── En cuadritos (carruseles de noticias) ───────────────────────────────── */
+// content.cuadritos: [{ titulo, fuente, texto?, instagram?, laminas: [url], added? }],
+// en el orden de /admin (los nuevos arriba). Sin la lista todavía guardada,
+// van los de la semilla; mientras carga /api/content no se muestra nada.
+const IG_PERFIL = "https://www.instagram.com/araucanaradio";
+
+function useCuadritos() {
+  const { cuadritos, loaded } = useSiteContent();
+  return useMemo(() => {
+    if (!loaded) return [];
+    const lista = Array.isArray(cuadritos) ? cuadritos : cuadritosSemilla;
+    return lista
+      .filter((c) => c && Array.isArray(c.laminas) && c.laminas.some((u) => typeof u === "string" && u))
+      .map((c) => ({
+        titulo: typeof c.titulo === "string" ? c.titulo.trim() : "",
+        fuente: typeof c.fuente === "string" ? c.fuente.trim() : "",
+        texto: typeof c.texto === "string" ? c.texto.trim() : "",
+        instagram: typeof c.instagram === "string" && /^https:\/\//.test(c.instagram.trim()) ? c.instagram.trim() : "",
+        laminas: c.laminas.filter((u) => typeof u === "string" && u),
+      }));
+  }, [cuadritos, loaded]);
+}
+
+function CuadritosSection() {
+  const ref = useReveal();
+  const lista = useCuadritos();
+  const filaRef = useRef(null);
+  const [abierto, setAbierto] = useState(null); // índice del carrusel en el visor
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+  const update = useCallback(() => {
+    const el = filaRef.current; if (!el) return;
+    setCanPrev(el.scrollLeft > 8);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+  useEffect(() => {
+    const el = filaRef.current; if (!el) return;
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => { el.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+  }, [update, lista.length]);
+  const scrollBy = (dir) => { const el = filaRef.current; if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" }); };
+
+  if (lista.length === 0) return null;
+  return (
+    <section id="cuadritos" aria-labelledby="cuadritos-title" style={{ background: "var(--ink)", borderBottom: "1px solid var(--line)", padding: "clamp(64px, 9vw, 120px) 0", overflow: "hidden" }}>
+      <div className="container reveal" ref={ref}>
+        <SectionHead
+          id="cuadritos-title"
+          kicker="Araucana Digital · Noticias"
+          title="La Araucanía, en cuadritos."
+          lede="Las noticias de la región explicadas con datos, lámina por lámina. Toca una para verla completa."
+          aside={
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="icon-btn" onClick={() => scrollBy(-1)} disabled={!canPrev} aria-label="Carruseles anteriores"><ChevronLeft size={20} /></button>
+              <button className="icon-btn" onClick={() => scrollBy(1)} disabled={!canNext} aria-label="Más carruseles"><ChevronRight size={20} /></button>
+            </div>
+          }
+        />
+      </div>
+      <div className="container">
+        <div ref={filaRef} className="reel-row" role="list" aria-label="Carruseles en cuadritos">
+          {lista.map((c, i) => (
+            <div key={`${i}-${c.laminas[0]}`} role="listitem" style={{ display: "contents" }}>
+              <button type="button" className="cuad-card" onClick={() => setAbierto(i)} aria-label={`Ver carrusel: ${c.titulo || "En cuadritos"}, ${c.laminas.length} láminas`}>
+                <span className="cuad-img">
+                  <img src={c.laminas[0]} alt="" width="600" height="750" loading={i < 4 ? "eager" : "lazy"} decoding="async" />
+                  <span className="cuad-n" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><rect x="3" y="5" width="13" height="15" rx="2" /><path d="M19 7v11" /></svg>
+                    {c.laminas.length}
+                  </span>
+                </span>
+                {(c.titulo || c.fuente) && (
+                  <span className="cuad-txt">
+                    {c.titulo && <strong>{c.titulo}</strong>}
+                    {c.fuente && <span>{c.fuente}</span>}
+                  </span>
+                )}
+              </button>
+            </div>
+          ))}
+          <div role="listitem" style={{ display: "contents" }}>
+            <a href={IG_PERFIL} target="_blank" rel="noreferrer" className="cuad-cierre">
+              <SvgInstagram size={28} />
+              <strong>Todos los cuadritos en Instagram</strong>
+              <span>@araucanaradio</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      {abierto !== null && lista[abierto] && <CuadritoVisor item={lista[abierto]} onClose={() => setAbierto(null)} />}
+    </section>
+  );
+}
+
+// El carrusel abierto: una lámina a la vez, con flechas, puntos, teclado y
+// deslizar con el dedo; al lado (abajo en el celular), el texto, la fuente y
+// el link al post.
+function CuadritoVisor({ item, onClose }) {
+  const [n, setN] = useState(0);
+  const total = item.laminas.length;
+  const closeRef = useRef(null);
+  const boxRef = useRef(null);
+  const x0 = useRef(null);
+  const mover = useCallback((d) => setN((i) => Math.min(total - 1, Math.max(0, i + d))), [total]);
+
+  useEffect(() => {
+    const prevFocus = document.activeElement;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === "ArrowRight") { mover(1); return; }
+      if (e.key === "ArrowLeft") { mover(-1); return; }
+      if (e.key !== "Tab" || !boxRef.current) return;
+      const f = [...boxRef.current.querySelectorAll("button:not(:disabled), a[href]")];
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); prevFocus?.focus?.(); };
+  }, [onClose, mover]);
+
+  // Precarga la lámina siguiente para que pasar sea inmediato.
+  useEffect(() => { if (n + 1 < total) { const img = new Image(); img.src = item.laminas[n + 1]; } }, [n, total, item.laminas]);
+
+  const parrafos = item.texto ? item.texto.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) : [];
+  return (
+    <div className="cuad-visor" onClick={onClose}>
+      <div ref={boxRef} className="cuad-visor-caja" role="dialog" aria-modal="true" aria-label={item.titulo || "En cuadritos"} onClick={(e) => e.stopPropagation()}>
+        <button ref={closeRef} onClick={onClose} className="icon-btn cuad-cerrar" aria-label="Cerrar carrusel"><X size={20} /></button>
+        <div className="cuad-lamina"
+          onTouchStart={(e) => { x0.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (x0.current == null) return;
+            const dx = e.changedTouches[0].clientX - x0.current; x0.current = null;
+            if (Math.abs(dx) > 40) mover(dx < 0 ? 1 : -1);
+          }}>
+          <img src={item.laminas[n]} alt={`Lámina ${n + 1} de ${total}${item.titulo ? `: ${item.titulo}` : ""}`} width="600" height="750" />
+          <button type="button" className="cuad-flecha cuad-prev" onClick={() => mover(-1)} disabled={n === 0} aria-label="Lámina anterior"><ChevronLeft size={22} /></button>
+          <button type="button" className="cuad-flecha cuad-next" onClick={() => mover(1)} disabled={n === total - 1} aria-label="Lámina siguiente"><ChevronRight size={22} /></button>
+          <div className="cuad-puntos" aria-hidden="true">
+            {item.laminas.map((_, i) => <i key={i} className={i === n ? "on" : undefined} />)}
+          </div>
+        </div>
+        <div className="cuad-info">
+          <p className="meta" style={{ color: "var(--green)" }}>En cuadritos · <span style={{ fontVariantNumeric: "tabular-nums" }} aria-live="polite">{n + 1} / {total}</span></p>
+          {item.titulo && <h3 style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 26px)", lineHeight: 1.15, letterSpacing: "-0.02em", color: "var(--cream)" })}>{item.titulo}</h3>}
+          {parrafos.map((p, i) => (
+            <p key={i} style={K({ fontSize: 15, lineHeight: 1.6, fontWeight: i === 0 && parrafos.length > 1 ? 700 : 400, color: i === 0 && parrafos.length > 1 ? "var(--cream)" : "var(--cream-70)" })}>{p}</p>
+          ))}
+          {item.fuente && <p style={K({ fontSize: 13, color: "var(--cream-55)", borderTop: "1px solid var(--line)", paddingTop: 10 })}>📰 Información de {item.fuente}</p>}
+          <a href={item.instagram || IG_PERFIL} target="_blank" rel="noreferrer" className="btn btn-red btn-sm" style={{ alignSelf: "flex-start" }}>
+            <SvgInstagram size={16} /> Ver en Instagram
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Reels / Shorts ──────────────────────────────────────────────────────── */
 function ReelsSection({ data, onPlay }) {
   const ref = useReveal();
@@ -1941,6 +2145,7 @@ function AppInner() {
         <Hero playing={araucanaPlaying} toggle={toggleAraucana} latest={yt.episodes[0]} portada={portada} />
         <WeatherTicker />
         <PodcastSection data={yt} portada={portada} onPlay={openVideo} />
+        <CuadritosSection />
         <ReelsSection data={yt} onPlay={openVideo} />
         <NewsGrid />
         <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} />

@@ -1406,9 +1406,18 @@ function useCuadritos() {
   }, [cuadritos, loaded]);
 }
 
+// La franja se monta recién cuando hay carruseles: useReveal engancha el
+// observador una sola vez al montar, y si en ese momento la sección no estaba
+// en el DOM (mientras carga /api/content no hay lista), el título quedaba
+// invisible para siempre.
 function CuadritosSection() {
-  const ref = useReveal();
   const lista = useCuadritos();
+  if (lista.length === 0) return null;
+  return <CuadritosFranja lista={lista} />;
+}
+
+function CuadritosFranja({ lista }) {
+  const ref = useReveal();
   const filaRef = useRef(null);
   const [abierto, setAbierto] = useState(null); // índice del carrusel en el visor
   const [canPrev, setCanPrev] = useState(false);
@@ -1427,7 +1436,6 @@ function CuadritosSection() {
   }, [update, lista.length]);
   const scrollBy = (dir) => { const el = filaRef.current; if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" }); };
 
-  if (lista.length === 0) return null;
   return (
     <section id="cuadritos" aria-labelledby="cuadritos-title" style={{ background: "var(--ink)", borderBottom: "1px solid var(--line)", padding: "clamp(64px, 9vw, 120px) 0", overflow: "hidden" }}>
       <div className="container reveal" ref={ref}>
@@ -1456,10 +1464,10 @@ function CuadritosSection() {
                     {c.laminas.length}
                   </span>
                 </span>
-                {(c.titulo || c.fuente) && (
+                {/* Bajo la portada sólo el título: el medio va en el visor y en el post. */}
+                {c.titulo && (
                   <span className="cuad-txt">
-                    {c.titulo && <strong>{c.titulo}</strong>}
-                    {c.fuente && <span>{c.fuente}</span>}
+                    <strong>{c.titulo}</strong>
                   </span>
                 )}
               </button>

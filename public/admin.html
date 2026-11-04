@@ -761,7 +761,15 @@
           el("input", { class: "yt-title-input", type: "text", value: v.title || "", placeholder: id,
             title: v.title || id,
             oninput: (e) => { v.title = e.target.value; markDirty(); } }),
-          short ? null : el("div", { class: "yt-extra" },
+          // En un reel, «Destacado» decide si sale en la fila de la portada:
+          // con al menos uno marcado, la portada muestra sólo los marcados.
+          short ? el("div", { class: "yt-extra" },
+            el("label", { class: "yt-peso", title: "Sale en la fila de reels de la portada. Si no marcas ninguno, salen todos." },
+              el("input", { type: "checkbox", checked: v.peso ? "" : null,
+                onchange: (e) => { if (e.target.checked) v.peso = true; else delete v.peso; markDirty(); renderBody(); } }),
+              "Destacado",
+            ),
+          ) : el("div", { class: "yt-extra" },
             el("input", { class: "yt-serie", type: "text", list: "yt-series", value: v.serie || "",
               placeholder: "Serie (opcional)", "aria-label": "Serie",
               title: "Los capítulos con la misma serie se muestran juntos en la portada",
@@ -874,7 +882,8 @@
     return el("div", null,
       el("div", { class: "yt-col-head" },
         el("span", { class: "yt-col-title" }, label),
-        el("span", { class: "yt-meta" }, `${list.length} ${list.length === 1 ? "video" : "videos"}`),
+        el("span", { class: "yt-meta" }, `${list.length} ${list.length === 1 ? "video" : "videos"}`
+          + (short ? ` · ${list.filter((x) => x.peso).length || "ninguno"} ${list.filter((x) => x.peso).length === 1 ? "destacado" : "destacados"} en la portada` : "")),
       ),
       listEl,
     );
@@ -940,7 +949,7 @@
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Podcast y reels"),
       el("p", { class: "panel-sub" },
-        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ elige la entrevista de la semana, el capítulo grande de la sección Podcast: dura 7 días y nunca repite el de arriba. «Destacada» suma el capítulo a la fila de entrevistas destacadas que va bajo el capítulo grande (con dos o más se muestra la fila); cuando el ★ vence, parte en la destacada más nueva. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ elige la entrevista de la semana, el capítulo grande de la sección Podcast: dura 7 días y nunca repite el de arriba. «Destacada» suma el capítulo a la fila de entrevistas destacadas que va bajo el capítulo grande (con dos o más se muestra la fila); cuando el ★ vence, parte en la destacada más nueva. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. En los reels, «Destacado» elige cuáles salen en la portada: con uno o más marcados, salen sólo esos, en el orden de la lista. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       ytAddBox(),
       ytDestacadoBox(),
       el("datalist", { id: "yt-series" }, series.map((s) => el("option", { value: s }))),

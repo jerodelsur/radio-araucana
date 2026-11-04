@@ -205,6 +205,13 @@ const GlobalStyles = () => (
     .serie-cap-thumb { display: block; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #0e1a12; }
     .serie-cap-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .serie-cap-texto { font-weight: 700; font-size: 13px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    /* Filtros por tema sobre la lista de capítulos. */
+    .tema-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; }
+    .tema-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--cream-70); font-family: var(--font); font-weight: 700; font-size: 13px; cursor: pointer; transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease); }
+    .tema-chip span { font-weight: 600; color: var(--cream-55); font-variant-numeric: tabular-nums; }
+    .tema-chip:hover { border-color: rgba(180,227,86,.6); color: var(--cream); }
+    .tema-chip[aria-pressed="true"] { background: var(--cream); border-color: var(--cream); color: #111; }
+    .tema-chip[aria-pressed="true"] span { color: rgba(17,17,17,.6); }
     .destacada-cargo { display: block; margin-top: 3px; font-weight: 700; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); }
     .serie-cap-num { font-weight: 800; color: var(--cream-55); font-variant-numeric: tabular-nums; margin-right: 4px; }
     .serie-cap[aria-pressed="true"] .serie-cap-num { color: var(--lime); }
@@ -391,6 +398,12 @@ function toVideoItem(v, vertical) {
 // Hoy en Chile como AAAA-MM-DD (el formato sueco da justo eso), para comparar
 // con las fechas que guarda /admin sin depender de la zona del navegador.
 const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
+
+// Orden de los filtros por tema de la lista de capítulos (los mismos temas
+// que ofrece /admin); un tema que no esté acá va al final. Las series van
+// juntas en «Especiales».
+const TEMAS_ORDEN = ["Política", "Deporte", "Salud", "Cultura", "Negocios", "Sociedad"];
+const ESPECIALES = "Especiales";
 
 // Cada lugar de la portada tiene un solo rol, así ningún capítulo sale dos veces:
 // - Arriba (reproductor del header): el ▶ fijado en /admin o, si no hay, el
@@ -917,10 +930,39 @@ function PodcastSection({ data, portada, onPlay }) {
     if (s.has(nombre)) s.delete(nombre); else s.add(nombre);
     return s;
   });
+  // Filtro por tema sobre la lista. «Todos» es la lista de siempre, sin lo que
+  // ya está arriba ni en el destacado. Un tema muestra todos sus capítulos,
+  // aunque alguno esté destacado: quien filtra por Política espera verlos
+  // todos. «Especiales» son las series, una fila por serie.
+  const [tema, setTema] = useState("");
+  const { episodes } = data;
+  const temas = useMemo(() => {
+    const cuenta = new Map();
+    for (const e of episodes) if (e.tema) cuenta.set(e.tema, (cuenta.get(e.tema) || 0) + 1);
+    const conocidos = TEMAS_ORDEN.filter((t) => cuenta.has(t));
+    const otros = [...cuenta.keys()].filter((t) => !TEMAS_ORDEN.includes(t));
+    return [...conocidos, ...otros].map((t) => ({ tema: t, n: cuenta.get(t) }));
+  }, [episodes]);
+  const especiales = useMemo(() => {
+    const grupos = new Map();
+    for (const e of episodes) {
+      if (!e.serie) continue;
+      if (!grupos.has(e.serie)) grupos.set(e.serie, { tipo: "serie", key: `serie:${e.serie}`, serie: e.serie, capitulos: [] });
+      grupos.get(e.serie).capitulos.push(e);
+    }
+    return [...grupos.values()];
+  }, [episodes]);
+  const filtrados = useMemo(() => {
+    if (!tema) return items;
+    if (tema === ESPECIALES) return especiales;
+    return episodes.filter((e) => e.tema === tema).map((e) => ({ tipo: "capitulo", key: e.id, ep: e }));
+  }, [tema, items, especiales, episodes]);
+  const elegirTema = (t) => { setTema(t); setExpanded(false); };
+
   const PREVIEW = 5;
-  const list = expanded ? items : items.slice(0, PREVIEW);
+  const list = expanded ? filtrados : filtrados.slice(0, PREVIEW);
   // Lo plegado se cuenta en capítulos y no en filas: una serie son varios.
-  const hidden = items.slice(list.length).reduce((n, it) => n + (it.tipo === "serie" ? it.capitulos.length : 1), 0);
+  const hidden = filtrados.slice(list.length).reduce((n, it) => n + (it.tipo === "serie" ? it.capitulos.length : 1), 0);
   // Al plegar, la lista pierde 19 tarjetas de golpe y todo lo que hay debajo
   // sube: sin corregir nada, el botón que acabas de tocar se va fuera de la
   // pantalla. Se ancla midiendo su posición antes y después del cambio y
@@ -987,7 +1029,22 @@ function PodcastSection({ data, portada, onPlay }) {
             </div>
 
             <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <p className="meta" style={{ padding: "0 14px 10px", color: "var(--cream-55)" }}>Más capítulos</p>
+              <p className="meta" style={{ padding: "0 14px 10px", color: "var(--cream-55)" }}>{tema ? "Capítulos por tema" : "Más capítulos"}</p>
+              {temas.length > 1 && (
+                <div className="tema-chips" role="group" aria-label="Filtrar capítulos por tema">
+                  <button type="button" className="tema-chip" aria-pressed={!tema} onClick={() => elegirTema("")}>Todos</button>
+                  {temas.map(({ tema: t, n }) => (
+                    <button key={t} type="button" className="tema-chip" aria-pressed={tema === t} onClick={() => elegirTema(t)}>
+                      {t} <span>{n}</span>
+                    </button>
+                  ))}
+                  {especiales.length > 0 && (
+                    <button type="button" className="tema-chip" aria-pressed={tema === ESPECIALES} onClick={() => elegirTema(ESPECIALES)}>
+                      {ESPECIALES} <span>{especiales.length}</span>
+                    </button>
+                  )}
+                </div>
+              )}
               {list.map((it) => (it.tipo === "serie"
                 ? <FilaSerie key={it.key} grupo={it} abierta={abiertas.has(it.serie)} onToggle={() => alternarSerie(it.serie)} onPlay={onPlay} />
                 : <FilaCapitulo key={it.key} ep={it.ep} onPlay={onPlay} />))}

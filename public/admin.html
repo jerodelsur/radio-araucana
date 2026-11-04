@@ -139,6 +139,9 @@
   .yt-peso{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap}
   .yt-extra .yt-peso input{flex:none;width:14px;height:14px;min-width:0;padding:0;margin:0;accent-color:var(--gold)}
   .yt-peso:has(input:checked){color:var(--gold)}
+  .yt-ficha{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding-left:8px;border-left:2px solid rgba(212,160,23,.5)}
+  .yt-ficha input{flex:1 1 150px;width:auto;min-width:120px;font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.2);border:1px solid var(--border);color:var(--bone);font-family:inherit}
+  .yt-ficha input:first-child{flex-basis:100%}
   .yt-destacado{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px}
   .yt-destacado-head{flex-basis:100%;display:flex;gap:8px;align-items:center;font-size:13px}
   .yt-destacado-star{color:var(--gold)}
@@ -535,6 +538,7 @@
   function desdeTitulo(title) {
     const t = String(title || "")
       .replace(/\s*\|\s*Araucana Digital\s*$/i, "")
+      .replace(/^Araucana Digital entrevista al?\s+/i, "")
       .replace(/\s*#\S+/g, "")
       .trim();
     const ABRE = "\"“«", CIERRA = "\"”»";
@@ -543,10 +547,22 @@
       return ABRE.includes(x[0]) && CIERRA.includes(x[x.length - 1]) ? x.slice(1, -1).trim() : x;
     };
     const entreComillas = (s) => { const x = s.trim(); return x.length > 2 && ABRE.includes(x[0]) && CIERRA.includes(x[x.length - 1]); };
+    // «Diputado Cristian Neira», «kinesiólogo Rodrigo Sandoval»: el cargo va
+    // delante y el nombre son las dos últimas palabras con mayúscula.
+    const CARGO_DELANTE = /^(diputad[oa]|senador[a]?|alcalde(sa)?|seremi|concejal[a]?|gobernador[a]?|delegad[oa]|ministr[oa]|director[a]?|president[ea])$/i;
+    const cargoDelante = (x) => {
+      const w = x.split(/\s+/);
+      if (w.length < 3 || !(CARGO_DELANTE.test(w[0]) || /^[a-záéíóúñü]/.test(w[0]))) return null;
+      const nombre = w.slice(-2);
+      if (!nombre.every((p) => /^[A-ZÁÉÍÓÚÑÜ]/.test(p))) return null;
+      const cargo = w.slice(0, -2).join(" ");
+      return { invitado: nombre.join(" "), cargo: cargo[0].toUpperCase() + cargo.slice(1) };
+    };
     const persona = (s) => {
       const x = s.trim();
       const i = x.indexOf(",");
-      return i > 0 ? { invitado: x.slice(0, i).trim(), cargo: x.slice(i + 1).trim() } : { invitado: x, cargo: "" };
+      if (i > 0) return { invitado: x.slice(0, i).trim(), cargo: x.slice(i + 1).trim() };
+      return cargoDelante(x) || { invitado: x, cargo: "" };
     };
     const vacio = { frase: "", invitado: "", cargo: "" };
     if (!t) return vacio;
@@ -575,9 +591,33 @@
       // Títulos antiguos, «Nombre: de qué se habló»: no hay cita que poner
       // en grande, sólo el invitado.
       if (esNombre(persona(antes).invitado) && /^[a-záéíóúñü¿¡]/.test(despues)) return { frase: "", ...persona(antes) };
+      // «diputado de La Araucanía José Montalva: galgos, reformas…»: lo de
+      // antes parte con minúscula, así que es la persona y no una frase.
+      if (/^[a-záéíóúñü]/.test(antes)) return { frase: "", ...persona(antes) };
       return { frase: sinComillas(antes), ...persona(despues) };
     }
     return vacio;
+  }
+
+  // Llena frase, invitado y cargo desde el título si los tres están vacíos.
+  // Devuelve true si cambió algo.
+  function fichaDesdeTitulo(v) {
+    if (v.frase || v.invitado || v.cargo) return false;
+    let cambio = false;
+    for (const [k, val] of Object.entries(desdeTitulo(v.title))) if (val) { v[k] = val; cambio = true; }
+    return cambio;
+  }
+
+  // Al abrir el panel: completa la ficha de las destacadas y del ★ que no la
+  // tengan. Devuelve cuántas completó.
+  function completarFichas() {
+    const starId = ytIdFromUrl(content.settings?.featuredEpisode);
+    let n = 0;
+    for (const v of ytList("episode")) {
+      const esStar = starId && ytIdFromUrl(v.youtube) === starId && !(v.serie || "").trim();
+      if ((v.peso || esStar) && fichaDesdeTitulo(v)) n++;
+    }
+    return n;
   }
 
   // Serie del capítulo que apunta una URL (la del ★), o "" si no tiene.
@@ -703,9 +743,7 @@
         // capítulo no tiene frase ni invitado, se sacan del título.
         if (key === "featuredEpisode" && !on) {
           if (!content.settings.featuredUntil) content.settings.featuredUntil = enDias(DIAS_SEMANA);
-          if (!v.frase && !v.invitado && !v.cargo) {
-            for (const [k, val] of Object.entries(desdeTitulo(v.title))) if (val) v[k] = val;
-          }
+          fichaDesdeTitulo(v);
         }
         markDirty();
         renderBody();
@@ -737,11 +775,23 @@
               el("option", { value: "" }, "Sin tema"),
               TEMAS.map((t) => el("option", { value: t, selected: v.tema === t ? "" : null }, t)),
             ),
-            el("label", { class: "yt-peso", title: "Autoridades y figuras. Si no hay ★ vigente, la entrevista de la semana es la última voz de peso." },
+            el("label", { class: "yt-peso", title: "Entra a la fila de entrevistas destacadas de la portada. Si no hay ★ vigente, la más nueva es la entrevista de la semana." },
               el("input", { type: "checkbox", checked: v.peso ? "" : null,
-                onchange: (e) => { if (e.target.checked) v.peso = true; else delete v.peso; markDirty(); } }),
-              "Voz de peso",
+                onchange: (e) => {
+                  // Al marcarla, la frase, el invitado y el cargo salen del
+                  // título y aparecen abajo para revisarlos.
+                  if (e.target.checked) { v.peso = true; fichaDesdeTitulo(v); } else delete v.peso;
+                  markDirty();
+                  renderBody();
+                } }),
+              "Destacada",
             ),
+          ),
+          // La ficha de una destacada: lo que se ve en la fila y en grande.
+          short || !v.peso ? null : el("div", { class: "yt-ficha" },
+            ...[["frase", "Frase en grande"], ["invitado", "Invitado"], ["cargo", "Cargo"]].map(([campo, etiqueta]) =>
+              el("input", { type: "text", value: v[campo] || "", placeholder: etiqueta, "aria-label": etiqueta, title: etiqueta,
+                oninput: (e) => { const t = e.target.value.trim(); if (t) v[campo] = t; else delete v[campo]; markDirty(); } })),
           ),
         ),
         el("div", { class: "yt-actions" },
@@ -840,7 +890,7 @@
     const ep = id ? ytList("episode").find((v) => ytIdFromUrl(v.youtube) === id) : null;
     if (!ep) {
       return el("p", { class: "yt-note" },
-        "Sin ★: la entrevista de la semana es la última marcada como «Voz de peso»; si no hay ninguna, el capítulo más nuevo después del que está arriba en el header.");
+        "Sin ★: la entrevista de la semana es la última marcada como «Destacada»; si no hay ninguna, el capítulo más nuevo después del que está arriba en el header.");
     }
     const serie = (ep.serie || "").trim();
     const vencida = Boolean(s.featuredUntil) && hoyChile() > s.featuredUntil;
@@ -858,9 +908,9 @@
         el("input", { type: "date", value: s.featuredUntil || "",
           onchange: (e) => { if (e.target.value) s.featuredUntil = e.target.value; else delete s.featuredUntil; markDirty(); renderBody(); } }),
         el("span", { class: "yt-hint" + (vencida ? " yt-hint-alerta" : "") }, vencida
-          ? "Ya venció: la portada muestra la última voz de peso. Marca otro ★ o cambia la fecha."
+          ? "Ya venció: la portada parte en la destacada más nueva. Marca otro ★ o cambia la fecha."
           : s.featuredUntil
-            ? "Se pone sola una semana después de marcar el ★. Pasado ese día, la portada muestra la última voz de peso."
+            ? "Se pone sola una semana después de marcar el ★. Pasado ese día, la portada parte en la destacada más nueva."
             : "Sin fecha, queda destacada hasta que la cambies."),
       ),
       serie ? null : el("div", { class: "yt-destacado-trio" },
@@ -890,7 +940,7 @@
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Podcast y reels"),
       el("p", { class: "panel-sub" },
-        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ elige la entrevista de la semana, el capítulo grande de la sección Podcast: dura 7 días y nunca repite el de arriba. «Voz de peso» marca a autoridades y figuras; cuando el ★ vence, la entrevista de la semana es la última de ellas. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ elige la entrevista de la semana, el capítulo grande de la sección Podcast: dura 7 días y nunca repite el de arriba. «Destacada» suma el capítulo a la fila de entrevistas destacadas que va bajo el capítulo grande (con dos o más se muestra la fila); cuando el ★ vence, parte en la destacada más nueva. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       ytAddBox(),
       ytDestacadoBox(),
       el("datalist", { id: "yt-series" }, series.map((s) => el("option", { value: s }))),
@@ -1074,6 +1124,15 @@
       markDirty();
       renderBody();
       setTimeout(() => toast("Importé tus capítulos y reels a la lista nueva. Revísala en «Podcast y reels» y guarda.", "ok"), 600);
+    }
+    // Las destacadas marcadas antes de que existiera la ficha quedaron sin
+    // frase, invitado ni cargo: se completan una vez desde el título y quedan
+    // a la vista en su fila para revisarlas antes de guardar.
+    const completadas = completarFichas();
+    if (completadas) {
+      markDirty();
+      renderBody();
+      setTimeout(() => toast(`Completé frase, invitado y cargo de ${completadas} ${completadas === 1 ? "entrevista destacada" : "entrevistas destacadas"} desde el título. Revísalos en «Podcast y reels» y guarda.`, "ok"), 900);
     }
   }
 

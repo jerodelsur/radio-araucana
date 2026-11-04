@@ -205,6 +205,7 @@ const GlobalStyles = () => (
     .serie-cap-thumb { display: block; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #0e1a12; }
     .serie-cap-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .serie-cap-texto { font-weight: 700; font-size: 13px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .destacada-cargo { display: block; margin-top: 3px; font-weight: 700; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--lime); }
     .serie-cap-num { font-weight: 800; color: var(--cream-55); font-variant-numeric: tabular-nums; margin-right: 4px; }
     .serie-cap[aria-pressed="true"] .serie-cap-num { color: var(--lime); }
     .serie-cap-proximo { cursor: default; border-style: dashed; border-color: var(--line-strong); }
@@ -397,8 +398,10 @@ const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Ameri
 //   la señal ocupa ese lugar y no hay capítulo arriba.
 // - Destacado (sección Podcast): la «Entrevista de la semana». Es el ★, salvo
 //   que haya vencido (/admin le pone 7 días al marcarlo) o sea el mismo de
-//   arriba; si no, la última voz de peso, y si no hay ninguna, el siguiente
-//   de la lista. Si es parte de una serie, se muestra la serie completa.
+//   arriba; si no, la última destacada (casilla `peso` en /admin), y si no
+//   hay ninguna, el siguiente de la lista. Si el ★ es parte de una serie, se
+//   muestra la serie completa; si no y hay dos o más destacadas, se muestran
+//   todas en una fila, como una serie, con la de la semana en grande.
 // - La lista: todo lo demás, con cada otra serie reducida a una sola fila.
 function repartirCapitulos(episodes, settings, loading) {
   const buscar = (url) => {
@@ -415,16 +418,25 @@ function repartirCapitulos(episodes, settings, loading) {
   const vencido = Boolean(settings.featuredUntil) && hoyChile() > settings.featuredUntil;
   const marcado = vencido ? null : buscar(settings.featuredEpisode);
   const elegido = marcado && marcado.id !== arribaId ? marcado : null;
-  const depeso = elegido ? null : episodes.find((e) => e.peso && e.id !== arribaId) || null;
+  const pesos = episodes.filter((e) => e.peso);
+  const depeso = elegido ? null : pesos.find((e) => e.id !== arribaId) || null;
   const featured = elegido || depeso || episodes.find((e) => e.id !== arribaId) || null;
   // Sólo se llama «Entrevista de la semana» lo que eligió alguien: el ★ o una
-  // voz de peso. El capítulo que cae por descarte sigue como «Capítulo destacado».
+  // destacada. El capítulo que cae por descarte sigue como «Capítulo destacado».
   const semana = Boolean(elegido || depeso);
 
-  const serie = featured?.serie || "";
+  // La fila de destacadas: todas las marcadas, de la más nueva a la más
+  // antigua, con el ★ al principio si no estaba marcado. Incluye la que está
+  // arriba en el header (es parte de la colección), pero nunca parte en ella.
+  // Con una sola no hay fila: va la tarjeta grande sola.
+  let destacadas = elegido?.serie ? [] : elegido && !elegido.peso ? [elegido, ...pesos] : pesos;
+  if (destacadas.filter((e) => e.id !== arribaId).length < 2) destacadas = [];
+
+  const serie = destacadas.length ? "" : featured?.serie || "";
   // La lista va del más nuevo al más antiguo; la serie se numera al revés.
   const capitulos = serie ? episodes.filter((e) => e.serie === serie).reverse() : [];
-  const fuera = new Set([arribaId, ...(serie ? capitulos.map((c) => c.id) : [featured?.id])].filter(Boolean));
+  const enGrande = serie ? capitulos : destacadas.length ? destacadas : [featured];
+  const fuera = new Set([arribaId, ...enGrande.map((c) => c?.id)].filter(Boolean));
 
   const items = [];
   const grupos = new Map();
@@ -447,7 +459,7 @@ function repartirCapitulos(episodes, settings, loading) {
   else if (arribaId || getYouTubeId(settings.liveStreamUrl)) arribaLabel = "Video destacado";
 
   const proximo = serie && typeof settings.featuredSeriesNext === "string" ? settings.featuredSeriesNext.trim() : "";
-  return { live, arriba, arribaId, arribaLabel, featured, semana, serie, capitulos, proximo, items };
+  return { live, arriba, arribaId, arribaLabel, featured, semana, destacadas, serie, capitulos, proximo, items };
 }
 
 function useYouTube() {
@@ -897,7 +909,7 @@ function PodcastSection({ data, portada, onPlay }) {
   const { loading } = data;
   // Qué va en el destacado y qué en la lista lo decide repartirCapitulos, para
   // que nada repita el capítulo que ya está arriba en el header.
-  const { featured, semana, serie, capitulos, proximo, items, arribaId } = portada;
+  const { featured, semana, destacadas, serie, capitulos, proximo, items, arribaId } = portada;
   const [expanded, setExpanded] = useState(false);
   const [abiertas, setAbiertas] = useState(() => new Set()); // series de la lista desplegadas
   const alternarSerie = (nombre) => setAbiertas((antes) => {
@@ -969,7 +981,9 @@ function PodcastSection({ data, portada, onPlay }) {
             <div className="lg:col-span-7">
               {serie
                 ? <SerieDestacada key={serie} serie={serie} capitulos={capitulos} inicialId={featured.id} evitarId={arribaId} proximo={proximo} onPlay={onPlay} />
-                : <CapituloDestacado ep={featured} semana={semana} onPlay={onPlay} />}
+                : destacadas.length
+                  ? <EntrevistasDestacadas lista={destacadas} inicialId={featured.id} semanaId={semana ? featured.id : null} onPlay={onPlay} />
+                  : <CapituloDestacado ep={featured} semana={semana} onPlay={onPlay} />}
             </div>
 
             <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -993,47 +1007,133 @@ function PodcastSection({ data, portada, onPlay }) {
   );
 }
 
-// El capítulo grande cuando el destacado no es parte de una serie. Si es la
-// «Entrevista de la semana» y tiene frase, la frase va en grande y el
-// invitado con su cargo debajo; sin frase, se ve el título como siempre.
-function CapituloDestacado({ ep, semana, onPlay }) {
+// La miniatura grande de un capítulo, con su etiqueta arriba a la izquierda.
+function TarjetaGrande({ ep, etiqueta, etiquetaClase = "tag-lima", onPlay }) {
+  return (
+    <button className="feature-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
+      <img src={ep.thumbHd || ep.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
+        onError={(e) => { if (ep.thumb && e.currentTarget.src !== ep.thumb) e.currentTarget.src = ep.thumb; }} />
+      <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
+      {etiqueta && (
+        <div style={{ position: "absolute", top: 18, left: 18 }}>
+          <span className={etiquetaClase}>{etiqueta}</span>
+        </div>
+      )}
+      <div style={{ position: "absolute", right: 20, bottom: 20 }}>
+        <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
+      </div>
+    </button>
+  );
+}
+
+// El texto bajo la tarjeta grande. Con `ficha` (entrevista de la semana o
+// destacada) y frase, la frase va en grande y el invitado con su cargo
+// debajo, más el botón para verla; sin frase, se ve el título como siempre.
+function TextoEntrevista({ ep, ficha, onPlay }) {
   const titulo = cleanTitle(ep.title);
-  const frase = semana ? ep.frase.replace(/^["“«]+|["”»]+$/g, "").trim() : "";
+  const frase = ficha ? ep.frase.replace(/^["“«]+|["”»]+$/g, "").trim() : "";
   // Sin frase, el título ya trae el nombre: el invitado sólo se repite debajo
   // si agrega el cargo.
-  const invitado = semana && (frase || ep.cargo) ? ep.invitado : "";
+  const invitado = ficha && (frase || ep.cargo) ? ep.invitado : "";
+  return (
+    <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: frase ? 14 : 8 }}>
+      {frase
+        ? <p className="cita-semana">{frase}</p>
+        : <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{titulo}</p>}
+      {invitado
+        ? (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px" }}>
+            <span style={K({ fontWeight: 800, fontSize: 18, color: "var(--cream)" })}>{invitado}</span>
+            {ep.cargo && <span className="cargo-pill">{ep.cargo}</span>}
+          </div>
+        )
+        : <p className="meta">{ep.tema ? `Araucana Digital · ${ep.tema}` : "Araucana Digital"}</p>}
+      {ficha && (
+        <button type="button" className="btn btn-red btn-sm" onClick={() => onPlay(ep, false)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
+          <Play size={16} fill="#fff" aria-hidden="true" /> Ver la entrevista completa
+        </button>
+      )}
+    </div>
+  );
+}
+
+// El capítulo grande cuando el destacado va solo (sin serie ni fila de
+// destacadas).
+function CapituloDestacado({ ep, semana, onPlay }) {
   return (
     <>
-      <button className="feature-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${titulo}`}>
-        <img src={ep.thumbHd || ep.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
-          onError={(e) => { if (ep.thumb && e.currentTarget.src !== ep.thumb) e.currentTarget.src = ep.thumb; }} />
-        <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
-        <div style={{ position: "absolute", top: 18, left: 18 }}>
-          <span className="tag-lima">{semana ? "Entrevista de la semana" : "Capítulo destacado"}</span>
-        </div>
-        <div style={{ position: "absolute", right: 20, bottom: 20 }}>
-          <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
-        </div>
-      </button>
-      <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: frase ? 14 : 8 }}>
-        {frase
-          ? <p className="cita-semana">{frase}</p>
-          : <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{titulo}</p>}
-        {invitado
-          ? (
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px" }}>
-              <span style={K({ fontWeight: 800, fontSize: 18, color: "var(--cream)" })}>{invitado}</span>
-              {ep.cargo && <span className="cargo-pill">{ep.cargo}</span>}
-            </div>
-          )
-          : <p className="meta">{ep.tema ? `Araucana Digital · ${ep.tema}` : "Araucana Digital"}</p>}
-        {semana && (
-          <button type="button" className="btn btn-red btn-sm" onClick={() => onPlay(ep, false)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
-            <Play size={16} fill="#fff" aria-hidden="true" /> Ver la entrevista completa
-          </button>
+      <TarjetaGrande ep={ep} etiqueta={semana ? "Entrevista de la semana" : "Capítulo destacado"} onPlay={onPlay} />
+      <TextoEntrevista ep={ep} ficha={semana} onPlay={onPlay} />
+    </>
+  );
+}
+
+// Las entrevistas marcadas como destacadas en /admin, en una fila como la de
+// una serie: la elegida en grande y todas debajo, de la más nueva a la más
+// antigua. Parte en la entrevista de la semana; tocar otra la pone en grande.
+function EntrevistasDestacadas({ lista, inicialId, semanaId, onPlay }) {
+  const [elegidoId, setElegidoId] = useState(null);
+  const elegido = lista.find((c) => c.id === elegidoId) || lista.find((c) => c.id === inicialId) || lista[0];
+  const filaRef = useRef(null);
+  const [puedeAtras, setPuedeAtras] = useState(false);
+  const [puedeAdelante, setPuedeAdelante] = useState(false);
+
+  const medir = useCallback(() => {
+    const el = filaRef.current; if (!el) return;
+    setPuedeAtras(el.scrollLeft > 8);
+    setPuedeAdelante(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+  useEffect(() => {
+    const el = filaRef.current; if (!el) return;
+    const activo = el.querySelector('[aria-pressed="true"]');
+    el.scrollLeft = activo ? Math.max(0, activo.offsetLeft - 2) : 0;
+    medir();
+    el.addEventListener("scroll", medir, { passive: true });
+    window.addEventListener("resize", medir);
+    return () => { el.removeEventListener("scroll", medir); window.removeEventListener("resize", medir); };
+  }, [medir, lista.length]);
+  const deslizar = (dir) => { const el = filaRef.current; if (el) el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.8), behavior: "smooth" }); };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <span className="tag-lima">Entrevistas destacadas</span>
+        <span style={K({ fontSize: 14, color: "var(--cream-55)" })}>{lista.length} entrevistas</span>
+      </div>
+
+      <div>
+        <TarjetaGrande ep={elegido} etiqueta={elegido.id === semanaId ? "Entrevista de la semana" : ""} etiquetaClase="tag-oscura" onPlay={onPlay} />
+        <TextoEntrevista ep={elegido} ficha onPlay={onPlay} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
+        <p className="meta" style={{ color: "var(--cream-55)" }}>Todas las destacadas</p>
+        {(puedeAtras || puedeAdelante) && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="icon-btn" onClick={() => deslizar(-1)} disabled={!puedeAtras} aria-label="Destacadas anteriores"><ChevronLeft size={18} /></button>
+            <button className="icon-btn" onClick={() => deslizar(1)} disabled={!puedeAdelante} aria-label="Más destacadas"><ChevronRight size={18} /></button>
+          </div>
         )}
       </div>
-    </>
+      <div ref={filaRef} className="serie-fila" role="list" aria-label="Entrevistas destacadas">
+        {lista.map((c) => (
+          <div key={c.id} role="listitem" style={{ display: "contents" }}>
+            <button className="serie-cap" aria-pressed={c.id === elegido.id} onClick={() => setElegidoId(c.id)}
+              aria-label={`Ver en grande: ${cleanTitle(c.title)}`}>
+              <span className="serie-cap-thumb"><img src={c.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" /></span>
+              {c.invitado
+                ? (
+                  <span className="serie-cap-texto">
+                    <strong style={{ display: "block", color: "var(--cream)" }}>{c.invitado}</strong>
+                    {c.cargo && <span className="destacada-cargo">{c.cargo}</span>}
+                  </span>
+                )
+                : <span className="serie-cap-texto">{cleanTitle(c.title)}</span>}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

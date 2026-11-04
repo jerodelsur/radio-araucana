@@ -1384,7 +1384,9 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
 }
 
 /* ─── En cuadritos (carruseles de noticias) ───────────────────────────────── */
-// content.cuadritos: [{ titulo, fuente, texto?, instagram?, laminas: [url], added? }],
+// content.cuadritos: [{ titulo, texto?, instagram?, laminas: [url], added? }],
+// El medio de origen no se muestra en el sitio: el crédito va en el post de
+// Instagram (pedido de Jerónimo, nov 2026).
 // en el orden de /admin (los nuevos arriba). Sin la lista todavía guardada,
 // van los de la semilla; mientras carga /api/content no se muestra nada.
 const IG_PERFIL = "https://www.instagram.com/araucanaradio";
@@ -1398,7 +1400,6 @@ function useCuadritos() {
       .filter((c) => c && Array.isArray(c.laminas) && c.laminas.some((u) => typeof u === "string" && u))
       .map((c) => ({
         titulo: typeof c.titulo === "string" ? c.titulo.trim() : "",
-        fuente: typeof c.fuente === "string" ? c.fuente.trim() : "",
         texto: typeof c.texto === "string" ? c.texto.trim() : "",
         instagram: typeof c.instagram === "string" && /^https:\/\//.test(c.instagram.trim()) ? c.instagram.trim() : "",
         laminas: c.laminas.filter((u) => typeof u === "string" && u),
@@ -1488,7 +1489,7 @@ function CuadritosFranja({ lista }) {
 }
 
 // El carrusel abierto: una lámina a la vez, con flechas, puntos, teclado y
-// deslizar con el dedo; al lado (abajo en el celular), el texto, la fuente y
+// deslizar con el dedo; al lado (abajo en el celular), el texto y
 // el link al post.
 function CuadritoVisor({ item, onClose }) {
   const [n, setN] = useState(0);
@@ -1545,7 +1546,6 @@ function CuadritoVisor({ item, onClose }) {
           {parrafos.map((p, i) => (
             <p key={i} style={K({ fontSize: 15, lineHeight: 1.6, fontWeight: i === 0 && parrafos.length > 1 ? 700 : 400, color: i === 0 && parrafos.length > 1 ? "var(--cream)" : "var(--cream-70)" })}>{p}</p>
           ))}
-          {item.fuente && <p style={K({ fontSize: 13, color: "var(--cream-55)", borderTop: "1px solid var(--line)", paddingTop: 10 })}>📰 Información de {item.fuente}</p>}
           <a href={item.instagram || IG_PERFIL} target="_blank" rel="noreferrer" className="btn btn-red btn-sm" style={{ alignSelf: "flex-start" }}>
             <SvgInstagram size={16} /> Ver en Instagram
           </a>

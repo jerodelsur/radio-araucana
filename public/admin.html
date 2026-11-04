@@ -168,7 +168,7 @@
   .cq-zona p{margin:0;font-size:13px;color:var(--bone-dim)}
   .cq-file{display:none}
   .cq-archivos{flex-basis:100%;font-size:12px;color:var(--muted)}
-  .cq-campos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+  .cq-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
   .cq-campo{display:flex;flex-direction:column;min-width:0}
   .cq-campo.cq-ancho{grid-column:1/-1}
   .cq-acciones{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -178,8 +178,7 @@
   .cq-datos{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
   .cq-datos input,.cq-datos textarea{font-size:13px;padding:6px 8px}
   .cq-datos textarea{min-height:52px}
-  .cq-dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
-  @media (max-width:760px){.cq-campos,.cq-dos{grid-template-columns:minmax(0,1fr)}.cq-fila{flex-wrap:wrap}.cq-datos{flex-basis:calc(100% - 76px)}}
+  @media (max-width:760px){.cq-campos{grid-template-columns:minmax(0,1fr)}.cq-fila{flex-wrap:wrap}.cq-datos{flex-basis:calc(100% - 76px)}}
 
   /* ─── TOAST ─── */
   #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--card);border:1px solid var(--border);padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transition:transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
@@ -983,7 +982,7 @@
   }
 
   /* ───────── En cuadritos (content.cuadritos) ───────── */
-  // Los carruseles de noticias de la portada: [{ titulo, fuente, texto,
+  // Los carruseles de noticias de la portada: [{ titulo, texto,
   // instagram, laminas: [url], added }], los nuevos arriba. Las láminas se
   // achican en el navegador a JPG de 600 × 750 antes de subirlas (un PNG de
   // 1080 × 1350 pesa 0,5 MB; el JPG, unos 60–80 KB) y se suben una por una.
@@ -1023,7 +1022,7 @@
 
     // Formulario para un carrusel nuevo. Lo escrito sobrevive a los redibujos
     // de la pestaña mientras no se agregue.
-    const nuevo = renderCuadritos.borrador || (renderCuadritos.borrador = { titulo: "", fuente: "", instagram: "", texto: "", archivos: [] });
+    const nuevo = renderCuadritos.borrador || (renderCuadritos.borrador = { titulo: "", instagram: "", texto: "", archivos: [] });
     const campo = (k, etiqueta, ayuda, ph, multi) => el("label", { class: "cq-campo" + (multi ? " cq-ancho" : "") },
       el("span", { class: "field-label" }, etiqueta),
       multi
@@ -1073,8 +1072,8 @@
         toast(`No se pudo subir la lámina ${urls.length + 1}: ${err.message}`, "err");
         return;
       }
-      const item = { titulo: nuevo.titulo.trim(), fuente: nuevo.fuente.trim(), texto: nuevo.texto.trim(), instagram: nuevo.instagram.trim(), laminas: urls, added: hoyChile() };
-      for (const k of ["fuente", "texto", "instagram"]) if (!item[k]) delete item[k];
+      const item = { titulo: nuevo.titulo.trim(), texto: nuevo.texto.trim(), instagram: nuevo.instagram.trim(), laminas: urls, added: hoyChile() };
+      for (const k of ["texto", "instagram"]) if (!item[k]) delete item[k];
       content.cuadritos = [item, ...lista];
       renderCuadritos.borrador = null;
       markDirty();
@@ -1087,7 +1086,6 @@
       zona,
       el("div", { class: "cq-campos" },
         campo("titulo", "Título", "Corto: va bajo la portada y en el visor.", "Ej.: Presupuesto 2027 del GORE"),
-        campo("fuente", "Medio de origen", "Sólo en el visor, al final, como «📰 Información de …». No va bajo la portada.", "Ej.: El Austral de Temuco"),
         campo("instagram", "Link del post en Instagram", "Opcional. Sin link, el botón lleva al perfil.", "https://www.instagram.com/p/…"),
         campo("texto", "Texto", "Opcional. El gancho y el primer párrafo del pie; una línea en blanco separa párrafos.", "Así se distribuye el presupuesto regional…", true),
       ),
@@ -1108,10 +1106,7 @@
       el("img", { class: "cq-thumb", src: c.laminas?.[0] || "", alt: "", loading: "lazy" }),
       el("div", { class: "cq-datos" },
         el("input", { type: "text", value: c.titulo || "", placeholder: "Título", "aria-label": "Título", oninput: editar(c, "titulo") }),
-        el("div", { class: "cq-dos" },
-          el("input", { type: "text", value: c.fuente || "", placeholder: "Medio de origen", "aria-label": "Medio de origen", oninput: editar(c, "fuente") }),
-          el("input", { type: "url", value: c.instagram || "", placeholder: "Link del post en Instagram", "aria-label": "Link del post en Instagram", oninput: editar(c, "instagram") }),
-        ),
+        el("input", { type: "url", value: c.instagram || "", placeholder: "Link del post en Instagram", "aria-label": "Link del post en Instagram", oninput: editar(c, "instagram") }),
         el("textarea", { rows: "2", placeholder: "Texto (opcional)", "aria-label": "Texto", oninput: editar(c, "texto") }, c.texto || ""),
         el("span", { class: "yt-hint" }, `${(c.laminas || []).length} láminas${c.added ? ` · agregado el ${c.added}` : ""}`),
       ),
@@ -1131,7 +1126,7 @@
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "En cuadritos"),
       el("p", { class: "panel-sub" },
-        "Los carruseles de noticias que se ven en la portada, en el orden de esta lista. Arrastra las láminas de la carpeta «carrusel», ponle título y medio, y se agrega arriba de todo. Las láminas se achican solas antes de subirse. Sin ningún carrusel, la sección no aparece. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los carruseles de noticias que se ven en la portada, en el orden de esta lista. Arrastra las láminas de la carpeta «carrusel», ponle título, y se agrega arriba de todo. Las láminas se achican solas antes de subirse. Sin ningún carrusel, la sección no aparece. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       form,
       el("div", { class: "yt-col-head", style: "margin-top:28px" },
         el("span", { class: "yt-col-title" }, "En la portada"),

@@ -1068,12 +1068,23 @@ function CapituloDestacado({ ep, semana, onPlay }) {
   );
 }
 
-// Las entrevistas marcadas como destacadas en /admin, en una fila como la de
-// una serie: la elegida en grande y todas debajo, de la más nueva a la más
-// antigua. Parte en la entrevista de la semana; tocar otra la pone en grande.
+// Las entrevistas marcadas como destacadas en /admin: la elegida en grande y
+// las demás en una fila debajo, de la más nueva a la más antigua. A
+// diferencia de la serie, la de arriba no se repite en la fila. Parte en la
+// entrevista de la semana; tocar otra la sube y la que estaba arriba vuelve a
+// su lugar en la fila.
 function EntrevistasDestacadas({ lista, inicialId, semanaId, onPlay }) {
   const [elegidoId, setElegidoId] = useState(null);
   const elegido = lista.find((c) => c.id === elegidoId) || lista.find((c) => c.id === inicialId) || lista[0];
+  const resto = lista.filter((c) => c.id !== elegido.id);
+  const grandeRef = useRef(null);
+  const elegir = (id) => {
+    setElegidoId(id);
+    // En el celular la tarjeta grande queda fuera de la pantalla, arriba de la
+    // fila: se sube hasta ella para que se vea el cambio.
+    const caja = grandeRef.current?.getBoundingClientRect();
+    if (caja && caja.top < 0) grandeRef.current.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
   const filaRef = useRef(null);
   const [puedeAtras, setPuedeAtras] = useState(false);
   const [puedeAdelante, setPuedeAdelante] = useState(false);
@@ -1085,13 +1096,14 @@ function EntrevistasDestacadas({ lista, inicialId, semanaId, onPlay }) {
   }, []);
   useEffect(() => {
     const el = filaRef.current; if (!el) return;
-    const activo = el.querySelector('[aria-pressed="true"]');
-    el.scrollLeft = activo ? Math.max(0, activo.offsetLeft - 2) : 0;
     medir();
     el.addEventListener("scroll", medir, { passive: true });
     window.addEventListener("resize", medir);
     return () => { el.removeEventListener("scroll", medir); window.removeEventListener("resize", medir); };
   }, [medir, lista.length]);
+  // Al cambiar la de arriba, la fila cambia de contenido: se vuelven a medir
+  // las flechas.
+  useEffect(() => { medir(); }, [medir, elegido.id]);
   const deslizar = (dir) => { const el = filaRef.current; if (el) el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.8), behavior: "smooth" }); };
 
   return (
@@ -1101,13 +1113,13 @@ function EntrevistasDestacadas({ lista, inicialId, semanaId, onPlay }) {
         <span style={K({ fontSize: 14, color: "var(--cream-55)" })}>{lista.length} entrevistas</span>
       </div>
 
-      <div>
+      <div ref={grandeRef} style={{ scrollMarginTop: 96 }}>
         <TarjetaGrande ep={elegido} etiqueta={elegido.id === semanaId ? "Entrevista de la semana" : ""} etiquetaClase="tag-oscura" onPlay={onPlay} />
         <TextoEntrevista ep={elegido} ficha onPlay={onPlay} />
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
-        <p className="meta" style={{ color: "var(--cream-55)" }}>Todas las destacadas</p>
+        <p className="meta" style={{ color: "var(--cream-55)" }}>Más destacadas</p>
         {(puedeAtras || puedeAdelante) && (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="icon-btn" onClick={() => deslizar(-1)} disabled={!puedeAtras} aria-label="Destacadas anteriores"><ChevronLeft size={18} /></button>
@@ -1116,9 +1128,9 @@ function EntrevistasDestacadas({ lista, inicialId, semanaId, onPlay }) {
         )}
       </div>
       <div ref={filaRef} className="serie-fila" role="list" aria-label="Entrevistas destacadas">
-        {lista.map((c) => (
+        {resto.map((c) => (
           <div key={c.id} role="listitem" style={{ display: "contents" }}>
-            <button className="serie-cap" aria-pressed={c.id === elegido.id} onClick={() => setElegidoId(c.id)}
+            <button className="serie-cap" onClick={() => elegir(c.id)}
               aria-label={`Ver en grande: ${cleanTitle(c.title)}`}>
               <span className="serie-cap-thumb"><img src={c.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" /></span>
               {c.invitado

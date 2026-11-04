@@ -136,12 +136,19 @@
      select se comía la fila y el campo de serie quedaba en cero. */
   .yt-extra input{flex:1 1 140px;width:auto;min-width:140px}
   .yt-extra select{flex:0 0 auto;width:auto}
+  .yt-peso{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .yt-extra .yt-peso input{flex:none;width:14px;height:14px;min-width:0;padding:0;margin:0;accent-color:var(--gold)}
+  .yt-peso:has(input:checked){color:var(--gold)}
   .yt-destacado{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px}
   .yt-destacado-head{flex-basis:100%;display:flex;gap:8px;align-items:center;font-size:13px}
   .yt-destacado-star{color:var(--gold)}
   .yt-destacado-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);flex:1;min-width:220px}
   .yt-destacado-field input{font-size:13px}
+  .yt-destacado-field input[type=date]{width:auto;max-width:220px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--bone);color-scheme:dark}
   .yt-hint{font-size:11px;color:var(--muted)}
+  .yt-hint-alerta{color:var(--gold)}
+  .yt-destacado-trio{flex-basis:100%;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end}
+  .yt-desde-titulo{font-size:12px;padding:8px 12px;margin-bottom:18px}
   .yt-note{font-size:12px;color:var(--muted);margin:0 0 16px}
   /* En el teléfono los 6 botones no dejan ancho para el título: la fila se
      parte y el título baja a su propia línea. */
@@ -507,6 +514,71 @@
   // Hoy en Chile como AAAA-MM-DD: la fecha en que se agrega un video (para el
   // «Estreno de hoy» del header) y la que se compara con «Destacar hasta».
   const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
+  // AAAA-MM-DD de dentro de `n` días (hora de Chile). Al mediodía UTC para que
+  // ningún cambio de horario mueva el día.
+  const enDias = (n) => {
+    const d = new Date(`${hoyChile()}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  // Cuánto dura la «Entrevista de la semana» desde que se marca el ★.
+  const DIAS_SEMANA = 7;
+
+  // Frase, invitado y cargo desde el título, para la «Entrevista de la semana».
+  // Entiende los formatos que se usan en el canal:
+  //   «"Frase": Nombre, cargo | Araucana Digital»
+  //   «Frase: Nombre, cargo»          «Frase | Nombre, cargo»
+  //   «Nombre, cargo: "Frase"»        (la cita entre comillas va después)
+  // Un título sin dos puntos ni barra no se adivina: vuelve todo vacío y se
+  // completa a mano. Lo que devuelve es una sugerencia; en el recuadro del ★
+  // se puede corregir.
+  function desdeTitulo(title) {
+    const t = String(title || "")
+      .replace(/\s*\|\s*Araucana Digital\s*$/i, "")
+      .replace(/\s*#\S+/g, "")
+      .trim();
+    const ABRE = "\"“«", CIERRA = "\"”»";
+    const sinComillas = (s) => {
+      const x = s.trim();
+      return ABRE.includes(x[0]) && CIERRA.includes(x[x.length - 1]) ? x.slice(1, -1).trim() : x;
+    };
+    const entreComillas = (s) => { const x = s.trim(); return x.length > 2 && ABRE.includes(x[0]) && CIERRA.includes(x[x.length - 1]); };
+    const persona = (s) => {
+      const x = s.trim();
+      const i = x.indexOf(",");
+      return i > 0 ? { invitado: x.slice(0, i).trim(), cargo: x.slice(i + 1).trim() } : { invitado: x, cargo: "" };
+    };
+    const vacio = { frase: "", invitado: "", cargo: "" };
+    if (!t) return vacio;
+
+    // Una cita al principio puede traer sus propios dos puntos o comas: se
+    // busca primero dónde cierra.
+    if (ABRE.includes(t[0])) {
+      const fin = [...t].findIndex((c, i) => i > 0 && CIERRA.includes(c));
+      const resto = fin > 0 ? t.slice(fin + 1).trim() : "";
+      if (resto.startsWith(":") || resto.startsWith("|")) {
+        return { frase: t.slice(1, fin).trim(), ...persona(resto.slice(1)) };
+      }
+    }
+    const barra = t.indexOf(" | ");
+    if (barra > 0) return { frase: sinComillas(t.slice(0, barra)), ...persona(t.slice(barra + 3)) };
+    // Un nombre propio: de dos a cuatro palabras, todas con mayúscula
+    // («Felipe Reynero», «Dra. Lidise Hernández»).
+    const esNombre = (s) => {
+      const w = s.trim().split(/\s+/);
+      return w.length >= 2 && w.length <= 4 && w.every((p) => /^\(?[A-ZÁÉÍÓÚÑÜ]/.test(p));
+    };
+    const dos = t.search(/:\s/);
+    if (dos > 0) {
+      const antes = t.slice(0, dos), despues = t.slice(dos + 1).trim();
+      if (entreComillas(despues)) return { frase: sinComillas(despues), ...persona(antes) };
+      // Títulos antiguos, «Nombre: de qué se habló»: no hay cita que poner
+      // en grande, sólo el invitado.
+      if (esNombre(persona(antes).invitado) && /^[a-záéíóúñü¿¡]/.test(despues)) return { frase: "", ...persona(antes) };
+      return { frase: sinComillas(antes), ...persona(despues) };
+    }
+    return vacio;
+  }
 
   // Serie del capítulo que apunta una URL (la del ★), o "" si no tiene.
   function serieDe(url) {
@@ -627,6 +699,14 @@
           delete content.settings.featuredUntil;
           delete content.settings.featuredSeriesNext;
         }
+        // Un ★ nuevo es la «Entrevista de la semana»: dura 7 días y, si el
+        // capítulo no tiene frase ni invitado, se sacan del título.
+        if (key === "featuredEpisode" && !on) {
+          if (!content.settings.featuredUntil) content.settings.featuredUntil = enDias(DIAS_SEMANA);
+          if (!v.frase && !v.invitado && !v.cargo) {
+            for (const [k, val] of Object.entries(desdeTitulo(v.title))) if (val) v[k] = val;
+          }
+        }
         markDirty();
         renderBody();
       };
@@ -657,11 +737,16 @@
               el("option", { value: "" }, "Sin tema"),
               TEMAS.map((t) => el("option", { value: t, selected: v.tema === t ? "" : null }, t)),
             ),
+            el("label", { class: "yt-peso", title: "Autoridades y figuras. Si no hay ★ vigente, la entrevista de la semana es la última voz de peso." },
+              el("input", { type: "checkbox", checked: v.peso ? "" : null,
+                onchange: (e) => { if (e.target.checked) v.peso = true; else delete v.peso; markDirty(); } }),
+              "Voz de peso",
+            ),
           ),
         ),
         el("div", { class: "yt-actions" },
           short ? null : el("button", { class: "icon-btn" + (isFeatured ? " on" : ""),
-            title: isFeatured ? "Es el capítulo grande de la sección Podcast — clic para quitarlo" : "Poner como capítulo grande de la sección Podcast",
+            title: isFeatured ? "Es la entrevista de la semana — clic para quitarla" : "Poner como entrevista de la semana (dura 7 días)",
             onClick: () => pick("featuredEpisode", isFeatured) }, isFeatured ? "★" : "☆"),
           short ? null : el("button", { class: "icon-btn" + (isPlayer ? " on" : ""),
             title: isPlayer ? "Es el video del reproductor del header — clic para quitarlo" : "Poner en el reproductor del header (cuando no hay vivo)",
@@ -745,26 +830,52 @@
     );
   }
 
-  // El ★ y sus dos opciones: hasta cuándo se destaca y, si es una serie, el
-  // próximo capítulo que se anuncia al final de su fila en la portada.
+  // El ★ es la «Entrevista de la semana». Acá se ve hasta cuándo dura y, si
+  // es un capítulo suelto, la frase, el invitado y el cargo que se muestran en
+  // grande; si es una serie, el próximo capítulo que se anuncia al final de
+  // su fila en la portada.
   function ytDestacadoBox() {
     const s = content.settings;
     const id = ytIdFromUrl(s.featuredEpisode);
     const ep = id ? ytList("episode").find((v) => ytIdFromUrl(v.youtube) === id) : null;
     if (!ep) {
       return el("p", { class: "yt-note" },
-        "Sin ★: el capítulo grande de la sección Podcast es el más nuevo después del que está arriba en el header.");
+        "Sin ★: la entrevista de la semana es la última marcada como «Voz de peso»; si no hay ninguna, el capítulo más nuevo después del que está arriba en el header.");
     }
     const serie = (ep.serie || "").trim();
+    const vencida = Boolean(s.featuredUntil) && hoyChile() > s.featuredUntil;
+    const texto = (campo, etiqueta, ayuda, ejemplo) => el("label", { class: "yt-destacado-field" }, etiqueta,
+      el("input", { type: "text", value: ep[campo] || "", placeholder: ejemplo,
+        oninput: (e) => { const t = e.target.value.trim(); if (t) ep[campo] = t; else delete ep[campo]; markDirty(); } }),
+      el("span", { class: "yt-hint" }, ayuda),
+    );
     return el("div", { class: "yt-destacado" },
       el("div", { class: "yt-destacado-head" },
         el("span", { class: "yt-destacado-star", "aria-hidden": "true" }, "★"),
-        el("span", null, serie ? `Destacada: la serie «${serie}», completa en una sola tarjeta` : `Destacado: ${ep.title || id}`),
+        el("span", null, serie ? `Entrevista de la semana: la serie «${serie}», completa en una sola tarjeta` : `Entrevista de la semana: ${ep.title || id}`),
       ),
       el("label", { class: "yt-destacado-field" }, "Destacar hasta",
         el("input", { type: "date", value: s.featuredUntil || "",
-          onchange: (e) => { if (e.target.value) s.featuredUntil = e.target.value; else delete s.featuredUntil; markDirty(); } }),
-        el("span", { class: "yt-hint" }, "Opcional. Pasado ese día, el destacado vuelve solo al capítulo más nuevo."),
+          onchange: (e) => { if (e.target.value) s.featuredUntil = e.target.value; else delete s.featuredUntil; markDirty(); renderBody(); } }),
+        el("span", { class: "yt-hint" + (vencida ? " yt-hint-alerta" : "") }, vencida
+          ? "Ya venció: la portada muestra la última voz de peso. Marca otro ★ o cambia la fecha."
+          : s.featuredUntil
+            ? "Se pone sola una semana después de marcar el ★. Pasado ese día, la portada muestra la última voz de peso."
+            : "Sin fecha, queda destacada hasta que la cambies."),
+      ),
+      serie ? null : el("div", { class: "yt-destacado-trio" },
+        texto("frase", "Frase en grande", "Sin frase, se muestra el título completo.", "La cita del invitado"),
+        texto("invitado", "Invitado", "Nombre y apellido.", "Nombre y apellido"),
+        texto("cargo", "Cargo", "Va en una etiqueta junto al nombre.", "Ej.: Seremi de Economía"),
+        el("button", { class: "btn btn-ghost yt-desde-titulo", type: "button",
+          title: "Reemplaza frase, invitado y cargo por lo que dice el título",
+          onClick: () => {
+            const d = desdeTitulo(ep.title);
+            for (const k of ["frase", "invitado", "cargo"]) { if (d[k]) ep[k] = d[k]; else delete ep[k]; }
+            markDirty();
+            renderBody();
+            if (!d.frase && !d.invitado) toast("El título no trae frase ni invitado: complétalos a mano", "err");
+          } }, "Sacar del título"),
       ),
       serie ? el("label", { class: "yt-destacado-field" }, "Próximo capítulo de la serie",
         el("input", { type: "text", value: s.featuredSeriesNext || "", placeholder: "Ej.: Viernes 25 · 12:30",
@@ -779,7 +890,7 @@
     return el("div", { class: "panel active" },
       el("h2", { class: "panel-title" }, "Podcast y reels"),
       el("p", { class: "panel-sub" },
-        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ marca el capítulo grande de la sección Podcast, que nunca repite el de arriba. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
+        "Los capítulos y reels que se ven en la portada, en el orden de esta lista. Pega un link de YouTube y se agrega arriba de todo, en la columna que corresponda. Arrastra ⠿ para reordenar (en el celular usa ↑ y ↓). ▶ fija el video del reproductor del header; sin ▶ va solo el capítulo más nuevo. ★ elige la entrevista de la semana, el capítulo grande de la sección Podcast: dura 7 días y nunca repite el de arriba. «Voz de peso» marca a autoridades y figuras; cuando el ★ vence, la entrevista de la semana es la última de ellas. Los capítulos con la misma serie se muestran juntos: si el ★ es parte de una serie, la portada muestra la serie completa. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       ytAddBox(),
       ytDestacadoBox(),
       el("datalist", { id: "yt-series" }, series.map((s) => el("option", { value: s }))),

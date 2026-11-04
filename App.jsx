@@ -188,6 +188,12 @@ const GlobalStyles = () => (
     .ep-card .thumb.thumb-pila img { border-radius: 8px; box-shadow: 4px -4px 0 -1px #2c302c, 8px -8px 0 -2px #222622; }
 
     .tag-lima { display: inline-block; background: var(--lime); color: #111; font-weight: 800; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; }
+    /* Entrevista de la semana: la frase del invitado en grande, con comillas
+       lima, y su cargo en una etiqueta delineada. */
+    .cita-semana { font-weight: 800; font-size: clamp(26px, 3.2vw, 42px); line-height: 1.06; letter-spacing: -0.03em; color: var(--cream); text-wrap: balance; }
+    .cita-semana::before { content: "«"; color: var(--lime); margin-right: .04em; }
+    .cita-semana::after { content: "»"; color: var(--lime); margin-left: .04em; }
+    .cargo-pill { display: inline-block; border: 1px solid rgba(180,227,86,.45); color: var(--lime); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; line-height: 1.3; }
     .tag-oscura { display: inline-block; background: rgba(10,14,11,.78); color: var(--cream); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; padding: 7px 11px; border-radius: 6px; }
 
     /* Serie destacada: capítulos en una fila que se desliza, como la de reels. */
@@ -370,6 +376,14 @@ function toVideoItem(v, vertical) {
     serie: typeof v.serie === "string" ? v.serie.trim() : "",
     tema: typeof v.tema === "string" ? v.tema.trim() : "",
     added: typeof v.added === "string" ? v.added : "",
+    // Para la «Entrevista de la semana»: la frase va en grande y el invitado
+    // con su cargo debajo. /admin los saca del título al marcar el ★ y se
+    // pueden corregir ahí. `peso` marca a las autoridades y figuras: si no
+    // hay ★ vigente, la entrevista de la semana es la última de ellas.
+    frase: typeof v.frase === "string" ? v.frase.trim() : "",
+    invitado: typeof v.invitado === "string" ? v.invitado.trim() : "",
+    cargo: typeof v.cargo === "string" ? v.cargo.trim() : "",
+    peso: v.peso === true,
   };
 }
 
@@ -381,9 +395,10 @@ const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Ameri
 // - Arriba (reproductor del header): el ▶ fijado en /admin o, si no hay, el
 //   capítulo más nuevo, que es el primero de la lista. Con el vivo encendido
 //   la señal ocupa ese lugar y no hay capítulo arriba.
-// - Destacado (sección Podcast): el ★, salvo que haya vencido o sea el mismo
-//   de arriba; si no, el siguiente de la lista. Si es parte de una serie, se
-//   muestra la serie completa.
+// - Destacado (sección Podcast): la «Entrevista de la semana». Es el ★, salvo
+//   que haya vencido (/admin le pone 7 días al marcarlo) o sea el mismo de
+//   arriba; si no, la última voz de peso, y si no hay ninguna, el siguiente
+//   de la lista. Si es parte de una serie, se muestra la serie completa.
 // - La lista: todo lo demás, con cada otra serie reducida a una sola fila.
 function repartirCapitulos(episodes, settings, loading) {
   const buscar = (url) => {
@@ -399,8 +414,12 @@ function repartirCapitulos(episodes, settings, loading) {
 
   const vencido = Boolean(settings.featuredUntil) && hoyChile() > settings.featuredUntil;
   const marcado = vencido ? null : buscar(settings.featuredEpisode);
-  const featured = (marcado && marcado.id !== arribaId ? marcado : null)
-    || episodes.find((e) => e.id !== arribaId) || null;
+  const elegido = marcado && marcado.id !== arribaId ? marcado : null;
+  const depeso = elegido ? null : episodes.find((e) => e.peso && e.id !== arribaId) || null;
+  const featured = elegido || depeso || episodes.find((e) => e.id !== arribaId) || null;
+  // Sólo se llama «Entrevista de la semana» lo que eligió alguien: el ★ o una
+  // voz de peso. El capítulo que cae por descarte sigue como «Capítulo destacado».
+  const semana = Boolean(elegido || depeso);
 
   const serie = featured?.serie || "";
   // La lista va del más nuevo al más antiguo; la serie se numera al revés.
@@ -428,7 +447,7 @@ function repartirCapitulos(episodes, settings, loading) {
   else if (arribaId || getYouTubeId(settings.liveStreamUrl)) arribaLabel = "Video destacado";
 
   const proximo = serie && typeof settings.featuredSeriesNext === "string" ? settings.featuredSeriesNext.trim() : "";
-  return { live, arriba, arribaId, arribaLabel, featured, serie, capitulos, proximo, items };
+  return { live, arriba, arribaId, arribaLabel, featured, semana, serie, capitulos, proximo, items };
 }
 
 function useYouTube() {
@@ -878,7 +897,7 @@ function PodcastSection({ data, portada, onPlay }) {
   const { loading } = data;
   // Qué va en el destacado y qué en la lista lo decide repartirCapitulos, para
   // que nada repita el capítulo que ya está arriba en el header.
-  const { featured, serie, capitulos, proximo, items, arribaId } = portada;
+  const { featured, semana, serie, capitulos, proximo, items, arribaId } = portada;
   const [expanded, setExpanded] = useState(false);
   const [abiertas, setAbiertas] = useState(() => new Set()); // series de la lista desplegadas
   const alternarSerie = (nombre) => setAbiertas((antes) => {
@@ -929,7 +948,7 @@ function PodcastSection({ data, portada, onPlay }) {
           id="podcast-title"
           kicker="Araucana Digital · Podcast"
           title="Las conversaciones de La Araucanía, en video."
-          lede="Entrevistas completas con las personas que mueven la región: deporte, cultura, negocios y política. Una entrevista nueva cada día, de lunes a viernes."
+          lede="Entrevistas completas con autoridades, deportistas, artistas y emprendedores de la región. Capítulos nuevos cada semana."
           aside={<>
             <a href={YT_CHANNEL} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Ver todos los capítulos <ArrowUpRight size={15} aria-hidden="true" /></a>
             <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="btn btn-red btn-sm"><SvgYoutube size={16} /> Suscribirse</a>
@@ -950,7 +969,7 @@ function PodcastSection({ data, portada, onPlay }) {
             <div className="lg:col-span-7">
               {serie
                 ? <SerieDestacada key={serie} serie={serie} capitulos={capitulos} inicialId={featured.id} evitarId={arribaId} proximo={proximo} onPlay={onPlay} />
-                : <CapituloDestacado ep={featured} onPlay={onPlay} />}
+                : <CapituloDestacado ep={featured} semana={semana} onPlay={onPlay} />}
             </div>
 
             <div className="lg:col-span-5" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -974,24 +993,45 @@ function PodcastSection({ data, portada, onPlay }) {
   );
 }
 
-// El capítulo grande cuando el destacado no es parte de una serie.
-function CapituloDestacado({ ep, onPlay }) {
+// El capítulo grande cuando el destacado no es parte de una serie. Si es la
+// «Entrevista de la semana» y tiene frase, la frase va en grande y el
+// invitado con su cargo debajo; sin frase, se ve el título como siempre.
+function CapituloDestacado({ ep, semana, onPlay }) {
+  const titulo = cleanTitle(ep.title);
+  const frase = semana ? ep.frase.replace(/^["“«]+|["”»]+$/g, "").trim() : "";
+  // Sin frase, el título ya trae el nombre: el invitado sólo se repite debajo
+  // si agrega el cargo.
+  const invitado = semana && (frase || ep.cargo) ? ep.invitado : "";
   return (
     <>
-      <button className="feature-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${cleanTitle(ep.title)}`}>
+      <button className="feature-card" onClick={() => onPlay(ep, false)} aria-label={`Reproducir: ${titulo}`}>
         <img src={ep.thumbHd || ep.thumb} alt="" width="1280" height="720" loading="eager" decoding="async"
           onError={(e) => { if (ep.thumb && e.currentTarget.src !== ep.thumb) e.currentTarget.src = ep.thumb; }} />
         <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(10,14,11,.55) 0%, rgba(10,14,11,0) 40%)" }} />
         <div style={{ position: "absolute", top: 18, left: 18 }}>
-          <span className="tag-lima">Capítulo destacado</span>
+          <span className="tag-lima">{semana ? "Entrevista de la semana" : "Capítulo destacado"}</span>
         </div>
         <div style={{ position: "absolute", right: 20, bottom: 20 }}>
           <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
         </div>
       </button>
-      <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-        <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(ep.title)}</p>
-        <p className="meta">{ep.tema ? `Araucana Digital · ${ep.tema}` : "Araucana Digital"}</p>
+      <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: frase ? 14 : 8 }}>
+        {frase
+          ? <p className="cita-semana">{frase}</p>
+          : <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{titulo}</p>}
+        {invitado
+          ? (
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px" }}>
+              <span style={K({ fontWeight: 800, fontSize: 18, color: "var(--cream)" })}>{invitado}</span>
+              {ep.cargo && <span className="cargo-pill">{ep.cargo}</span>}
+            </div>
+          )
+          : <p className="meta">{ep.tema ? `Araucana Digital · ${ep.tema}` : "Araucana Digital"}</p>}
+        {semana && (
+          <button type="button" className="btn btn-red btn-sm" onClick={() => onPlay(ep, false)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
+            <Play size={16} fill="#fff" aria-hidden="true" /> Ver la entrevista completa
+          </button>
+        )}
       </div>
     </>
   );

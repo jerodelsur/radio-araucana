@@ -327,7 +327,7 @@
     { id: "programs", label: "Programación",   render: () => renderList("programs", programCard) },
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
     { id: "podcast",  label: "Podcast y reels", render: renderPodcast, wide: true },
-    { id: "cuadritos", label: "En cuadritos",  render: renderCuadritos, wide: true },
+    { id: "cuadritos", label: "La Región al Día",  render: renderCuadritos, wide: true },
     { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
   ];
   let currentTab = "settings";
@@ -1124,7 +1124,7 @@
     ));
 
     return el("div", { class: "panel active" },
-      el("h2", { class: "panel-title" }, "En cuadritos"),
+      el("h2", { class: "panel-title" }, "La Región al Día"),
       el("p", { class: "panel-sub" },
         "Los carruseles de noticias que se ven en la portada, en el orden de esta lista. Arrastra las láminas de la carpeta «carrusel», ponle título, y se agrega arriba de todo. Las láminas se achican solas antes de subirse. Sin ningún carrusel, la sección no aparece. Recuerda Guardar; la portada tarda hasta 1 minuto en actualizarse."),
       form,
@@ -1323,7 +1323,7 @@
     if (sembrados) {
       markDirty();
       renderBody();
-      setTimeout(() => toast(`Cargué ${sembrados} carruseles de octubre en «En cuadritos». Revísalos y guarda.`, "ok"), completadas ? 3600 : 900);
+      setTimeout(() => toast(`Cargué ${sembrados} carruseles de octubre en «La Región al Día». Revísalos y guarda.`, "ok"), completadas ? 3600 : 900);
     }
   }
 

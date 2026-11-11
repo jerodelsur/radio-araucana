@@ -309,6 +309,13 @@ const GlobalStyles = () => (
     .yt-facade .play-ring { position: absolute; left: 50%; top: 50%; margin: -36px 0 0 -36px; width: 72px; height: 72px; }
     .yt-facade:hover .play-ring { transform: scale(1.08); background: var(--lime); }
 
+    .pantalla { background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 18px; padding: 8px; box-shadow: 0 2px 0 rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.35); }
+    .pantalla-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 14px; }
+    .pantalla-pie { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 10px 8px; }
+    .pantalla-link { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; min-height: 44px; font-weight: 700; font-size: 14px; color: var(--lime); text-decoration: none; white-space: nowrap; }
+    .pantalla-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+    @media (max-width: 480px) { .pantalla-pie { flex-direction: column; align-items: flex-start; gap: 2px; padding-bottom: 2px; } }
+
     /* Las utilidades de Tailwind v4 viven en una capa y pierden contra estas
        reglas sin capa (un .icon-btn con «hidden» se seguía viendo), así que
        lo que se oculta por ancho de pantalla usa estas clases. */
@@ -914,17 +921,27 @@ function Hero({ playing, toggle, latest, portada }) {
             </ul>
           </div>
 
-          <div className="lg:col-span-6 fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}>
-            <span aria-hidden="true" style={K({ position: "absolute", top: "-0.55em", right: -6, fontWeight: 800, fontSize: "clamp(56px, 7vw, 104px)", lineHeight: 1, letterSpacing: "-0.04em", color: "transparent", WebkitTextStroke: "1.5px rgba(180,227,86,0.35)", pointerEvents: "none", userSelect: "none", zIndex: 0 })}>95.9</span>
-            <div style={{ position: "relative", zIndex: 1, aspectRatio: "16/9", borderRadius: 18, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(246,243,238,.1)", background: "#0d1a12" }}>
-              <LivePlaceholder videoId={portada.arribaId} label={portada.arribaLabel} title={portada.arriba?.title} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: portada.live ? "#ff5a52" : portada.arribaLabel === "Estreno de hoy" ? "var(--lime)" : "var(--green)" }} />
-                <span className="meta" style={{ color: "var(--cream-70)", textTransform: "none", letterSpacing: 0, fontSize: 13, fontWeight: 600 }}>{portada.arribaLabel}</span>
+          {/* El video va montado en un marco oscuro, como la pantalla del
+              estudio sobre el muro de cuadritos: la etiqueta arriba y el
+              título abajo lo anclan, en vez de dejarlo flotando con sombra. */}
+          <div className="lg:col-span-6 fiu-4">
+            <div className="pantalla">
+              <div className="pantalla-barra">
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <span aria-hidden="true" className={portada.live ? "live-dot" : undefined} style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: portada.live ? "#ff5a52" : portada.arribaLabel === "Estreno de hoy" ? "var(--lime)" : "var(--green)" }} />
+                  <span style={K({ fontWeight: 800, fontSize: 12, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--cream)" })}>{portada.arribaLabel}</span>
+                </span>
+                <span className="meta">Araucana Digital</span>
               </div>
-              <span className="meta">Radio Araucana · Temuco</span>
+              <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: 10, overflow: "hidden", background: "#0d1a12" }}>
+                <LivePlaceholder videoId={portada.arribaId} label={portada.arribaLabel} title={portada.arriba?.title} />
+              </div>
+              {portada.arriba?.title && (
+                <div className="pantalla-pie">
+                  <p style={K({ fontWeight: 700, fontSize: "clamp(15px, 1.25vw, 17px)", lineHeight: 1.3, color: "var(--cream)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" })}>{portada.arriba.title}</p>
+                  <a href="#podcast" className="pantalla-link">Más capítulos <ChevronRight size={16} aria-hidden="true" /></a>
+                </div>
+              )}
             </div>
           </div>
 

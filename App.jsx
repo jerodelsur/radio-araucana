@@ -1383,7 +1383,7 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
   );
 }
 
-/* ─── En cuadritos (carruseles de noticias) ───────────────────────────────── */
+/* ─── La Región al Día, antes «En cuadritos» (carruseles de noticias) ───────────────────────────────── */
 // content.cuadritos: [{ titulo, texto?, instagram?, laminas: [url], added? }],
 // El medio de origen no se muestra en el sitio: el crédito va en el post de
 // Instagram (pedido de Jerónimo, nov 2026).
@@ -1443,7 +1443,7 @@ function CuadritosFranja({ lista }) {
         <SectionHead
           id="cuadritos-title"
           kicker="Araucana Digital · Noticias"
-          title="La Araucanía, en cuadritos."
+          title="La Región al Día."
           lede="Las noticias de la región explicadas con datos, lámina por lámina. Toca una para verla completa."
           aside={
             <div style={{ display: "flex", gap: 8 }}>
@@ -1454,10 +1454,10 @@ function CuadritosFranja({ lista }) {
         />
       </div>
       <div className="container">
-        <div ref={filaRef} className="reel-row" role="list" aria-label="Carruseles en cuadritos">
+        <div ref={filaRef} className="reel-row" role="list" aria-label="Carruseles de La Región al Día">
           {lista.map((c, i) => (
             <div key={`${i}-${c.laminas[0]}`} role="listitem" style={{ display: "contents" }}>
-              <button type="button" className="cuad-card" onClick={() => setAbierto(i)} aria-label={`Ver carrusel: ${c.titulo || "En cuadritos"}, ${c.laminas.length} láminas`}>
+              <button type="button" className="cuad-card" onClick={() => setAbierto(i)} aria-label={`Ver carrusel: ${c.titulo || "La Región al Día"}, ${c.laminas.length} láminas`}>
                 <span className="cuad-img">
                   <img src={c.laminas[0]} alt="" width="600" height="750" loading={i < 4 ? "eager" : "lazy"} decoding="async" />
                   <span className="cuad-n" aria-hidden="true">
@@ -1477,7 +1477,7 @@ function CuadritosFranja({ lista }) {
           <div role="listitem" style={{ display: "contents" }}>
             <a href={IG_PERFIL} target="_blank" rel="noreferrer" className="cuad-cierre">
               <SvgInstagram size={28} />
-              <strong>Todos los cuadritos en Instagram</strong>
+              <strong>Todas las noticias en Instagram</strong>
               <span>@araucanaradio</span>
             </a>
           </div>
@@ -1524,7 +1524,7 @@ function CuadritoVisor({ item, onClose }) {
   const parrafos = item.texto ? item.texto.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) : [];
   return (
     <div className="cuad-visor" onClick={onClose}>
-      <div ref={boxRef} className="cuad-visor-caja" role="dialog" aria-modal="true" aria-label={item.titulo || "En cuadritos"} onClick={(e) => e.stopPropagation()}>
+      <div ref={boxRef} className="cuad-visor-caja" role="dialog" aria-modal="true" aria-label={item.titulo || "La Región al Día"} onClick={(e) => e.stopPropagation()}>
         <button ref={closeRef} onClick={onClose} className="icon-btn cuad-cerrar" aria-label="Cerrar carrusel"><X size={20} /></button>
         <div className="cuad-lamina"
           onTouchStart={(e) => { x0.current = e.touches[0].clientX; }}
@@ -1541,7 +1541,7 @@ function CuadritoVisor({ item, onClose }) {
           </div>
         </div>
         <div className="cuad-info">
-          <p className="meta" style={{ color: "var(--green)" }}>En cuadritos · <span style={{ fontVariantNumeric: "tabular-nums" }} aria-live="polite">{n + 1} / {total}</span></p>
+          <p className="meta" style={{ color: "var(--green)" }}>La Región al Día · <span style={{ fontVariantNumeric: "tabular-nums" }} aria-live="polite">{n + 1} / {total}</span></p>
           {item.titulo && <h3 style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 26px)", lineHeight: 1.15, letterSpacing: "-0.02em", color: "var(--cream)" })}>{item.titulo}</h3>}
           {parrafos.map((p, i) => (
             <p key={i} style={K({ fontSize: 15, lineHeight: 1.6, fontWeight: i === 0 && parrafos.length > 1 ? 700 : 400, color: i === 0 && parrafos.length > 1 ? "var(--cream)" : "var(--cream-70)" })}>{p}</p>

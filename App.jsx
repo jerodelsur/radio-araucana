@@ -301,6 +301,21 @@ const GlobalStyles = () => (
     .wa-fab { transition: transform 180ms var(--ease), box-shadow 180ms var(--ease); }
     .wa-fab:hover { transform: scale(1.06); }
 
+    /* Video del header: la miniatura con el play de la marca; el iframe de
+       YouTube recién se carga al tocarla. */
+    .yt-facade { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: #0e1a12; color: var(--cream); cursor: pointer; text-align: left; font-family: var(--font); }
+    .yt-facade img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease); }
+    .yt-facade:hover img { transform: scale(1.03); }
+    .yt-facade .play-ring { position: absolute; left: 50%; top: 50%; margin: -36px 0 0 -36px; width: 72px; height: 72px; }
+    .yt-facade:hover .play-ring { transform: scale(1.08); background: var(--lime); }
+
+    /* Las utilidades de Tailwind v4 viven en una capa y pierden contra estas
+       reglas sin capa (un .icon-btn con «hidden» se seguía viendo), así que
+       lo que se oculta por ancho de pantalla usa estas clases. */
+    @media (max-width: 639px) { .hide-sm-down { display: none !important; } }
+    @media (min-width: 640px) { .hide-sm-up { display: none !important; } }
+    @media (min-width: 1024px) { .hide-lg-up { display: none !important; } }
+
     ::-webkit-scrollbar { height: 6px; width: 10px; }
     ::-webkit-scrollbar-track { background: var(--ink); }
     ::-webkit-scrollbar-thumb { background: var(--green-deep); border-radius: 4px; }
@@ -722,7 +737,27 @@ function LiveOffline({ message = "Sin transmisión de video en este momento" }) 
 
 // `videoId` es el capítulo que le toca arriba según repartirCapitulos: el ▶
 // fijado en /admin o, si no hay, el más nuevo de la lista.
-const LivePlaceholder = ({ videoId, label }) => {
+// La miniatura del capítulo con el play de la marca. El reproductor de YouTube
+// (y sus ~20 solicitudes) sólo se carga cuando alguien lo pide.
+function YouTubeFacade({ id, title, label }) {
+  const [on, setOn] = useState(false);
+  if (on) {
+    return (
+      <iframe title={title || label || "Video destacado"} src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&autoplay=1`}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+    );
+  }
+  return (
+    <button type="button" className="yt-facade" onClick={() => setOn(true)} aria-label={title ? `Reproducir: ${title}` : `Reproducir ${label || "el video destacado"}`}>
+      <img src={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`} alt="" fetchPriority="high"
+        onError={(e) => { const f = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`; if (e.currentTarget.src !== f) e.currentTarget.src = f; }} />
+      <span className="play-ring" aria-hidden="true"><Play size={28} fill="currentColor" style={{ marginLeft: 4 }} /></span>
+    </button>
+  );
+}
+
+const LivePlaceholder = ({ videoId, label, title }) => {
   const { settings } = useSiteContent();
   const lv = settings.liveVideo || {};
   if (lv.enabled) {
@@ -731,13 +766,7 @@ const LivePlaceholder = ({ videoId, label }) => {
   }
   if (!lv.enabled) {
     const ytId = videoId || getYouTubeId(settings.liveStreamUrl);
-    if (ytId) {
-      return (
-        <iframe title={label || "Video destacado"} src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-      );
-    }
+    if (ytId) return <YouTubeFacade key={ytId} id={ytId} title={title} label={label} />;
   }
   return <LiveOffline />;
 };
@@ -785,13 +814,13 @@ function Header({ playing, toggle }) {
         </nav>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="icon-btn hidden sm:inline-flex" aria-label="Suscribirse al canal de YouTube de Radio Araucana"><SvgYoutube size={18} /></a>
-          <button className="live-pill" onClick={toggle} aria-pressed={playing} aria-label={playing ? "Pausar Radio Araucana 95.9 FM" : "Escuchar Radio Araucana 95.9 FM en vivo"}>
+          <a href={`${YT_CHANNEL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="icon-btn" aria-label="Suscribirse al canal de YouTube de Radio Araucana"><SvgYoutube size={18} /></a>
+          <button className="live-pill hide-sm-down" onClick={toggle} aria-pressed={playing} aria-label={playing ? "Pausar Radio Araucana 95.9 FM" : "Escuchar Radio Araucana 95.9 FM en vivo"}>
             <span className="live-dot" aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
             {playing ? <Pause size={14} aria-hidden="true" /> : <Play size={14} fill="#fff" aria-hidden="true" />}
             <span>{playing ? "Al aire" : "En vivo"}</span>
           </button>
-          <button onClick={() => setOpen(!open)} className="icon-btn lg:hidden" aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open} aria-controls="menu-movil">
+          <button onClick={() => setOpen(!open)} className="icon-btn hide-lg-up" aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open} aria-controls="menu-movil">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
@@ -819,6 +848,7 @@ function Hero({ playing, toggle, latest, portada }) {
   useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
   const progIdx = getCurrentProgram(PROGRAMS);
   const currentProg = progIdx >= 0 ? PROGRAMS[progIdx] : null;
+  const sigue = getNextProgram(PROGRAMS);
 
   return (
     <section id="inicio" aria-labelledby="hero-title" style={{ position: "relative", overflow: "hidden", background: "var(--ink)", padding: "clamp(44px, 7vw, 96px) 0 clamp(40px, 6vw, 72px)" }}>
@@ -857,16 +887,21 @@ function Hero({ playing, toggle, latest, portada }) {
               </a>
             </div>
 
-            {currentProg && (
-              <div className="fiu-3" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14, background: "rgba(246,243,238,.05)", border: "1px solid var(--line)", maxWidth: 520 }}>
-                <Waveform />
-                <div style={{ minWidth: 0 }}>
-                  <p className="meta" style={{ color: "var(--green)", marginBottom: 2 }}>Ahora al aire</p>
-                  <p style={K({ fontWeight: 700, fontSize: 16, color: "var(--cream)", lineHeight: 1.25 })}>{currentProg.name}</p>
-                  <p style={K({ fontWeight: 400, fontSize: 13, color: "var(--cream-70)", marginTop: 2, fontVariantNumeric: "tabular-nums" })}>{currentProg.host} · {currentProg.start} – {currentProg.end}</p>
-                </div>
+            <div className="fiu-3" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14, background: "rgba(246,243,238,.05)", border: "1px solid var(--line)", maxWidth: 520 }}>
+              <Waveform color={currentProg ? "#52B870" : "#5d665e"} />
+              <div style={{ minWidth: 0 }}>
+                <p className="meta" style={{ color: "var(--green)", marginBottom: 2 }}>{currentProg ? "Ahora al aire" : "Ahora suena"}</p>
+                <p style={K({ fontWeight: 700, fontSize: 17, color: "var(--cream)", lineHeight: 1.25 })}>{currentProg ? currentProg.name : "Selección musical de Radio Araucana"}</p>
+                {currentProg && (
+                  <p style={K({ fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 2, fontVariantNumeric: "tabular-nums" })}>{currentProg.host} · {currentProg.start} – {currentProg.end}</p>
+                )}
+                {sigue && (
+                  <p style={K({ fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 2, fontVariantNumeric: "tabular-nums" })}>
+                    <span style={{ fontWeight: 700, color: "var(--cream)" }}>Sigue:</span> {sigue.prog.name}, {sigue.cuando ? `${sigue.cuando} a las` : "a las"} {sigue.prog.start}
+                  </p>
+                )}
               </div>
-            )}
+            </div>
 
             <ul className="fiu-3" aria-label="Redes sociales de Radio Araucana" style={{ listStyle: "none", display: "flex", gap: 8, flexWrap: "wrap" }}>
               {SOC_LINKS.map(({ key, label, handle, href, Icon }) => (
@@ -882,7 +917,7 @@ function Hero({ playing, toggle, latest, portada }) {
           <div className="lg:col-span-6 fiu-4" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 12 }}>
             <span aria-hidden="true" style={K({ position: "absolute", top: "-0.55em", right: -6, fontWeight: 800, fontSize: "clamp(56px, 7vw, 104px)", lineHeight: 1, letterSpacing: "-0.04em", color: "transparent", WebkitTextStroke: "1.5px rgba(180,227,86,0.35)", pointerEvents: "none", userSelect: "none", zIndex: 0 })}>95.9</span>
             <div style={{ position: "relative", zIndex: 1, aspectRatio: "16/9", borderRadius: 18, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(246,243,238,.1)", background: "#0d1a12" }}>
-              <LivePlaceholder videoId={portada.arribaId} label={portada.arribaLabel} />
+              <LivePlaceholder videoId={portada.arribaId} label={portada.arribaLabel} title={portada.arriba?.title} />
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1641,18 +1676,40 @@ function ReelsSection({ data, onPlay }) {
 /* ─── Program Schedule ────────────────────────────────────────────────────── */
 const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
-function getCurrentProgram(programs) {
+const DIAS_HABILES = [1, 2, 3, 4, 5];
+const DIAS_NOMBRE = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+// Minuto del día y día de la semana (0 = domingo) en hora de Chile.
+function ahoraChile() {
   const parts = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
   const h = Number(parts.find((p) => p.type === "hour").value);
   const m = Number(parts.find((p) => p.type === "minute").value);
-  const cur = h * 60 + m;
   const dayMap = { dom: 0, lun: 1, mar: 2, mié: 3, mie: 3, jue: 4, vie: 5, sáb: 6, sab: 6 };
   const wkRaw = (parts.find((p) => p.type === "weekday")?.value || "").toLowerCase().replace(/\.$/, "");
-  const today = dayMap[wkRaw] ?? new Date().getDay();
+  return { cur: (h % 24) * 60 + m, today: dayMap[wkRaw] ?? new Date().getDay() };
+}
+
+function getCurrentProgram(programs) {
+  const { cur, today } = ahoraChile();
   return (programs || []).findIndex((p) => {
-    const days = p.days || [1, 2, 3, 4, 5];
+    const days = p.days || DIAS_HABILES;
     return days.includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
   });
+}
+
+// El próximo programa de la parrilla: el que sigue hoy o, si ya no queda
+// ninguno, el primero del siguiente día con programas. `cuando` va vacío si
+// es hoy; si no, «mañana» o «el lunes».
+function getNextProgram(programs) {
+  const { cur, today } = ahoraChile();
+  for (let off = 0; off <= 7; off++) {
+    const d = (today + off) % 7;
+    const cands = (programs || [])
+      .filter((p) => (p.days || DIAS_HABILES).includes(d) && (off > 0 || toMinutes(p.start) > cur))
+      .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+    if (cands.length) return { prog: cands[0], cuando: off === 0 ? "" : off === 1 ? "mañana" : `el ${DIAS_NOMBRE[d]}` };
+  }
+  return null;
 }
 
 function ProgramSchedule({ playing, toggle }) {
@@ -2004,10 +2061,11 @@ const SvgWhatsApp = ({ size = 28 }) => (
   </svg>
 );
 
-function WhatsAppWidget() {
+// En celular no hay botón flotante: el panel se abre desde la barra del
+// reproductor, para no tapar el contenido con dos capas fijas.
+function WhatsAppWidget({ open, setOpen }) {
   const { settings, whatsappOptions: WA_OPTIONS } = useSiteContent();
   const WA_NUMBER = settings.whatsappNumber;
-  const [open, setOpen] = useState(false);
   const openChat = (opt) => {
     const number = opt.wa ?? WA_NUMBER;
     window.open(`https://wa.me/${number}?text=${encodeURIComponent(opt.msg)}`, "_blank", "noopener,noreferrer");
@@ -2017,12 +2075,12 @@ function WhatsAppWidget() {
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, setOpen]);
 
   return (
     <>
       {open && (
-        <div className="wa-panel" role="dialog" aria-label="Escríbenos por WhatsApp" style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9998, width: 300, borderRadius: 14, overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,0.4)", fontFamily: "var(--font)" }}>
+        <div className="wa-panel" role="dialog" aria-label="Escríbenos por WhatsApp" style={{ position: "fixed", bottom: 84, right: 12, zIndex: 9998, width: "min(300px, calc(100vw - 24px))", borderRadius: 14, overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,0.4)", fontFamily: "var(--font)" }}>
           <div style={{ background: "#075E54", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#128C7E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><SvgWhatsApp size={20} /></div>
@@ -2049,7 +2107,7 @@ function WhatsAppWidget() {
         </div>
       )}
       {!open && (
-        <div style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="hide-sm-down" style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
           <div className="hidden sm:block" aria-hidden="true" style={{ background: "var(--ink-3)", border: "1px solid var(--line-strong)", borderRadius: 10, padding: "8px 12px", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
             <p style={K({ fontWeight: 700, fontSize: 12, color: "var(--cream)", whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
             <p style={K({ fontWeight: 400, fontSize: 11, color: "var(--green)", whiteSpace: "nowrap" })}>Escríbenos por WhatsApp →</p>
@@ -2064,8 +2122,12 @@ function WhatsAppWidget() {
 }
 
 /* ─── Floating audio player ───────────────────────────────────────────────── */
-function FloatingPlayer({ station, play }) {
+function FloatingPlayer({ station, play, onWhatsApp }) {
   const [muted, setMuted] = useState(false);
+  const { programs: PROGRAMS } = useSiteContent();
+  useMinuteTick();
+  const progIdx = getCurrentProgram(PROGRAMS);
+  const programa = progIdx >= 0 ? PROGRAMS[progIdx].name : "";
   const playing = station !== null;
   const isFrontera = station === "frontera";
   const toggleMute = () => { const a = document.querySelector("audio"); if (a) a.muted = !muted; setMuted(!muted); };
@@ -2086,10 +2148,10 @@ function FloatingPlayer({ station, play }) {
         </div>
         <div style={{ minWidth: 0 }}>
           <p style={K({ fontWeight: 700, fontSize: 13, color: "var(--cream)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>
-            {isFrontera ? "Radio La Frontera 1110 AM" : "Radio Araucana 95.9 FM"}
+            {isFrontera ? "Radio La Frontera 1110 AM" : programa || "Radio Araucana 95.9 FM"}
           </p>
           <p style={K({ fontWeight: 700, fontSize: 11, color: playing ? accent : "var(--cream-55)", letterSpacing: "0.1em", textTransform: "uppercase" })} aria-live="polite">
-            {playing ? "Al aire" : "En pausa"}
+            {playing ? "Al aire" : "En pausa"}{!isFrontera && programa ? " · 95.9 FM" : ""}
           </p>
         </div>
       </div>
@@ -2105,7 +2167,8 @@ function FloatingPlayer({ station, play }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <button onClick={toggleMute} className="icon-btn" aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted} style={{ border: "none", color: muted ? "var(--cream-55)" : "var(--cream)" }}>
+        <button onClick={onWhatsApp} className="icon-btn hide-sm-up" aria-label="Escríbenos por WhatsApp" style={{ border: "none", color: "#25D366" }}><SvgWhatsApp size={22} /></button>
+        <button onClick={toggleMute} className="icon-btn hide-sm-down" aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted} style={{ border: "none", color: muted ? "var(--cream-55)" : "var(--cream)" }}>
           {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
         <button onClick={share} className="icon-btn" aria-label="Compartir la radio" style={{ border: "none" }}><Share2 size={20} /></button>
@@ -2121,6 +2184,7 @@ function AppInner() {
   const STREAM_FRONTERA = settings.streamFrontera;
   const [station, setStation] = useState(null); // null | "araucana" | "frontera"
   const [modal, setModal] = useState(null); // { video, vertical }
+  const [waOpen, setWaOpen] = useState(false);
   const audioRef = useRef(null);
   const yt = useYouTube();
   const portada = useMemo(() => repartirCapitulos(yt.episodes, settings, yt.loading), [yt.episodes, settings, yt.loading]);
@@ -2163,8 +2227,8 @@ function AppInner() {
         <AboutSection />
         <Footer />
       </main>
-      <FloatingPlayer station={station} play={play} />
-      <WhatsAppWidget />
+      <FloatingPlayer station={station} play={play} onWhatsApp={() => setWaOpen((o) => !o)} />
+      <WhatsAppWidget open={waOpen} setOpen={setWaOpen} />
       {modal && (
         <VideoModal
           video={modal.video}

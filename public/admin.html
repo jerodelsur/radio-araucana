@@ -785,7 +785,7 @@
           // En un reel, «Destacado» decide si sale en la fila de la portada:
           // con al menos uno marcado, la portada muestra sólo los marcados.
           short ? el("div", { class: "yt-extra" },
-            el("label", { class: "yt-peso", title: "Sale en la fila de reels de la portada. Si no marcas ninguno, salen todos." },
+            el("label", { class: "yt-peso", title: "Sale en la fila de reels de la portada. Si no marcas ninguno, salen los 12 más nuevos." },
               el("input", { type: "checkbox", checked: v.peso ? "" : null,
                 onchange: (e) => { if (e.target.checked) v.peso = true; else delete v.peso; markDirty(); renderBody(); } }),
               "Destacado",
@@ -1244,7 +1244,36 @@
       ),
       textField("Nombre del programa", item.name, (v) => { item.name = v; markDirty(); }),
       textField("Conductor / Locutor", item.host, (v) => { item.host = v; markDirty(); }),
-      textField("Color (HEX, ej. #29623a)", item.color, (v) => { item.color = v; markDirty(); }),
+      diasField(item),
+    );
+  }
+  // Días al aire del bloque. Sin la casilla guardada, se leen del texto del
+  // conductor («· Lun, Mié, Vie») y, si no dice nada, es de lunes a viernes:
+  // lo mismo que hace la portada.
+  const DIAS_AL_AIRE = [[1, "Lun"], [2, "Mar"], [3, "Mié"], [4, "Jue"], [5, "Vie"], [6, "Sáb"], [0, "Dom"]];
+  function diasDelBloque(item) {
+    if (Array.isArray(item.days) && item.days.length) return item.days;
+    const abrev = { dom: 0, lun: 1, mar: 2, mie: 3, jue: 4, vie: 5, sab: 6 };
+    const cola = String(item.host || "").split("·").slice(1).join(" ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const dias = [...new Set((cola.match(/\b(dom|lun|mar|mie|jue|vie|sab)/g) || []).map((d) => abrev[d]))];
+    return dias.length ? dias : [1, 2, 3, 4, 5];
+  }
+  function diasField(item) {
+    const marcados = new Set(diasDelBloque(item));
+    return el("div", { class: "field" },
+      el("label", { class: "field-label" }, "Días al aire"),
+      el("div", { style: "display:flex;flex-wrap:wrap;gap:6px 16px" },
+        ...DIAS_AL_AIRE.map(([n, nombre]) =>
+          el("label", { style: "display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:var(--bone)" },
+            el("input", { type: "checkbox", checked: marcados.has(n) ? "" : null,
+              onchange: (e) => {
+                if (e.target.checked) marcados.add(n); else marcados.delete(n);
+                item.days = DIAS_AL_AIRE.map(([d]) => d).filter((d) => marcados.has(d));
+                markDirty();
+              } }),
+            nombre,
+          )),
+      ),
     );
   }
   programCard.empty = () => ({ start: "00:00", end: "01:00", name: "", host: "", color: "#29623a" });

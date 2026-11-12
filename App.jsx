@@ -1713,6 +1713,17 @@ const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 6
 const DIAS_HABILES = [1, 2, 3, 4, 5];
 const DIAS_NOMBRE = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
+// Días en que va un programa (0 = domingo). Manda la casilla «Días al aire»
+// de /admin; si el bloque no la tiene, se leen del texto del conductor
+// («Mariela González · Lun, Mié, Vie») y, si tampoco, es de lunes a viernes.
+const DIAS_ABREV = { dom: 0, lun: 1, mar: 2, mie: 3, jue: 4, vie: 5, sab: 6 };
+function diasDe(p) {
+  if (Array.isArray(p?.days) && p.days.length) return p.days;
+  const cola = String(p?.host || "").split("·").slice(1).join(" ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const dias = [...new Set((cola.match(/\b(dom|lun|mar|mie|jue|vie|sab)/g) || []).map((d) => DIAS_ABREV[d]))];
+  return dias.length ? dias : DIAS_HABILES;
+}
+
 // Minuto del día y día de la semana (0 = domingo) en hora de Chile.
 function ahoraChile() {
   const parts = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
@@ -1726,8 +1737,7 @@ function ahoraChile() {
 function getCurrentProgram(programs) {
   const { cur, today } = ahoraChile();
   return (programs || []).findIndex((p) => {
-    const days = p.days || DIAS_HABILES;
-    return days.includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
+    return diasDe(p).includes(today) && cur >= toMinutes(p.start) && cur < toMinutes(p.end);
   });
 }
 
@@ -1739,7 +1749,7 @@ function getNextProgram(programs) {
   for (let off = 0; off <= 7; off++) {
     const d = (today + off) % 7;
     const cands = (programs || [])
-      .filter((p) => (p.days || DIAS_HABILES).includes(d) && (off > 0 || toMinutes(p.start) > cur))
+      .filter((p) => diasDe(p).includes(d) && (off > 0 || toMinutes(p.start) > cur))
       .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
     if (cands.length) return { prog: cands[0], cuando: off === 0 ? "" : off === 1 ? "mañana" : `el ${DIAS_NOMBRE[d]}` };
   }

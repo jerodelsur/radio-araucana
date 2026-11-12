@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
-import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Menu, X, Play, Pause, Volume2, VolumeX, Share2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowUpRight, MessageCircle } from "lucide-react";
+import Asistente from "./src/portada/Asistente.jsx";
 import defaultContent from "./src/content/site.json";
 // Los carruseles «En cuadritos» de octubre de 2026, con sus láminas en
 // public/cuadritos/. Se muestran mientras el contenido guardado desde /admin
@@ -310,12 +311,6 @@ const GlobalStyles = () => (
     .footer-link { color: var(--cream-70); text-decoration: none; display: inline-flex; align-items: center; min-height: 36px; transition: color 150ms var(--ease); }
     .footer-link:hover { color: var(--green); }
 
-    .wa-panel { animation: waPop .22s cubic-bezier(.34,1.56,.64,1) forwards; }
-    @keyframes waPop { from { opacity: 0; transform: scale(.9) translateY(12px); } to { opacity: 1; transform: none; } }
-    .wa-opt { transition: background 150ms var(--ease), transform 120ms var(--ease); cursor: pointer; }
-    .wa-opt:hover { background: #f0fdf4 !important; transform: translateX(3px); }
-    .wa-fab { transition: transform 180ms var(--ease), box-shadow 180ms var(--ease); }
-    .wa-fab:hover { transform: scale(1.06); }
 
     /* Video del header: la miniatura con el play de la marca; el iframe de
        YouTube recién se carga al tocarla. */
@@ -2095,75 +2090,35 @@ function Footer() {
   );
 }
 
-/* ─── WhatsApp Widget ─────────────────────────────────────────────────────── */
-const SvgWhatsApp = ({ size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-  </svg>
-);
+/* ─── Asistente de preguntas frecuentes ───────────────────────────────────── */
+// Reemplaza al panel de WhatsApp: responde solo lo habitual (cómo escuchar,
+// parrilla, podcast, extractos, contacto) y sólo la publicidad abre WhatsApp.
+// Acá se arma lo que el asistente necesita saber del sitio; las preguntas y
+// respuestas viven en src/portada/Asistente.jsx.
+const WA_PUBLICIDAD = "Hola, me gustaría cotizar una pauta publicitaria en Radio Araucana 95.9 FM. ¿Podrían enviarme información de tarifas y formatos disponibles?";
 
-// En celular no hay botón flotante: el panel se abre desde la barra del
-// reproductor, para no tapar el contenido con dos capas fijas.
-function WhatsAppWidget({ open, setOpen }) {
-  const { settings, whatsappOptions: WA_OPTIONS } = useSiteContent();
-  const WA_NUMBER = settings.whatsappNumber;
-  const openChat = (opt) => {
-    const number = opt.wa ?? WA_NUMBER;
-    window.open(`https://wa.me/${number}?text=${encodeURIComponent(opt.msg)}`, "_blank", "noopener,noreferrer");
+function AsistentePortada({ open, setOpen, station, play }) {
+  const { settings, programs, whatsappOptions } = useSiteContent();
+  useMinuteTick();
+  const lista = Array.isArray(programs) ? programs : [];
+  const idx = getCurrentProgram(lista);
+  // El mensaje de WhatsApp es el de la opción de publicidad de /admin.
+  const msg = (whatsappOptions || []).find((o) => /publicidad/i.test(o?.label || ""))?.msg || WA_PUBLICIDAD;
+  const ctx = {
+    settings,
+    programs: lista,
+    ahora: idx >= 0 ? lista[idx] : null,
+    sigue: getNextProgram(lista),
+    station,
+    play,
+    waUrl: `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`,
+    redes: Object.fromEntries(SOC_LINKS.map((r) => [r.key, r.href])),
   };
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, setOpen]);
-
-  return (
-    <>
-      {open && (
-        <div className="wa-panel" role="dialog" aria-label="Escríbenos por WhatsApp" style={{ position: "fixed", bottom: 84, right: 12, zIndex: 9998, width: "min(300px, calc(100vw - 24px))", borderRadius: 14, overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,0.4)", fontFamily: "var(--font)" }}>
-          <div style={{ background: "#075E54", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#128C7E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><SvgWhatsApp size={20} /></div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 14, color: "#fff", lineHeight: 1.2 }}>Radio Araucana 95.9</p>
-                <p style={{ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Normalmente responde en minutos</p>
-              </div>
-            </div>
-            <button onClick={() => setOpen(false)} aria-label="Cerrar" style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} /></button>
-          </div>
-          <div style={{ background: "#ECE5DD", padding: "14px 16px 6px" }}>
-            <div style={{ background: "#fff", borderRadius: "0 8px 8px 8px", padding: "10px 14px", display: "inline-block", boxShadow: "0 1px 2px rgba(0,0,0,0.1)", maxWidth: 240 }}>
-              <p style={{ fontWeight: 400, fontSize: 13, color: "#191919", lineHeight: 1.45 }}>Hola, ¿en qué te ayudamos hoy?</p>
-            </div>
-          </div>
-          <div style={{ background: "#ECE5DD", padding: "8px 16px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-            {WA_OPTIONS.map((opt, i) => (
-              <button key={i} className="wa-opt" onClick={() => openChat(opt)} style={{ background: "#fff", border: "none", borderRadius: 8, padding: "11px 14px", display: "flex", alignItems: "center", gap: 10, textAlign: "left", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", width: "100%", minHeight: 44 }}>
-                <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
-                <span style={{ fontWeight: 600, fontSize: 13, color: "#075E54" }}>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {!open && (
-        <div className="hide-sm-down" style={{ position: "fixed", bottom: 92, right: 20, zIndex: 9997, display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="hidden sm:block" aria-hidden="true" style={{ background: "var(--ink-3)", border: "1px solid var(--line-strong)", borderRadius: 10, padding: "8px 12px", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
-            <p style={K({ fontWeight: 700, fontSize: 12, color: "var(--cream)", whiteSpace: "nowrap" })}>Cotiza tu publicidad</p>
-            <p style={K({ fontWeight: 400, fontSize: 12, color: "var(--green)", whiteSpace: "nowrap" })}>Escríbenos por WhatsApp →</p>
-          </div>
-          <button className="wa-fab" onClick={() => setOpen(true)} aria-label="Escríbenos por WhatsApp" style={{ width: 56, height: 56, borderRadius: "50%", flexShrink: 0, background: "#25D366", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 6px 20px rgba(37,211,102,0.4)" }}>
-            <SvgWhatsApp size={28} />
-          </button>
-        </div>
-      )}
-    </>
-  );
+  return <Asistente open={open} setOpen={setOpen} ctx={ctx} />;
 }
 
 /* ─── Floating audio player ───────────────────────────────────────────────── */
-function FloatingPlayer({ station, play, onWhatsApp }) {
+function FloatingPlayer({ station, play, onAsistente, asistenteAbierto }) {
   const [muted, setMuted] = useState(false);
   const { programs: PROGRAMS } = useSiteContent();
   useMinuteTick();
@@ -2208,7 +2163,7 @@ function FloatingPlayer({ station, play, onWhatsApp }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <button onClick={onWhatsApp} className="icon-btn hide-sm-up" aria-label="Escríbenos por WhatsApp" style={{ border: "none", color: "#25D366" }}><SvgWhatsApp size={22} /></button>
+        <button onClick={onAsistente} className="icon-btn hide-sm-up" aria-label={asistenteAbierto ? "Cerrar el asistente" : "Abrir el asistente de preguntas"} aria-expanded={asistenteAbierto} aria-controls="asistente" style={{ border: "none", color: asistenteAbierto ? "var(--lime)" : "var(--cream)" }}><MessageCircle size={22} /></button>
         <button onClick={toggleMute} className="icon-btn hide-sm-down" aria-label={muted ? "Activar sonido" : "Silenciar"} aria-pressed={muted} style={{ border: "none", color: muted ? "var(--cream-55)" : "var(--cream)" }}>
           {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
@@ -2225,7 +2180,7 @@ function AppInner() {
   const STREAM_FRONTERA = settings.streamFrontera;
   const [station, setStation] = useState(null); // null | "araucana" | "frontera"
   const [modal, setModal] = useState(null); // { video, vertical }
-  const [waOpen, setWaOpen] = useState(false);
+  const [asistente, setAsistente] = useState(false);
   const audioRef = useRef(null);
   const yt = useYouTube();
   const portada = useMemo(() => repartirCapitulos(yt.episodes, settings, yt.loading), [yt.episodes, settings, yt.loading]);
@@ -2268,8 +2223,8 @@ function AppInner() {
         <AboutSection />
         <Footer />
       </main>
-      <FloatingPlayer station={station} play={play} onWhatsApp={() => setWaOpen((o) => !o)} />
-      <WhatsAppWidget open={waOpen} setOpen={setWaOpen} />
+      <FloatingPlayer station={station} play={play} onAsistente={() => setAsistente((o) => !o)} asistenteAbierto={asistente} />
+      <AsistentePortada open={asistente} setOpen={setAsistente} station={station} play={play} />
       {modal && (
         <VideoModal
           video={modal.video}

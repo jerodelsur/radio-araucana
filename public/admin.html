@@ -328,7 +328,7 @@
     { id: "regions",  label: "Destinos",       render: () => renderList("regions", regionCard) },
     { id: "podcast",  label: "Podcast y reels", render: renderPodcast, wide: true },
     { id: "cuadritos", label: "La Región al Día",  render: renderCuadritos, wide: true },
-    { id: "whatsappOptions", label: "WhatsApp", render: () => renderList("whatsappOptions", waCard) },
+    { id: "whatsappOptions", label: "WhatsApp", render: renderWhatsApp },
   ];
   let currentTab = "settings";
 
@@ -1141,7 +1141,6 @@
       news: "Noticias",
       programs: "Programación",
       regions: "Destinos / Historias regionales",
-      whatsappOptions: "Mensajes pre-armados de WhatsApp",
     })[key] || key;
   }
   function panelSubFor(key) {
@@ -1149,7 +1148,6 @@
       news: "Las 4 noticias más recientes que aparecen en la portada.",
       programs: "Bloques horarios. El programa actual se destaca según la hora del usuario.",
       regions: "Los 4 destinos de la sección regional. El detalle abre en un modal.",
-      whatsappOptions: "Opciones que aparecen al abrir el widget flotante de WhatsApp.",
     })[key] || "";
   }
 
@@ -1306,17 +1304,25 @@
   }
   regionCard.empty = () => ({ name: "", sub: "", img: "", body: [""] });
 
-  function waCard(item, idx, list) {
-    return el("div", { class: "item-card" },
-      cardHeader(`Mensaje ${idx + 1}`, idx, list),
-      el("div", { class: "field-row" },
-        textField("Etiqueta del botón", item.label, (v) => { item.label = v; markDirty(); }),
-        textField("Emoji / icono", item.icon, (v) => { item.icon = v; markDirty(); }),
+  // WhatsApp: desde que la portada tiene el asistente de preguntas, lo único
+  // que abre WhatsApp es la publicidad. Acá se edita ese mensaje; el número
+  // está en Configuración. Las otras opciones del panel antiguo (extracto,
+  // entrevista, prensa, consulta general) ya no se usan: el asistente las
+  // responde o las deriva al formulario de contacto.
+  function renderWhatsApp() {
+    const lista = Array.isArray(content.whatsappOptions) ? content.whatsappOptions : (content.whatsappOptions = []);
+    let item = lista.find((o) => /publicidad/i.test(o?.label || ""));
+    return el("div", { class: "panel active" },
+      el("h2", { class: "panel-title" }, "Mensaje de WhatsApp para publicidad"),
+      el("p", { class: "panel-sub" }, "El asistente de la portada sólo deriva a WhatsApp cuando preguntan por publicidad. Este es el mensaje que llega escrito."),
+      el("div", { class: "item-card" },
+        textAreaField("Mensaje pre-armado (lo que se envía al WhatsApp)", item ? item.msg : "", (v) => {
+          if (!item) { item = { label: "Cotizar publicidad", icon: "📣", msg: "" }; lista.push(item); }
+          item.msg = v; markDirty();
+        }, "Si lo dejas vacío, se usa el mensaje de siempre."),
       ),
-      textAreaField("Mensaje pre-armado (lo que se envía al WhatsApp)", item.msg, (v) => { item.msg = v; markDirty(); }),
     );
   }
-  waCard.empty = () => ({ label: "", icon: "💬", msg: "" });
 
   /* ───────── Boot ───────── */
   async function showPanel() {

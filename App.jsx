@@ -226,6 +226,28 @@ const GlobalStyles = () => (
     .serie-cap-proximo .serie-cap-thumb { display: flex; align-items: center; justify-content: center; padding: 0 10px; text-align: center; background: rgba(246,243,238,.04); color: var(--cream-70); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
     .serie-cap-proximo .serie-cap-texto { color: var(--cream-70); }
 
+    /* La serie del club: el pasto cortado en franjas, las líneas de cal del
+       círculo central y los capítulos numerados como dorsales. Verde y blanco,
+       y el escudo sólo junto al programa oficial, al cierre. */
+    .club { position: relative; overflow: hidden; padding: clamp(64px, 9vw, 120px) 0; border-top: 1px solid rgba(246,243,238,.14); border-bottom: 1px solid rgba(246,243,238,.14);
+      background: repeating-linear-gradient(90deg, rgba(246,243,238,.028) 0 clamp(70px, 9vw, 130px), transparent clamp(70px, 9vw, 130px) clamp(140px, 18vw, 260px)), linear-gradient(165deg, #0d2a15 0%, #15431f 52%, #0a2010 100%); }
+    .club-cal { position: absolute; top: 0; bottom: 0; right: clamp(-140px, 6vw, 120px); height: 100%; width: auto; color: rgba(246,243,238,.13); pointer-events: none; }
+    .club-cal * { vector-effect: non-scaling-stroke; }
+    .club .kicker { color: var(--cream); }
+    .club .kicker::before { background: var(--cream); }
+    .club .lede { color: rgba(246,243,238,.8); }
+    .tag-crema { display: inline-block; background: var(--cream); color: #0d2a15; font-weight: 800; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; }
+    .club-fila { display: grid; grid-template-columns: 46px 112px 1fr; gap: 14px; align-items: center; width: 100%; padding: 12px 10px; border: 0; border-top: 1px solid rgba(246,243,238,.14); background: transparent; color: var(--cream); text-align: left; cursor: pointer; font-family: var(--font); transition: background 160ms var(--ease); }
+    li:last-child > .club-fila { border-bottom: 1px solid rgba(246,243,238,.14); }
+    .club-fila:hover { background: rgba(246,243,238,.06); }
+    .club-dorsal { font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: transparent; -webkit-text-stroke: 1.4px rgba(246,243,238,.6); transition: color 160ms var(--ease), -webkit-text-stroke-color 160ms var(--ease); }
+    .club-fila:hover .club-dorsal { color: var(--cream); -webkit-text-stroke-color: var(--cream); }
+    .club-fila .thumb { display: block; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #0a1e10; }
+    .club-fila .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .club-fila-titulo { font-weight: 700; font-size: 15px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    @media (max-width: 480px) { .club-fila { grid-template-columns: 38px 96px 1fr; gap: 10px; padding: 10px 4px; } .club-dorsal { font-size: 24px; } }
+    .club-aire { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 28px; margin-top: clamp(32px, 5vw, 56px); padding: 18px 22px; border: 1px solid rgba(246,243,238,.2); border-radius: 16px; background: rgba(8,24,13,.45); }
+
     .feature-card { position: relative; display: block; border-radius: 18px; overflow: hidden; background: #0e1a12; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--line); text-align: left; width: 100%; color: inherit; padding: 0; }
     .feature-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease); }
     .feature-card:hover img { transform: scale(1.04); }
@@ -472,6 +494,10 @@ const hoyChile = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Ameri
 // juntas en «Especiales».
 const TEMAS_ORDEN = ["Política", "Deporte", "Salud", "Cultura", "Negocios", "Sociedad"];
 const ESPECIALES = "Especiales";
+// La serie que tiene sección propia en la portada (ClubSection). Sus capítulos
+// se marcan en /admin con este nombre en el campo «Serie»; como ya tienen su
+// lugar, no se repiten como fila en «Más capítulos» ni en «Especiales».
+const SERIE_CLUB = "Deportes Temuco";
 
 // Cada lugar de la portada tiene un solo rol, así ningún capítulo sale dos veces:
 // - Arriba (reproductor del header): el ▶ fijado en /admin o, si no hay, el
@@ -522,7 +548,7 @@ function repartirCapitulos(episodes, settings, loading) {
   const items = [];
   const grupos = new Map();
   for (const e of episodes) {
-    if (fuera.has(e.id)) continue;
+    if (fuera.has(e.id) || e.serie === SERIE_CLUB) continue;
     if (!e.serie) { items.push({ tipo: "capitulo", key: e.id, ep: e }); continue; }
     let g = grupos.get(e.serie);
     if (!g) {
@@ -1055,7 +1081,7 @@ function PodcastSection({ data, portada, onPlay }) {
   const especiales = useMemo(() => {
     const grupos = new Map();
     for (const e of episodes) {
-      if (!e.serie) continue;
+      if (!e.serie || e.serie === SERIE_CLUB) continue;
       if (!grupos.has(e.serie)) grupos.set(e.serie, { tipo: "serie", key: `serie:${e.serie}`, serie: e.serie, capitulos: [] });
       grupos.get(e.serie).capitulos.push(e);
     }
@@ -1444,6 +1470,112 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
         </div>
       )}
     </div>
+  );
+}
+
+/* ─── La serie del club (capítulos con serie «Deportes Temuco») ───────────── */
+// Sección propia para las conversaciones con el plantel, los técnicos y la
+// cantera. El diseño viste la sección de cancha: pasto en franjas, cal del
+// círculo central, verde y blanco, y los capítulos numerados como dorsales.
+// Abajo, La Voz Albiverde, el programa oficial del club, con su escudo (se
+// busca por nombre en la parrilla, así el horario sale de /admin). Sin
+// capítulos marcados, la sección no existe.
+function ClubSection({ data, portada, onPlay, playing, toggle }) {
+  const ref = useReveal();
+  const { programs } = useSiteContent();
+  // La lista va del más nuevo al más antiguo; el dorsal es el número de
+  // capítulo, así que el más nuevo lleva el más alto.
+  const capitulos = useMemo(() => data.episodes.filter((e) => e.serie === SERIE_CLUB), [data.episodes]);
+  if (data.loading || !capitulos.length) return null;
+  const total = capitulos.length;
+  const dos = (n) => String(n).padStart(2, "0");
+  // En grande, el más nuevo que no esté ya arriba en el header.
+  const grande = capitulos.find((c) => c.id !== portada.arribaId) || capitulos[0];
+  const numGrande = total - capitulos.indexOf(grande);
+  const programa = (Array.isArray(programs) ? programs : []).find((p) => /albiverde/i.test(p?.name || ""));
+  // En la parrilla el conductor viene como «Mariela González · Lun, Mié, Vie».
+  const conduce = String(programa?.host || "").split("·")[0].trim();
+  const dias = programa ? diasDe(programa).map((d) => DIAS_NOMBRE[d]) : [];
+  const cuando = dias.length > 1 ? `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}` : dias[0] || "";
+
+  return (
+    <section id="albiverde" aria-labelledby="club-title" className="club">
+      <svg className="club-cal" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <line x1="300" y1="-400" x2="300" y2="1000" />
+        <circle cx="300" cy="300" r="210" />
+        <circle cx="300" cy="300" r="5" fill="currentColor" />
+      </svg>
+      <div className="container reveal" ref={ref} style={{ position: "relative", zIndex: 1 }}>
+        <SectionHead
+          id="club-title"
+          kicker="Albiverde"
+          title={<>Acá el Pije juega de local. <span style={{ color: "rgba(246,243,238,.62)" }}>En las radios históricas de La Araucanía.</span></>}
+          lede="Del camarín al estudio: jugadores, técnicos y canteranos de Deportes Temuco cuentan su historia con calma y en confianza, como se conversa en casa."
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          <div className="lg:col-span-7">
+            <button className="feature-card" onClick={() => onPlay(grande, false)} aria-label={`Reproducir: ${cleanTitle(grande.title)}`} style={{ borderColor: "rgba(246,243,238,.22)" }}>
+              <img src={grande.thumbHd || grande.thumb} alt="" width="1280" height="720" loading="lazy" decoding="async"
+                onError={(e) => { if (grande.thumb && e.currentTarget.src !== grande.thumb) e.currentTarget.src = grande.thumb; }} />
+              <div className="scrim" aria-hidden="true" style={{ background: "linear-gradient(to top, rgba(8,24,13,.55) 0%, rgba(8,24,13,0) 40%)" }} />
+              <div style={{ position: "absolute", top: 18, left: 18 }}>
+                <span className="tag-crema">Dorsal {dos(numGrande)}</span>
+              </div>
+              <div style={{ position: "absolute", right: 20, bottom: 20 }}>
+                <span className="play-ring" aria-hidden="true"><Play size={26} fill="currentColor" style={{ marginLeft: 3 }} /></span>
+              </div>
+            </button>
+            <div style={{ padding: "18px 6px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={K({ fontWeight: 800, fontSize: "clamp(20px, 2.2vw, 28px)", lineHeight: 1.12, letterSpacing: "-0.02em", color: "var(--cream)" })}>{cleanTitle(grande.title)}</p>
+              <button type="button" className="btn btn-cream btn-sm" onClick={() => onPlay(grande, false)} style={{ alignSelf: "flex-start", marginTop: 4 }}>
+                <Play size={16} fill="currentColor" aria-hidden="true" /> Ver la conversación
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5">
+            <p className="meta" style={{ padding: "0 10px 12px", color: "rgba(246,243,238,.7)" }}>La formación · {total} {total === 1 ? "conversación" : "conversaciones"}</p>
+            <ol style={{ listStyle: "none" }} aria-label="Conversaciones con Deportes Temuco">
+              {capitulos.map((c, i) => (
+                <li key={c.id}>
+                  <button className="club-fila" onClick={() => onPlay(c, false)} aria-label={`Capítulo ${total - i}: ${cleanTitle(c.title)}`}>
+                    <span className="club-dorsal" aria-hidden="true">{dos(total - i)}</span>
+                    <span className="thumb"><img src={c.thumb} alt="" width="480" height="270" loading="lazy" decoding="async" /></span>
+                    <span className="club-fila-titulo">{cleanTitle(c.title)}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        {programa && (
+          <div className="club-aire">
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, flex: "1 1 320px" }}>
+              <img src="/escudo-deportes-temuco.png" alt="Escudo de Deportes Temuco" width="139" height="146" loading="lazy" decoding="async" style={{ width: 58, height: "auto", flex: "0 0 auto" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                <span className="meta" style={{ color: "rgba(246,243,238,.78)" }}>El programa oficial de Deportes Temuco</span>
+                <p style={K({ fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.2, color: "var(--cream)" })}>
+                  {programa.name} <span style={{ fontWeight: 400, color: "rgba(246,243,238,.8)" }}>· {cuando}, {programa.start} a {programa.end} · 95.9 FM</span>
+                </p>
+                {conduce && (
+                  <p style={K({ display: "flex", alignItems: "center", gap: 10, marginTop: 4, fontSize: 15, lineHeight: 1.4, color: "rgba(246,243,238,.8)" })}>
+                    {/* El retrato es de Mariela (con su permiso): sólo va si la conductora sigue siendo ella. */}
+                    {/mariela/i.test(conduce) && <img src="/mariela-gonzalez.jpg" alt="" width="240" height="240" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(246,243,238,.85)", flex: "0 0 auto" }} />}
+                    <span>Conduce <strong style={{ fontWeight: 700, color: "var(--cream)" }}>{conduce}</strong></span>
+                  </p>
+                )}
+              </div>
+            </div>
+            <button className="btn btn-cream btn-sm" onClick={toggle} aria-pressed={playing}>
+              {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} fill="currentColor" aria-hidden="true" />}
+              {playing ? "Al aire · pausar" : "Escuchar la 95.9"}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -2213,6 +2345,7 @@ function AppInner() {
         <Hero playing={araucanaPlaying} toggle={toggleAraucana} latest={yt.episodes[0]} portada={portada} />
         <WeatherTicker />
         <PodcastSection data={yt} portada={portada} onPlay={openVideo} />
+        <ClubSection data={yt} portada={portada} onPlay={openVideo} playing={araucanaPlaying} toggle={toggleAraucana} />
         <CuadritosSection />
         <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} />
         <ReelsSection data={yt} onPlay={openVideo} />

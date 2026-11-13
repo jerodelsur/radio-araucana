@@ -1493,6 +1493,8 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
   const grande = capitulos.find((c) => c.id !== portada.arribaId) || capitulos[0];
   const numGrande = total - capitulos.indexOf(grande);
   const programa = (Array.isArray(programs) ? programs : []).find((p) => /albiverde/i.test(p?.name || ""));
+  // En la parrilla el conductor viene como «Mariela González · Lun, Mié, Vie».
+  const conduce = String(programa?.host || "").split("·")[0].trim();
   const dias = programa ? diasDe(programa).map((d) => DIAS_NOMBRE[d]) : [];
   const cuando = dias.length > 1 ? `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}` : dias[0] || "";
 
@@ -1557,6 +1559,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
                 <p style={K({ fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.2, color: "var(--cream)" })}>
                   {programa.name} <span style={{ fontWeight: 400, color: "rgba(246,243,238,.8)" }}>· {cuando}, {programa.start} a {programa.end} · 95.9 FM</span>
                 </p>
+                {conduce && <p style={K({ fontSize: 15, lineHeight: 1.4, color: "rgba(246,243,238,.8)" })}>Conduce <strong style={{ fontWeight: 700, color: "var(--cream)" }}>{conduce}</strong></p>}
               </div>
             </div>
             <button className="btn btn-cream btn-sm" onClick={toggle} aria-pressed={playing}>

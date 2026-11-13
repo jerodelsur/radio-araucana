@@ -1486,13 +1486,21 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
 // Abajo, La Voz Albiverde, el programa oficial del club, con su escudo (se
 // busca por nombre en la parrilla, así el horario sale de /admin). Sin
 // capítulos marcados, la sección no existe.
-function ClubSection({ data, portada, onPlay, playing, toggle }) {
-  const ref = useReveal();
-  const { programs } = useSiteContent();
+//
+// Va en dos componentes porque useReveal observa el nodo una sola vez, al
+// montar: si la sección devolviera null mientras carga /api/content, el
+// contenido quedaría invisible para siempre (lo mismo que CuadritosSection).
+function ClubSection({ data, ...resto }) {
   // La lista va del más nuevo al más antiguo; el dorsal es el número de
   // capítulo, así que el más nuevo lleva el más alto.
   const capitulos = useMemo(() => data.episodes.filter((e) => e.serie === SERIE_CLUB), [data.episodes]);
   if (data.loading || !capitulos.length) return null;
+  return <ClubCancha capitulos={capitulos} {...resto} />;
+}
+
+function ClubCancha({ capitulos, portada, onPlay, playing, toggle }) {
+  const ref = useReveal();
+  const { programs } = useSiteContent();
   const total = capitulos.length;
   const dos = (n) => String(n).padStart(2, "0");
   // En grande, el más nuevo que no esté ya arriba en el header.

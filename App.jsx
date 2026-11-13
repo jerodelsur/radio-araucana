@@ -306,6 +306,10 @@ const GlobalStyles = () => (
     .prog-row:last-child { border-bottom: 1px solid var(--line); }
     .prog-row.active { background: linear-gradient(90deg, rgba(82,184,112,.16), rgba(82,184,112,.02)); border-radius: 12px; border-color: transparent; }
     @media (max-width: 560px) { .prog-row { grid-template-columns: 1fr; gap: 6px; } }
+    /* El retrato del conductor, en círculo; sin foto, sus iniciales. */
+    .prog-foto { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--line-strong); background: #1c3324; }
+    .prog-foto-iniciales { display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; letter-spacing: .04em; color: var(--cream-70); }
+    .prog-row.active .prog-foto { border-color: var(--lime); }
 
     .soc-row { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr auto; gap: 24px; align-items: center; padding: 22px 10px; border-top: 1px solid var(--line-strong); color: inherit; text-decoration: none; transition: background 160ms var(--ease); }
     li:last-child > .soc-row { border-bottom: 1px solid var(--line-strong); }
@@ -1494,7 +1498,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
   const numGrande = total - capitulos.indexOf(grande);
   const programa = (Array.isArray(programs) ? programs : []).find((p) => /albiverde/i.test(p?.name || ""));
   // En la parrilla el conductor viene como «Mariela González · Lun, Mié, Vie».
-  const conduce = String(programa?.host || "").split("·")[0].trim();
+  const conduce = conductorDe(programa);
   const dias = programa ? diasDe(programa).map((d) => DIAS_NOMBRE[d]) : [];
   const cuando = dias.length > 1 ? `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}` : dias[0] || "";
 
@@ -1561,8 +1565,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
                 </p>
                 {conduce && (
                   <p style={K({ display: "flex", alignItems: "center", gap: 10, marginTop: 4, fontSize: 15, lineHeight: 1.4, color: "rgba(246,243,238,.8)" })}>
-                    {/* El retrato es de Mariela (con su permiso): sólo va si la conductora sigue siendo ella. */}
-                    {/mariela/i.test(conduce) && <img src="/mariela-gonzalez.jpg" alt="" width="240" height="240" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(246,243,238,.85)", flex: "0 0 auto" }} />}
+                    {fotoDe(programa) && <img className="prog-foto" src={fotoDe(programa)} alt="" width="240" height="240" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderColor: "rgba(246,243,238,.85)" }} />}
                     <span>Conduce <strong style={{ fontWeight: 700, color: "var(--cream)" }}>{conduce}</strong></span>
                   </p>
                 )}
@@ -1851,6 +1854,27 @@ function diasDe(p) {
   return dias.length ? dias : DIAS_HABILES;
 }
 
+// El conductor de un bloque, sin la cola de días («Mariela González · Lun, Mié, Vie»).
+const conductorDe = (p) => String(p?.host || "").split("·")[0].trim();
+const sinTildes = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+// Retratos de los conductores (cuadros reales de sus entrevistas en el
+// estudio). Manda la «Foto» que se suba al bloque en /admin; si no hay, se
+// busca por el nombre del conductor, así la cara nunca queda junto a otro
+// nombre si el programa cambia de manos.
+const FOTOS_CONDUCTORES = {
+  "alejandro contreras": "/programas/alejandro-contreras.jpg",
+  "miguel angel contreras": "/programas/miguel-angel-contreras.jpg",
+  "mariela gonzalez": "/programas/mariela-gonzalez.jpg",
+  "cristian inostroza": "/programas/cristian-inostroza.jpg",
+  "luis vega": "/programas/luis-vega.jpg",
+  "rolando gomez": "/programas/rolando-gomez.jpg",
+};
+function fotoDe(p) {
+  const propia = typeof p?.photo === "string" ? p.photo.trim() : "";
+  return propia || FOTOS_CONDUCTORES[sinTildes(conductorDe(p))] || "";
+}
+const inicialesDe = (nombre) => nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+
 // Minuto del día y día de la semana (0 = domingo) en hora de Chile.
 function ahoraChile() {
   const parts = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
@@ -1889,6 +1913,9 @@ function ProgramSchedule({ playing, toggle }) {
   useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
   const activeIdx = getCurrentProgram(PROGRAMS);
   const sigue = getNextProgram(PROGRAMS);
+  // Con al menos un retrato, todas las filas reservan el círculo (las que no
+  // tienen foto muestran iniciales) para que los nombres queden alineados.
+  const conFotos = PROGRAMS.some((p) => fotoDe(p));
 
   return (
     <section id="programacion" aria-labelledby="prog-title" style={{ background: "var(--ink-2)", padding: "clamp(64px, 9vw, 120px) 0" }}>
@@ -1911,9 +1938,14 @@ function ProgramSchedule({ playing, toggle }) {
               return (
                 <li key={i} className={`prog-row${active ? " active" : ""}`} aria-current={active ? "true" : undefined}>
                   <span style={K({ fontWeight: 700, fontSize: 15, color: active ? "var(--lime)" : "var(--cream-70)", fontVariantNumeric: "tabular-nums", letterSpacing: ".02em" })}>{p.start} – {p.end}</span>
-                  <span style={{ minWidth: 0 }}>
-                    <span style={K({ display: "block", fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.15, color: "var(--cream)" })}>{p.name}</span>
-                    <span style={K({ display: "block", fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 3 })}>{p.host}</span>
+                  <span style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
+                    {conFotos && (fotoDe(p)
+                      ? <img className="prog-foto" src={fotoDe(p)} alt="" width="240" height="240" loading="lazy" decoding="async" />
+                      : <span className="prog-foto prog-foto-iniciales" aria-hidden="true">{inicialesDe(conductorDe(p))}</span>)}
+                    <span style={{ minWidth: 0 }}>
+                      <span style={K({ display: "block", fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.15, color: "var(--cream)" })}>{p.name}</span>
+                      <span style={K({ display: "block", fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 3 })}>{p.host}</span>
+                    </span>
                   </span>
                   {(active || next) && (
                     <span style={{ display: "flex", alignItems: "center", gap: 10, justifySelf: "end" }}>

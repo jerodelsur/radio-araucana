@@ -1242,6 +1242,9 @@
       ),
       textField("Nombre del programa", item.name, (v) => { item.name = v; markDirty(); }),
       textField("Conductor / Locutor", item.host, (v) => { item.host = v; markDirty(); }),
+      // Opcional: se ve en círculo junto al programa. Sin foto, la portada usa
+      // el retrato que ya tenga de ese conductor o sus iniciales.
+      imageField("Foto del conductor (cuadrada, opcional)", item.photo, (v) => { if (v.trim()) item.photo = v.trim(); else delete item.photo; markDirty(); }),
       diasField(item),
     );
   }

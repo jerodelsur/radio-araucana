@@ -804,7 +804,7 @@
               el("option", { value: "" }, "Sin tema"),
               TEMAS.map((t) => el("option", { value: t, selected: v.tema === t ? "" : null }, t)),
             ),
-            el("label", { class: "yt-peso", title: "Entra a la fila de entrevistas destacadas de la portada. Si no hay ★ vigente, la más nueva es la entrevista de la semana." },
+            el("label", { class: "yt-peso", title: "Entra a la fila de entrevistas destacadas de la portada. Si no hay ★ vigente, la más nueva es la entrevista de la semana. En la serie Deportes Temuco, la destacada va en grande en la sección albiverde." },
               el("input", { type: "checkbox", checked: v.peso ? "" : null,
                 onchange: (e) => {
                   // Al marcarla, la frase, el invitado y el cargo salen del

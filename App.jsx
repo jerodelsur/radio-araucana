@@ -1506,7 +1506,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
       <div className="container reveal" ref={ref} style={{ position: "relative", zIndex: 1 }}>
         <SectionHead
           id="club-title"
-          kicker="Verde y blanco"
+          kicker="Albiverde"
           title={<>Acá el Pije juega de local. <span style={{ color: "rgba(246,243,238,.62)" }}>En las radios históricas de La Araucanía.</span></>}
           lede="El plantel, los técnicos y la cantera de Deportes Temuco pasan por el estudio antes de volver a la cancha. Conversaciones largas, sin apuro y con la camiseta puesta."
         />

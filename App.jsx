@@ -531,7 +531,9 @@ function repartirCapitulos(episodes, settings, loading) {
   const vencido = Boolean(settings.featuredUntil) && hoyChile() > settings.featuredUntil;
   const marcado = vencido ? null : buscar(settings.featuredEpisode);
   const elegido = marcado && marcado.id !== arribaId ? marcado : null;
-  const pesos = episodes.filter((e) => e.peso);
+  // Las destacadas de la serie del club se lucen en su propia sección
+  // (ClubCancha), no en la fila del podcast.
+  const pesos = episodes.filter((e) => e.peso && e.serie !== SERIE_CLUB);
   const depeso = elegido ? null : pesos.find((e) => e.id !== arribaId) || null;
   const featured = elegido || depeso || episodes.find((e) => e.id !== arribaId) || null;
   // Sólo se llama «Entrevista de la semana» lo que eligió alguien: el ★ o una
@@ -1503,8 +1505,10 @@ function ClubCancha({ capitulos, portada, onPlay, playing, toggle }) {
   const { programs } = useSiteContent();
   const total = capitulos.length;
   const dos = (n) => String(n).padStart(2, "0");
-  // En grande, el más nuevo que no esté ya arriba en el header.
-  const grande = capitulos.find((c) => c.id !== portada.arribaId) || capitulos[0];
+  // En grande, el destacado en /admin (casilla `peso`; si hay varios, el más
+  // nuevo). Sin destacado, el más nuevo. Nunca el que ya está arriba en el header.
+  const libres = capitulos.filter((c) => c.id !== portada.arribaId);
+  const grande = libres.find((c) => c.peso) || libres[0] || capitulos[0];
   const numGrande = total - capitulos.indexOf(grande);
   const programa = (Array.isArray(programs) ? programs : []).find((p) => /albiverde/i.test(p?.name || ""));
   // En la parrilla el conductor viene como «Mariela González · Lun, Mié, Vie».

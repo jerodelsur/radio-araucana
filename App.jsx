@@ -1559,7 +1559,13 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
                 <p style={K({ fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.2, color: "var(--cream)" })}>
                   {programa.name} <span style={{ fontWeight: 400, color: "rgba(246,243,238,.8)" }}>· {cuando}, {programa.start} a {programa.end} · 95.9 FM</span>
                 </p>
-                {conduce && <p style={K({ fontSize: 15, lineHeight: 1.4, color: "rgba(246,243,238,.8)" })}>Conduce <strong style={{ fontWeight: 700, color: "var(--cream)" }}>{conduce}</strong></p>}
+                {conduce && (
+                  <p style={K({ display: "flex", alignItems: "center", gap: 10, marginTop: 4, fontSize: 15, lineHeight: 1.4, color: "rgba(246,243,238,.8)" })}>
+                    {/* El retrato es de Mariela (con su permiso): sólo va si la conductora sigue siendo ella. */}
+                    {/mariela/i.test(conduce) && <img src="/mariela-gonzalez.jpg" alt="" width="240" height="240" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(246,243,238,.85)", flex: "0 0 auto" }} />}
+                    <span>Conduce <strong style={{ fontWeight: 700, color: "var(--cream)" }}>{conduce}</strong></span>
+                  </p>
+                )}
               </div>
             </div>
             <button className="btn btn-cream btn-sm" onClick={toggle} aria-pressed={playing}>

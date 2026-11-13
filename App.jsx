@@ -228,7 +228,7 @@ const GlobalStyles = () => (
 
     /* La serie del club: el pasto cortado en franjas, las líneas de cal del
        círculo central y los capítulos numerados como dorsales. Verde y blanco,
-       sin escudo ni nombre de cargo: se sugiere, no se declara. */
+       y el escudo sólo junto al programa oficial, al cierre. */
     .club { position: relative; overflow: hidden; padding: clamp(64px, 9vw, 120px) 0; border-top: 1px solid rgba(246,243,238,.14); border-bottom: 1px solid rgba(246,243,238,.14);
       background: repeating-linear-gradient(90deg, rgba(246,243,238,.028) 0 clamp(70px, 9vw, 130px), transparent clamp(70px, 9vw, 130px) clamp(140px, 18vw, 260px)), linear-gradient(165deg, #0d2a15 0%, #15431f 52%, #0a2010 100%); }
     .club-cal { position: absolute; top: 0; bottom: 0; right: clamp(-140px, 6vw, 120px); height: 100%; width: auto; color: rgba(246,243,238,.13); pointer-events: none; }
@@ -1475,11 +1475,11 @@ function FilaSerie({ grupo, abierta, onToggle, onPlay }) {
 
 /* ─── La serie del club (capítulos con serie «Deportes Temuco») ───────────── */
 // Sección propia para las conversaciones con el plantel, los técnicos y la
-// cantera. El diseño hace el trabajo de decir de quién es esta radio sin
-// declararlo: pasto en franjas, cal del círculo central, verde y blanco, y los
-// capítulos numerados como dorsales. Abajo, el programa del club en la
-// parrilla (se busca por nombre, así el horario sale de /admin). Sin capítulos
-// marcados, la sección no existe.
+// cantera. El diseño viste la sección de cancha: pasto en franjas, cal del
+// círculo central, verde y blanco, y los capítulos numerados como dorsales.
+// Abajo, La Voz Albiverde, el programa oficial del club, con su escudo (se
+// busca por nombre en la parrilla, así el horario sale de /admin). Sin
+// capítulos marcados, la sección no existe.
 function ClubSection({ data, portada, onPlay, playing, toggle }) {
   const ref = useReveal();
   const { programs } = useSiteContent();
@@ -1507,7 +1507,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
         <SectionHead
           id="club-title"
           kicker="Verde y blanco"
-          title="Acá el Pije juega de local."
+          title={<>Acá el Pije juega de local. <span style={{ color: "rgba(246,243,238,.62)" }}>En las radios históricas de La Araucanía.</span></>}
           lede="El plantel, los técnicos y la cantera de Deportes Temuco pasan por el estudio antes de volver a la cancha. Conversaciones largas, sin apuro y con la camiseta puesta."
         />
 
@@ -1550,11 +1550,14 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
 
         {programa && (
           <div className="club-aire">
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
-              <span className="meta" style={{ color: "rgba(246,243,238,.7)" }}>Y la semana se juega al aire</span>
-              <p style={K({ fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.2, color: "var(--cream)" })}>
-                {programa.name} <span style={{ fontWeight: 400, color: "rgba(246,243,238,.8)" }}>· {cuando}, {programa.start} a {programa.end} · 95.9 FM</span>
-              </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, flex: "1 1 320px" }}>
+              <img src="/escudo-deportes-temuco.png" alt="Escudo de Deportes Temuco" width="139" height="146" loading="lazy" decoding="async" style={{ width: 58, height: "auto", flex: "0 0 auto" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                <span className="meta" style={{ color: "rgba(246,243,238,.78)" }}>El programa oficial de Deportes Temuco</span>
+                <p style={K({ fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.2, color: "var(--cream)" })}>
+                  {programa.name} <span style={{ fontWeight: 400, color: "rgba(246,243,238,.8)" }}>· {cuando}, {programa.start} a {programa.end} · 95.9 FM</span>
+                </p>
+              </div>
             </div>
             <button className="btn btn-cream btn-sm" onClick={toggle} aria-pressed={playing}>
               {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} fill="currentColor" aria-hidden="true" />}

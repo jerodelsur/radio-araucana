@@ -1508,7 +1508,7 @@ function ClubSection({ data, portada, onPlay, playing, toggle }) {
           id="club-title"
           kicker="Albiverde"
           title={<>Acá el Pije juega de local. <span style={{ color: "rgba(246,243,238,.62)" }}>En las radios históricas de La Araucanía.</span></>}
-          lede="El plantel, los técnicos y la cantera de Deportes Temuco pasan por el estudio antes de volver a la cancha. Conversaciones largas, sin apuro y con la camiseta puesta."
+          lede="Del camarín al estudio: jugadores, técnicos y canteranos de Deportes Temuco cuentan su historia con calma y en confianza, como se conversa en casa."
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">

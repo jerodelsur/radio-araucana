@@ -310,6 +310,8 @@ const GlobalStyles = () => (
     .prog-foto { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--line-strong); background: #1c3324; }
     .prog-foto-iniciales { display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; letter-spacing: .04em; color: var(--cream-70); }
     .prog-row.active .prog-foto { border-color: var(--lime); }
+    .prog-entrevista { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-top: 4px; padding: 0; border: 0; background: transparent; color: var(--green); font-family: var(--font); font-weight: 700; font-size: 13px; cursor: pointer; transition: color 150ms var(--ease); }
+    .prog-entrevista:hover { color: var(--lime); text-decoration: underline; text-underline-offset: 3px; }
 
     .soc-row { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr auto; gap: 24px; align-items: center; padding: 22px 10px; border-top: 1px solid var(--line-strong); color: inherit; text-decoration: none; transition: background 160ms var(--ease); }
     li:last-child > .soc-row { border-bottom: 1px solid var(--line-strong); }
@@ -1907,7 +1909,17 @@ function getNextProgram(programs) {
   return null;
 }
 
-function ProgramSchedule({ playing, toggle }) {
+// La entrevista de un conductor: el capítulo de la serie de la radio que lo
+// nombra en el título. Se busca por nombre completo, así que un programa que
+// cambia de conductor deja de enlazar solo.
+const SERIE_RADIO = "Semana de la Radio";
+function entrevistaDe(p, episodes) {
+  const nombre = sinTildes(conductorDe(p));
+  if (!nombre) return null;
+  return episodes.find((e) => e.serie === SERIE_RADIO && sinTildes(e.title).includes(nombre)) || null;
+}
+
+function ProgramSchedule({ playing, toggle, data, onPlay }) {
   const ref = useReveal();
   const { programs: PROGRAMS } = useSiteContent();
   useMinuteTick(); // re-render cada minuto para actualizar el programa al aire
@@ -1935,6 +1947,7 @@ function ProgramSchedule({ playing, toggle }) {
             {PROGRAMS.map((p, i) => {
               const active = i === activeIdx;
               const next = !active && sigue?.prog === p;
+              const entrevista = data.loading ? null : entrevistaDe(p, data.episodes);
               return (
                 <li key={i} className={`prog-row${active ? " active" : ""}`} aria-current={active ? "true" : undefined}>
                   <span style={K({ fontWeight: 700, fontSize: 15, color: active ? "var(--lime)" : "var(--cream-70)", fontVariantNumeric: "tabular-nums", letterSpacing: ".02em" })}>{p.start} – {p.end}</span>
@@ -1945,6 +1958,11 @@ function ProgramSchedule({ playing, toggle }) {
                     <span style={{ minWidth: 0 }}>
                       <span style={K({ display: "block", fontWeight: 800, fontSize: "clamp(18px, 2vw, 24px)", letterSpacing: "-0.015em", lineHeight: 1.15, color: "var(--cream)" })}>{p.name}</span>
                       <span style={K({ display: "block", fontWeight: 400, fontSize: 14, color: "var(--cream-70)", marginTop: 3 })}>{p.host}</span>
+                      {entrevista && (
+                        <button type="button" className="prog-entrevista" onClick={() => onPlay(entrevista, false)} aria-label={`Ver la entrevista a ${conductorDe(p)}`}>
+                          <Play size={11} fill="currentColor" aria-hidden="true" /> Ver su entrevista
+                        </button>
+                      )}
                     </span>
                   </span>
                   {(active || next) && (
@@ -2379,7 +2397,7 @@ function AppInner() {
         <PodcastSection data={yt} portada={portada} onPlay={openVideo} />
         <ClubSection data={yt} portada={portada} onPlay={openVideo} playing={araucanaPlaying} toggle={toggleAraucana} />
         <CuadritosSection />
-        <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} />
+        <ProgramSchedule playing={araucanaPlaying} toggle={toggleAraucana} data={yt} onPlay={openVideo} />
         <ReelsSection data={yt} onPlay={openVideo} />
         <NewsGrid />
         <SocialSection />

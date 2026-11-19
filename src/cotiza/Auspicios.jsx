@@ -512,6 +512,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
             </div>
             <p className="aus-modalidad-desc" key={modalidadPodcast?.id}>{modalidadPodcast?.descripcion}</p>
 
+            <Etiqueta>Episodios por mes</Etiqueta>
             {(podcast?.unidades || []).map((u) => (
               <div key={u.id} className="aus-fila">
                 <span>{u.label}<small>{fmtCLP(precioPodcast(u, modalidadPodcast))} + IVA por episodio</small></span>
@@ -519,6 +520,29 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
                   onChange={(v) => accion("podcast", { cantidades: { ...sel.podcast.cantidades, [u.id]: v } })} />
               </div>
             ))}
+
+            <div style={{ marginTop: 26 }}>
+              <Etiqueta>¿Por cuánto tiempo?</Etiqueta>
+              <div className="aus-segmentos" role="radiogroup" aria-label="Plazo del podcast">
+                {plazos.map((pl) => {
+                  const on = (Number(sel.podcast.meses) || plazos[0].meses) === pl.meses;
+                  const porMes = (podcast?.unidades || []).reduce((t, u) => t + (Number(sel.podcast.cantidades?.[u.id]) || 0) * precioPodcast(u, modalidadPodcast), 0);
+                  const mensual = Math.round(porMes * (1 - pl.descuento / 100));
+                  return (
+                    <button key={pl.meses} type="button" role="radio" aria-checked={on} className="aus-segmento"
+                      aria-label={`${pl.meses} ${pl.meses === 1 ? "mes" : "meses"}${pl.descuento ? `, ${pl.descuento}% de descuento` : ""}`}
+                      onClick={() => accion("podcast", { meses: pl.meses }, pl.descuento
+                        ? `Con ${pl.meses} meses, ${pl.descuento}% menos${porMes ? `: ${fmtCLP(mensual)} al mes en vez de ${fmtCLP(porMes)}` : ""}.`
+                        : "Un mes para probar, sin compromiso de permanencia.")}>
+                      <span className="aus-seg-num">{pl.meses}</span>
+                      <span className="aus-seg-uni">{pl.meses === 1 ? "mes" : "meses"}</span>
+                      <span className="aus-seg-precio">{porMes ? `${fmtCLP(mensual)} al mes` : pl.descuento ? `${pl.descuento}% menos` : "Sin compromiso"}</span>
+                      {pl.descuento > 0 && <span className="aus-badge">−{pl.descuento}%</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </Bloque>
 
           {/* 05 · Envío */}

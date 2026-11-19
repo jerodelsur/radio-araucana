@@ -15,7 +15,7 @@
  *     auspicio:    { activo, cantidad, franjas: ["manana"|"tarde"|"noche"], meses },
  *     frases:      { activo, horario: "base"|"prime", pack: "suelta"|"30"|…, cantidad, meses },
  *     entrevistas: { activo, cantidades: { "5min": n, … }, despacho },
- *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } },
+ *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } (por mes), meses: 1|6|12 },
  *   }
  */
 
@@ -82,7 +82,7 @@ export const SELECCION_INICIAL = {
   auspicio: { activo: true, cantidad: 1, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
-  podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 } },
+  podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 }, meses: 1 },
 };
 
 /**
@@ -170,6 +170,34 @@ export function calcular(sel, tarifas) {
       subtotal += n * precio;
       total += n;
       partes.push(`${n} × ${u.label.replace(/^(Entrevista|Podcast) de /, "")} (${fmtCLP(precio)})`);
+    }
+    // El podcast se contrata con plazo (1, 6 o 12 meses): las cantidades son
+    // episodios por mes y el descuento del plazo rebaja el valor mensual.
+    if (total > 0 && clave === "podcast") {
+      const plazos = plazosAuspicio(tarifas);
+      const plazo = plazos.find((p) => p.meses === Number(s.meses)) || plazos[0];
+      const mensual = Math.round(subtotal * (1 - plazo.descuento / 100));
+      const extras = [modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null];
+      if (plazo.meses > 1) {
+        lineas.push({
+          id: clave,
+          titulo: `Podcast · ${total} al mes por ${plazo.meses} meses`,
+          detalle: [...partes.map((x) => `${x} al mes`), ...extras, `${plazo.meses} meses (−${plazo.descuento}%)`].filter(Boolean),
+          mensual,
+          meses: plazo.meses,
+          subtotal: mensual * plazo.meses,
+          ahorro: (subtotal - mensual) * plazo.meses,
+        });
+      } else {
+        lineas.push({
+          id: clave,
+          titulo: `Podcast · ${total} ${total === 1 ? "episodio" : "episodios"}`,
+          detalle: [...partes, ...extras].filter(Boolean),
+          unico: subtotal,
+          subtotal,
+        });
+      }
+      continue;
     }
     if (total > 0) {
       lineas.push({

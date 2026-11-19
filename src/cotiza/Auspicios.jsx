@@ -3,7 +3,7 @@ import { OPCIONES_TIPO_PROMOCION } from "./Identificacion.jsx";
 import {
   SELECCION_INICIAL, calcular, descuentoPorMeses, fmtCLP, auspicioDe, auspicioMensualBase,
   plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast, personasEstudio,
-  precioModerador, packsReels, entregaPodcast, mesesPlazo,
+  precioModerador, packsReels, entregaPodcast, mesesPlazo, podcastMensualPartes,
 } from "./auspicios-calc.js";
 
 /* ─── /cotiza/auspicios ──────────────────────────────────────────────────
@@ -166,7 +166,7 @@ function Contador({ valor, min = 0, max = 50, onChange, etiqueta }) {
 
 /* Plazo por tramos: 1 a 5 meses sin descuento, 6 a 11 y 12 o más con
    descuento. El tramo se elige de un toque y el contador fija el mes exacto. */
-function Plazo({ meses, plazos, base, etiqueta, onChange }) {
+function Plazo({ meses, plazos, base, fijo = 0, etiqueta, onChange }) {
   const m = mesesPlazo(meses);
   const tramos = [...plazos].sort((a, b) => a.meses - b.meses);
   const actual = tramos.reduce((t, p) => (m >= p.meses ? p : t), tramos[0]);
@@ -183,7 +183,7 @@ function Plazo({ meses, plazos, base, etiqueta, onChange }) {
               onClick={() => onChange(on ? m : pl.meses)}>
               <span className="aus-seg-num aus-seg-rango">{rango}</span>
               <span className="aus-seg-uni">meses</span>
-              <span className="aus-seg-precio">{base ? `${fmtCLP(Math.round(base * (1 - pl.descuento / 100)))} al mes` : pl.descuento ? `${pl.descuento}% menos` : "Sin descuento"}</span>
+              <span className="aus-seg-precio">{base ? `${fmtCLP(Math.round(base * (1 - pl.descuento / 100)) + fijo)} al mes` : pl.descuento ? `${pl.descuento}% menos` : "Sin descuento"}</span>
               {pl.descuento > 0 && <span className="aus-badge">−{pl.descuento}%</span>}
             </button>
           );
@@ -308,7 +308,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   const reels = packsReels(tarifas);
   const entrega = entregaPodcast(tarifas);
   const personas = personasEstudio(tarifas);
-  const podcastMensualBase = calcular({ podcast: { ...sel.podcast, meses: 1 } }, tarifas).neto;
+  const partesPodcast = podcastMensualPartes(sel, tarifas);
   const modalidadPodcast = modalidades.find((m) => m.id === sel.podcast.modalidad) || modalidades[0];
   const horarioFrases = frase?.horarios?.find((h) => h.id === sel.frases.horario) || frase?.horarios?.[0];
   const packFrases = horarioFrases?.packs?.find((p) => p.id === sel.frases.pack) || horarioFrases?.packs?.[0];
@@ -328,11 +328,11 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
       estaba ? `Sacaste la franja de ${f.label.toLowerCase()}.` : `Franja de ${f.label.toLowerCase()}, de ${String(f.desde).padStart(2, "0")}:00 a ${String(f.hasta).padStart(2, "0")}:00: lo conversamos contigo y lo cerramos.`);
   };
 
-  const mensajePlazo = (meses, base) => {
+  const mensajePlazo = (meses, base, fijo = 0) => {
     const d = descuentoPorMeses(tarifas, meses);
     const txt = `${meses} ${meses === 1 ? "mes" : "meses"}`;
     if (!d) return meses === 1 ? "Un mes para probar, sin compromiso de permanencia." : `${txt}, sin descuento: desde 6 meses baja 20%.`;
-    return base ? `${txt}: pagas ${fmtCLP(Math.round(base * (1 - d / 100)))} al mes en vez de ${fmtCLP(base)}.` : `${txt}: ${d}% menos.`;
+    return base ? `${txt}: pagas ${fmtCLP(Math.round(base * (1 - d / 100)) + fijo)} al mes en vez de ${fmtCLP(base + fijo)}.` : `${txt}: ${d}% menos.`;
   };
   const elegirPlazo = (meses) => accion("auspicio", { meses }, mensajePlazo(meses, baseAuspicio));
 
@@ -572,8 +572,9 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
             <div style={{ marginTop: 26 }}>
               <Etiqueta>¿Por cuánto tiempo?</Etiqueta>
-              <Plazo meses={sel.podcast.meses} plazos={plazos} base={podcastMensualBase} etiqueta="del podcast"
-                onChange={(meses) => accion("podcast", { meses }, mensajePlazo(meses, podcastMensualBase))} />
+              <Plazo meses={sel.podcast.meses} plazos={plazos} base={partesPodcast.episodios} fijo={partesPodcast.extras} etiqueta="del podcast"
+                onChange={(meses) => accion("podcast", { meses }, mensajePlazo(meses, partesPodcast.episodios, partesPodcast.extras))} />
+              <p className="aus-nota-plazo">El descuento se aplica a los episodios. Moderador, reels y entrega en 24 horas van a precio normal.</p>
             </div>
           </Bloque>
 
@@ -774,6 +775,7 @@ function EstilosAuspicios() {
       .aus-seg-num { font: 400 38px/1 var(--anton); font-variant-numeric: tabular-nums; }
       .aus-seg-uni { font: 700 15px var(--barlow); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(246,243,238,0.7); }
       .aus-seg-titulo { font: 400 22px/1 var(--anton); text-transform: uppercase; }
+      .aus-nota-plazo { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: rgba(246,243,238,0.6); }
       .aus-seg-canal { grid-column: 1 / -1; font: 600 13px/1.3 var(--barlow); letter-spacing: 0.04em; color: #92BD55; margin-top: 6px; }
       .aus-seg-precio { grid-column: 1 / -1; font-size: 13px; color: rgba(246,243,238,0.7); margin-top: 6px; font-variant-numeric: tabular-nums; }
       .aus-vivo { position: absolute; top: 12px; right: 14px; font: 700 12px var(--barlow); letter-spacing: 0.14em; text-transform: uppercase; color: #FFA69B; animation: ausLatido 1.6s ease-in-out infinite; }

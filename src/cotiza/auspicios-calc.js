@@ -12,7 +12,7 @@
  *
  * Forma de la selección:
  *   {
- *     auspicio:    { activo, programas: [nombre], meses },
+ *     auspicio:    { activo, cantidad, franjas: ["manana"|"tarde"|"noche"], meses },
  *     frases:      { activo, horario: "base"|"prime", pack: "suelta"|"30"|…, cantidad, meses },
  *     entrevistas: { activo, cantidades: { "5min": n, … }, despacho },
  *     podcast:     { activo, cantidades: { "30min": n, … } },
@@ -22,6 +22,14 @@
 import defaultsBundled from "../content/cotiza-tarifas.json" with { type: "json" };
 
 const MAX_PROGRAMAS = 10;
+
+// Franjas de preferencia. El programa concreto se define internamente con el
+// cliente (hay bloques arrendados), por eso la web nunca nombra programas.
+export const FRANJAS = [
+  { id: "manana", label: "Mañana", desde: 6, hasta: 13 },
+  { id: "tarde", label: "Tarde", desde: 13, hasta: 18 },
+  { id: "noche", label: "Noche", desde: 18, hasta: 20 },
+];
 const MAX_MESES = 12;
 const MAX_UNIDADES = 50;
 const MAX_SUELTAS = 500;
@@ -56,7 +64,7 @@ export function plazosAuspicio(tarifas) {
 }
 
 export const SELECCION_INICIAL = {
-  auspicio: { activo: true, programas: [], meses: 1 },
+  auspicio: { activo: true, cantidad: 1, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
   podcast: { activo: false, cantidades: { "30min": 0, "60min": 1 } },
@@ -64,37 +72,35 @@ export const SELECCION_INICIAL = {
 
 /**
  * Devuelve las líneas del presupuesto y los totales.
- * `programasValidos` (opcional) restringe los nombres de programa aceptados;
- * el servidor lo pasa para que no lleguen nombres inventados al correo.
+ * Las franjas se filtran contra FRANJAS, así no llega texto libre al correo.
  */
-export function calcular(sel, tarifas, { programasValidos } = {}) {
+export function calcular(sel, tarifas) {
   const iva = Number.isFinite(tarifas?.iva) ? tarifas.iva : defaultsBundled.iva;
   const lineas = [];
 
   // ── Auspicio de programa ──────────────────────────────────────────────
   const a = sel?.auspicio;
   if (a?.activo) {
-    let programas = Array.isArray(a.programas) ? a.programas.map((p) => String(p).slice(0, 80)) : [];
-    if (programasValidos) programas = programas.filter((p) => programasValidos.includes(p));
-    programas = [...new Set(programas)].slice(0, MAX_PROGRAMAS);
+    const cantidad = entero(a.cantidad, 1, MAX_PROGRAMAS);
+    const franjas = FRANJAS.filter((f) => Array.isArray(a.franjas) && a.franjas.includes(f.id));
     const plazos = plazosAuspicio(tarifas);
     const plazo = plazos.find((p) => p.meses === Number(a.meses)) || plazos[0];
     const base = auspicioMensualBase(tarifas);
     const mensualPorPrograma = Math.round(base * (1 - plazo.descuento / 100));
-    if (programas.length > 0) {
-      const mensual = mensualPorPrograma * programas.length;
+    {
+      const mensual = mensualPorPrograma * cantidad;
       lineas.push({
         id: "auspicio",
-        titulo: programas.length === 1 ? `Auspicio · ${programas[0]}` : `Auspicio · ${programas.length} programas`,
+        titulo: cantidad === 1 ? "Auspicio de programa" : `Auspicio · ${cantidad} programas`,
         detalle: [
-          programas.length > 1 ? programas.join(", ") : null,
+          franjas.length ? `Franja preferida: ${franjas.map((f) => f.label.toLowerCase()).join(", ")}` : "Programa a definir con el equipo",
           "2 menciones en vivo + 2 frases por programa, lunes a viernes",
           `${plazo.meses} ${plazo.meses === 1 ? "mes" : "meses"}${plazo.descuento ? ` (−${plazo.descuento}%)` : ""}`,
         ].filter(Boolean),
         mensual,
         meses: plazo.meses,
         subtotal: mensual * plazo.meses,
-        ahorro: (base - mensualPorPrograma) * programas.length * plazo.meses,
+        ahorro: (base - mensualPorPrograma) * cantidad * plazo.meses,
       });
     }
   }
@@ -176,7 +182,7 @@ export function salidasAlAire(sel, tarifas) {
   const a = sel?.auspicio;
   if (a?.activo) {
     const porPrograma = auspicioDe(tarifas).componentes.reduce((s, c) => s + c.cantidadMensual, 0);
-    n += porPrograma * Math.min(MAX_PROGRAMAS, new Set(a.programas || []).size);
+    n += porPrograma * entero(a.cantidad, 1, MAX_PROGRAMAS);
   }
   const f = sel?.frases;
   if (f?.activo) {

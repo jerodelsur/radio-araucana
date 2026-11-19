@@ -20,6 +20,8 @@
  *
  * Plazo (auspicio y podcast): de 1 a 5 meses sin descuento, de 6 a 11 −20%,
  * 12 o más −36%. En el JSON cada plazo marca desde qué mes rige su descuento.
+ * En el podcast el descuento rebaja solo los episodios: moderador, reels y
+ * entrega en 24 h son trabajo pagado por episodio y van a precio lleno.
  *   }
  */
 
@@ -116,6 +118,15 @@ export function descuentoPorMeses(tarifas, meses) {
   return plazosAuspicio(tarifas).reduce((d, p) => (m >= p.meses ? Math.max(d, p.descuento) : d), 0);
 }
 
+/** Valor mensual del podcast sin descuento, separado en episodios (con descuento por plazo) y extras (sin descuento). */
+export function podcastMensualPartes(sel, tarifas) {
+  const p = sel?.podcast;
+  if (!p) return { episodios: 0, extras: 0 };
+  const total = calcular({ podcast: { ...p, activo: true, meses: 1 } }, tarifas).neto;
+  const soloEpisodios = calcular({ podcast: { ...p, activo: true, meses: 1, moderador: false, reels: "0", express: false } }, tarifas).neto;
+  return { episodios: soloEpisodios, extras: total - soloEpisodios };
+}
+
 export function mesesPlazo(meses) {
   return entero(meses, 1, MAX_MESES_PLAZO);
 }
@@ -204,6 +215,7 @@ export function calcular(sel, tarifas) {
     const modalidad = modalidades.find((m) => m.id === s.modalidad) || modalidades[0];
     const partes = [];
     let subtotal = 0;
+    let fijo = 0; // podcast: extras que no llevan descuento por plazo
     let total = 0;
     for (const u of formato?.unidades || []) {
       const n = entero(s.cantidades?.[u.id], 0, MAX_UNIDADES);
@@ -214,13 +226,13 @@ export function calcular(sel, tarifas) {
       partes.push(`${n} × ${u.label.replace(/^(Entrevista|Podcast) de /, "")} (${fmtCLP(precio)})`);
       if (clave === "podcast" && s.moderador) {
         const mod = precioModerador(tarifas, u.id);
-        subtotal += n * mod;
+        fijo += n * mod;
         if (mod) partes.push(`Moderador ${u.label.replace(/^Podcast de /, "")} (${n} × ${fmtCLP(mod)})`);
       }
     }
     // El podcast se contrata con plazo: las cantidades son episodios por mes,
     // los extras (reels, entrega en 24 h) se cobran por episodio y el
-    // descuento del tramo rebaja todo el valor mensual.
+    // descuento del tramo rebaja solo los episodios (extras a precio lleno).
     if (total > 0 && clave === "podcast") {
       const pack = packsReels(tarifas).find((p) => p.id === String(s.reels));
       const entrega = entregaPodcast(tarifas);
@@ -230,34 +242,35 @@ export function calcular(sel, tarifas) {
         ? `Estudio de Radio Araucana para ${personas} personas: ${personas - 1} invitados y el moderador, con control`
         : `Estudio de Radio Araucana para ${personas} personas, con control`);
       if (pack?.reels) {
-        subtotal += total * pack.precio;
+        fijo += total * pack.precio;
         extras.push(`Pack de ${pack.reels} reels por episodio (${total} × ${fmtCLP(pack.precio)})`);
       }
       if (s.express && entrega.expressPrecio) {
-        subtotal += total * entrega.expressPrecio;
+        fijo += total * entrega.expressPrecio;
         extras.push(`Entrega en ${entrega.expressHoras} horas (${total} × ${fmtCLP(entrega.expressPrecio)})`);
       } else {
         extras.push(`Entrega de la grabación en ${entrega.horas} horas`);
       }
       const plazo = { meses: mesesPlazo(s.meses), descuento: descuentoPorMeses(tarifas, s.meses) };
-      const mensual = Math.round(subtotal * (1 - plazo.descuento / 100));
+      const conDescuento = Math.round(subtotal * (1 - plazo.descuento / 100));
+      const mensual = conDescuento + fijo;
       if (plazo.meses > 1) {
         lineas.push({
           id: clave,
           titulo: `Podcast · ${total} al mes por ${plazo.meses} meses`,
-          detalle: [...partes.map((x) => `${x} al mes`), ...extras, `${plazo.meses} meses${plazo.descuento ? ` (−${plazo.descuento}%)` : ""}`].filter(Boolean),
+          detalle: [...partes.map((x) => `${x} al mes`), ...extras, `${plazo.meses} meses${plazo.descuento ? ` (−${plazo.descuento}% en los episodios)` : ""}`].filter(Boolean),
           mensual,
           meses: plazo.meses,
           subtotal: mensual * plazo.meses,
-          ahorro: (subtotal - mensual) * plazo.meses,
+          ahorro: (subtotal - conDescuento) * plazo.meses,
         });
       } else {
         lineas.push({
           id: clave,
           titulo: `Podcast · ${total} ${total === 1 ? "episodio" : "episodios"}`,
           detalle: [...partes, ...extras].filter(Boolean),
-          unico: subtotal,
-          subtotal,
+          unico: subtotal + fijo,
+          subtotal: subtotal + fijo,
         });
       }
       continue;

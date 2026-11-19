@@ -107,7 +107,14 @@ export default function LoginAdmin({ titulo, descripcion }) {
           {validando ? "Validando…" : "Entrar"}
         </button>
 
-        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 16, lineHeight: 1.5, textAlign: "center" })}>
+        <p style={K({ fontSize: 13, marginTop: 16, lineHeight: 1.5, textAlign: "center" })}>
+          {/* La recuperación vive en el panel de extractos: es la misma cuenta. */}
+          <a href="/frontera/extractos/admin/forgot-password" style={{ color: "#7bd8a0", textDecoration: "underline" }}>
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
+
+        <p style={K({ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 12, lineHeight: 1.5, textAlign: "center" })}>
           Misma cuenta que para el panel de extractos.
         </p>
 

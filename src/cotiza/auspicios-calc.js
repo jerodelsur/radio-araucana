@@ -121,7 +121,7 @@ export function mesesPlazo(meses) {
 }
 
 export const SELECCION_INICIAL = {
-  auspicio: { activo: true, franjas: [], meses: 1 },
+  auspicio: { activo: false, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
   podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 }, moderador: true, reels: "0", express: false, meses: 1 },

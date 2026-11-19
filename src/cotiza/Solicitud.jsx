@@ -31,7 +31,7 @@ const PREGUNTAS_POR_FORMATO = {
         { id: "2", label: "2 frases al día", descripcion: "Refuerzo medido. Buen punto de partida para sostener la presencia: el oyente promedio te escucha varias veces por semana." },
         { id: "3", label: "3 frases al día", descripcion: "Cobertura sólida. Te posiciona en distintos momentos del día. Recomendado para mantenimiento activo de marca." },
         { id: "4", label: "4 frases al día", descripcion: "Presencia fuerte. Ideal para construir recordación rápido: marcas nuevas o ampliación de portafolio." },
-        { id: "5", label: "5 frases al día", descripcion: "Alta exposición. Pensado para lanzamientos, inauguraciones o eventos puntuales donde necesitás impacto en poco tiempo." },
+        { id: "5", label: "5 frases al día", descripcion: "Alta exposición. Pensado para lanzamientos, inauguraciones o eventos puntuales donde necesitas impacto en poco tiempo." },
         { id: "6-10", label: "6 a 10 frases al día", descripcion: "Campaña intensiva. Para lanzamientos importantes, fechas comerciales fuertes (Navidad, Día del Padre) o eventos masivos." },
         { id: "10+", label: "Más de 10 frases al día", descripcion: "Saturación máxima. Solo recomendado para campañas de muy alto impacto en periodos cortos. Cuidamos juntos no agotar al oyente." },
       ],

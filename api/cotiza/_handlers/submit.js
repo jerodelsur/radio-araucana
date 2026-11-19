@@ -9,6 +9,7 @@ import { rateLimit, tooManyRequests } from "../../_lib/security.js";
 import { getSupabaseAdmin, isSupabaseConfigured } from "../../extractos/_lib/supabase.js";
 import { leerTarifas } from "../_lib/tarifas-store.js";
 import { cotizaTo, cotizaCc, cotizaFromEmail } from "../_lib/recipients.js";
+import { calcular } from "../../../src/cotiza/auspicios-calc.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -105,9 +106,52 @@ function ejemplosPacksBase(tarifas) {
   });
 }
 
+/* ─── Propuesta armada en /cotiza/auspicios ─────────────────────────────────
+   Ese cotizador muestra precios, así que el pedido llega como `armado` (la
+   selección cruda) y acá se recalcula con el tarifario vigente: el navegador
+   nunca manda montos. Devuelve el pedido en el formato de siempre (para el
+   panel y los correos) más el resumen de precio. */
+
+const FORMATO_DE_LINEA = { auspicio: "auspicio", frases: "frase_comercial", entrevistas: "entrevista", podcast: "podcast" };
+
+function pedidoDesdeArmado(armado, tarifas) {
+  const r = calcular(armado, tarifas);
+  const pedido = r.lineas.map((l) => ({
+    formatoId: FORMATO_DE_LINEA[l.id] || l.id,
+    titulo: l.titulo,
+    duracion: l.mensual ? `${fmtCLP(l.mensual)} + IVA al mes` : `${fmtCLP(l.subtotal)} + IVA`,
+    necesidad: [...l.detalle, `Subtotal ${fmtCLP(l.subtotal)} + IVA`].join(" · "),
+  }));
+  return { pedido, precio: r };
+}
+
+function precioHtml(precio) {
+  if (!precio) return "";
+  const fila = (k, v, fuerte) => `<tr><td style="padding:6px 0;font-size:${fuerte ? 16 : 14}px;color:${fuerte ? "#191919" : "#666"};${fuerte ? "font-weight:700;" : ""}">${k}</td><td style="padding:6px 0;text-align:right;white-space:nowrap;font-size:${fuerte ? 20 : 14}px;color:${fuerte ? "#29623a" : "#444"};${fuerte ? "font-weight:700;" : ""}">${v}</td></tr>`;
+  return `
+    <h2 style="margin:32px 0 8px;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Precio de la propuesta</h2>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background:#fafafa;border:1px solid #eee;border-radius:6px;">
+      <tbody><tr><td style="padding:14px 18px;"><table role="presentation" style="width:100%;border-collapse:collapse;"><tbody>
+        ${fila("Neto", fmtCLP(precio.neto))}
+        ${fila(`IVA ${Math.round(precio.ivaTasa * 100)}%`, fmtCLP(precio.iva))}
+        ${fila("Total", fmtCLP(precio.total), true)}
+        ${precio.mensual > 0 ? fila("Pago mensual (con IVA)", fmtCLP(Math.round(precio.mensual * (1 + precio.ivaTasa)))) : ""}
+        ${precio.ahorro > 0 ? fila("Descuento por plazo", `−${fmtCLP(precio.ahorro)}`) : ""}
+      </tbody></table></td></tr></tbody>
+    </table>`;
+}
+
+function precioTexto(precio) {
+  if (!precio) return [];
+  const out = ["", "PRECIO DE LA PROPUESTA:", `  Neto: ${fmtCLP(precio.neto)}`, `  IVA: ${fmtCLP(precio.iva)}`, `  Total: ${fmtCLP(precio.total)}`];
+  if (precio.mensual > 0) out.push(`  Pago mensual (con IVA): ${fmtCLP(Math.round(precio.mensual * (1 + precio.ivaTasa)))}`);
+  if (precio.ahorro > 0) out.push(`  Descuento por plazo: -${fmtCLP(precio.ahorro)}`);
+  return out;
+}
+
 /* ─── Email AL EQUIPO COMERCIAL ─────────────────────────────────────────── */
 
-function renderTeamHtml({ cliente, pedido, comentarios, fecha }) {
+function renderTeamHtml({ cliente, pedido, comentarios, fecha, precio }) {
   const filas = pedido.map((p) => `
     <tr>
       <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:14px;width:40%;"><strong>${escapeHtml(p.titulo)}</strong><br/><span style="font-size:12px;color:#999;">${escapeHtml(p.duracion)}</span></td>
@@ -142,6 +186,7 @@ function renderTeamHtml({ cliente, pedido, comentarios, fecha }) {
       </thead>
       <tbody>${filas}</tbody>
     </table>
+    ${precio ? `<p style="margin:10px 0 0;font-size:12px;color:#999;">Armado por el cliente en radioaraucana.cl/cotiza/auspicios, con los precios a la vista.</p>${precioHtml(precio)}` : ""}
 
     ${comentarios ? `<div style="margin-top:24px;padding:14px;background:#fafafa;border-left:3px solid #29623a;font-size:13px;color:#444;line-height:1.5;"><strong>Comentarios:</strong><br/>${escapeHtml(comentarios).replace(/\n/g, "<br/>")}</div>` : ""}
 
@@ -156,7 +201,7 @@ function renderTeamHtml({ cliente, pedido, comentarios, fecha }) {
 </body></html>`;
 }
 
-function renderTeamText({ cliente, pedido, comentarios, fecha }) {
+function renderTeamText({ cliente, pedido, comentarios, fecha, precio }) {
   const out = [];
   out.push("NUEVA SOLICITUD — COTIZACIÓN PUBLICIDAD RADIO ARAUCANA");
   out.push("=".repeat(50));
@@ -175,6 +220,7 @@ function renderTeamText({ cliente, pedido, comentarios, fecha }) {
     out.push(`  • ${p.titulo} (${p.duracion})`);
     if (p.necesidad) out.push(`      → ${p.necesidad}`);
   });
+  out.push(...precioTexto(precio));
   if (comentarios) {
     out.push("");
     out.push("COMENTARIOS:");
@@ -187,7 +233,7 @@ function renderTeamText({ cliente, pedido, comentarios, fecha }) {
 
 /* ─── Email AL CLIENTE (confirmación + ejemplos educativos) ──────────────── */
 
-function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
+function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha, precio }) {
   const nombrePila = (cliente.nombre || "").split(" ")[0] || cliente.nombre || "";
 
   // Cada item del pedido se renderiza con la "necesidad" partida en líneas
@@ -263,6 +309,7 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
       </thead>
       <tbody>${pedidoFilas}</tbody>
     </table>
+    ${precioHtml(precio)}
     ${comentarios ? `<div style="margin-top:12px;padding:12px 14px;background:#fafafa;border-left:3px solid #29623a;font-size:13px;color:#444;line-height:1.5;"><strong>Tus comentarios:</strong><br/>${escapeHtml(comentarios).replace(/\n/g, "<br/>")}</div>` : ""}
 
     ${ejemplos.length > 0 ? `
@@ -300,7 +347,7 @@ function renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha }) {
 </body></html>`;
 }
 
-function renderClienteText({ cliente, pedido, comentarios, ejemplos, fecha }) {
+function renderClienteText({ cliente, pedido, comentarios, ejemplos, fecha, precio }) {
   const nombrePila = (cliente.nombre || "").split(" ")[0] || cliente.nombre || "";
   const out = [];
   out.push("RADIO ARAUCANA 95.9 FM");
@@ -316,6 +363,7 @@ function renderClienteText({ cliente, pedido, comentarios, ejemplos, fecha }) {
     out.push(`  • ${p.titulo} (${p.duracion})`);
     if (p.necesidad) out.push(`      → ${p.necesidad}`);
   });
+  out.push(...precioTexto(precio));
   if (comentarios) {
     out.push("");
     out.push(`Tus comentarios: ${comentarios}`);
@@ -362,6 +410,18 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "Body too large" });
   }
 
+  // Propuesta armada en /cotiza/auspicios: se recalcula acá con el tarifario
+  // vigente y se convierte al formato de pedido de siempre.
+  let precio = null;
+  let tarifasVigentes = null;
+  if (req.body && typeof req.body === "object" && req.body.armado && typeof req.body.armado === "object") {
+    tarifasVigentes = await leerTarifas();
+    const armado = pedidoDesdeArmado(req.body.armado, tarifasVigentes);
+    if (armado.pedido.length === 0) return res.status(400).json({ error: "Arma al menos una opción antes de enviar" });
+    req.body.pedido = armado.pedido;
+    precio = armado.precio;
+  }
+
   const errorMsg = validar(req.body);
   if (errorMsg) return res.status(400).json({ error: errorMsg });
 
@@ -390,7 +450,7 @@ export default async function handler(req, res) {
       formatoId: clean(p.formatoId, 60) || null,
       titulo: clean(p.titulo, 80),
       duracion: clean(p.duracion, 40),
-      necesidad: clean(p.necesidad, 400),
+      necesidad: clean(p.necesidad, 600),
       opciones,
     };
   });
@@ -438,8 +498,8 @@ export default async function handler(req, res) {
     to: cotizaTo(),
     cc: cotizaCc(),
     subject: subjectTeam,
-    html: renderTeamHtml({ cliente, pedido, comentarios, fecha }),
-    text: renderTeamText({ cliente, pedido, comentarios, fecha }),
+    html: renderTeamHtml({ cliente, pedido, comentarios, fecha, precio }),
+    text: renderTeamText({ cliente, pedido, comentarios, fecha, precio }),
     replyTo: cliente.email || undefined,
     fromName: "Radio Araucana — Solicitud Cotización",
     fromEmail: cotizaFromEmail(),
@@ -458,14 +518,15 @@ export default async function handler(req, res) {
   let clienteEmailSent = false;
   if (esEmail(cliente.email)) {
     try {
-      const tarifas = await leerTarifas();
-      const ejemplos = ejemplosPacksBase(tarifas);
+      // Con propuesta armada el cliente ya vio su precio: van sus números y
+      // no los ejemplos genéricos de packs.
+      const ejemplos = precio ? [] : ejemplosPacksBase(tarifasVigentes || await leerTarifas());
       const fechaCliente = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
       const clientResult = await sendEmail({
         to: cliente.email,
         subject: `Recibimos tu solicitud de cotización — Radio Araucana 95.9 FM`,
-        html: renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha: fechaCliente }),
-        text: renderClienteText({ cliente, pedido, comentarios, ejemplos, fecha: fechaCliente }),
+        html: renderClienteHtml({ cliente, pedido, comentarios, ejemplos, fecha: fechaCliente, precio }),
+        text: renderClienteText({ cliente, pedido, comentarios, ejemplos, fecha: fechaCliente, precio }),
         replyTo: cotizaFromEmail(),
         fromName: "Radio Araucana 95.9 FM",
         fromEmail: cotizaFromEmail(),

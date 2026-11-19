@@ -12,7 +12,7 @@
  *
  * Forma de la selección:
  *   {
- *     auspicio:    { activo, cantidad, franjas: ["manana"|"tarde"|"noche"], meses },
+ *     auspicio:    { activo, franjas: ["manana"|"tarde"|"noche"], meses },  (paquete único)
  *     frases:      { activo, horario: "base"|"prime", pack: "suelta"|"30"|…, cantidad, meses },
  *     entrevistas: { activo, cantidades: { "5min": n, … }, despacho },
  *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } (por mes), meses: 1|6|12 },
@@ -21,7 +21,6 @@
 
 import defaultsBundled from "../content/cotiza-tarifas.json" with { type: "json" };
 
-const MAX_PROGRAMAS = 10;
 
 // Franjas de preferencia. El programa concreto se define internamente con el
 // cliente (hay bloques arrendados), por eso la web nunca nombra programas.
@@ -68,6 +67,23 @@ export function modalidadesPodcast(tarifas) {
   return Array.isArray(propias) && propias.length ? propias : defaultsBundled.formatos.find((f) => f.id === "podcast").modalidades;
 }
 
+/** Personas que caben en el estudio incluido con el podcast (control y moderador van aparte). */
+export function personasEstudio(tarifas) {
+  const f = formatoDe(tarifas, "podcast");
+  const base = defaultsBundled.formatos.find((x) => x.id === "podcast");
+  return Number.isFinite(f?.personasEstudio) ? f.personasEstudio : base.personasEstudio;
+}
+
+/** Reels que se entregan con el video del podcast en planes largos (6 y 12 meses). */
+export function reelsPodcast(tarifas) {
+  const f = formatoDe(tarifas, "podcast");
+  const base = defaultsBundled.formatos.find((x) => x.id === "podcast");
+  return {
+    cantidad: Number.isFinite(f?.reelsIncluidos) ? f.reelsIncluidos : base.reelsIncluidos,
+    desdeMeses: Number.isFinite(f?.reelsDesdeMeses) ? f.reelsDesdeMeses : base.reelsDesdeMeses,
+  };
+}
+
 /** Precio de un episodio según modalidad: base + recargo por minuto. */
 export function precioPodcast(unidad, modalidad) {
   const minutos = Number(unidad.minutos) || parseInt(unidad.id, 10) || 0;
@@ -79,7 +95,7 @@ export function plazosAuspicio(tarifas) {
 }
 
 export const SELECCION_INICIAL = {
-  auspicio: { activo: true, cantidad: 1, franjas: [], meses: 1 },
+  auspicio: { activo: true, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
   podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 }, meses: 1 },
@@ -96,17 +112,18 @@ export function calcular(sel, tarifas) {
   // ── Auspicio de programa ──────────────────────────────────────────────
   const a = sel?.auspicio;
   if (a?.activo) {
-    const cantidad = entero(a.cantidad, 1, MAX_PROGRAMAS);
     const franjas = FRANJAS.filter((f) => Array.isArray(a.franjas) && a.franjas.includes(f.id));
     const plazos = plazosAuspicio(tarifas);
     const plazo = plazos.find((p) => p.meses === Number(a.meses)) || plazos[0];
     const base = auspicioMensualBase(tarifas);
-    const mensualPorPrograma = Math.round(base * (1 - plazo.descuento / 100));
+    // Paquete único: el precio no depende de cuántos programas se usen; el
+    // programa y la distribución se definen internamente con el cliente.
+    const mensualPaquete = Math.round(base * (1 - plazo.descuento / 100));
     {
-      const mensual = mensualPorPrograma * cantidad;
+      const mensual = mensualPaquete;
       lineas.push({
         id: "auspicio",
-        titulo: cantidad === 1 ? "Auspicio de programa" : `Auspicio · ${cantidad} programas`,
+        titulo: "Auspicio de programa",
         detalle: [
           franjas.length ? `Franja preferida: ${franjas.map((f) => f.label.toLowerCase()).join(", ")}` : "Programa a definir con el equipo",
           "2 menciones en vivo + 2 frases por programa, lunes a viernes",
@@ -115,7 +132,7 @@ export function calcular(sel, tarifas) {
         mensual,
         meses: plazo.meses,
         subtotal: mensual * plazo.meses,
-        ahorro: (base - mensualPorPrograma) * cantidad * plazo.meses,
+        ahorro: (base - mensualPaquete) * plazo.meses,
       });
     }
   }
@@ -177,7 +194,13 @@ export function calcular(sel, tarifas) {
       const plazos = plazosAuspicio(tarifas);
       const plazo = plazos.find((p) => p.meses === Number(s.meses)) || plazos[0];
       const mensual = Math.round(subtotal * (1 - plazo.descuento / 100));
-      const extras = [modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null];
+      const reels = reelsPodcast(tarifas);
+      const conReels = reels.cantidad > 0 && plazo.meses >= reels.desdeMeses;
+      const extras = [
+        modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null,
+        `Estudio de Radio Araucana para ${personasEstudio(tarifas)} personas, con control y moderador`,
+        conReels ? `Incluye ${reels.cantidad} reels por episodio, además del video` : null,
+      ];
       if (plazo.meses > 1) {
         lineas.push({
           id: clave,
@@ -227,7 +250,7 @@ export function salidasAlAire(sel, tarifas) {
   const a = sel?.auspicio;
   if (a?.activo) {
     const porPrograma = auspicioDe(tarifas).componentes.reduce((s, c) => s + c.cantidadMensual, 0);
-    n += porPrograma * entero(a.cantidad, 1, MAX_PROGRAMAS);
+    n += porPrograma;
   }
   const f = sel?.frases;
   if (f?.activo) {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { OPCIONES_TIPO_PROMOCION } from "./Identificacion.jsx";
 import {
   SELECCION_INICIAL, calcular, fmtCLP, auspicioDe, auspicioMensualBase,
-  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS,
+  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast,
 } from "./auspicios-calc.js";
 
 /* ─── /cotiza/auspicios ──────────────────────────────────────────────────
@@ -270,6 +270,8 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   const frase = formatoDe(tarifas, "frase_comercial");
   const entrevista = formatoDe(tarifas, "entrevista");
   const podcast = formatoDe(tarifas, "podcast");
+  const modalidades = modalidadesPodcast(tarifas);
+  const modalidadPodcast = modalidades.find((m) => m.id === sel.podcast.modalidad) || modalidades[0];
   const horarioFrases = frase?.horarios?.find((h) => h.id === sel.frases.horario) || frase?.horarios?.[0];
   const packFrases = horarioFrases?.packs?.find((p) => p.id === sel.frases.pack) || horarioFrases?.packs?.[0];
   const frasesAlDia = sel.frases.activo && packFrases && packFrases.id !== "suelta" ? Math.round(packFrases.frases / 30) : 0;
@@ -489,17 +491,58 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
           {/* 04 · Podcast */}
           <Bloque indice="04" titulo="Graba tu propio" acento="podcast"
-            bajada="Un episodio producido en el estudio de Araucana Digital. Sale por streaming y por la radio, y queda publicado en nuestras plataformas."
+            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
             desde={`Desde ${fmtCLP(Math.min(...(podcast?.unidades || []).map((u) => u.precio)))} + IVA por episodio`}
             activo={sel.podcast.activo}
             onToggle={(v) => accion("podcast", { activo: v }, v ? "Podcast incluido: grabas en el estudio del muro verde." : "Sacaste el podcast.")}>
+            <Etiqueta>¿Cómo lo quieres?</Etiqueta>
+            <div className="aus-segmentos" role="radiogroup" aria-label="Modalidad del podcast">
+              {modalidades.map((m) => {
+                const on = modalidadPodcast?.id === m.id;
+                const desde = Math.min(...(podcast?.unidades || []).map((u) => precioPodcast(u, m)));
+                return (
+                  <button key={m.id} type="button" role="radio" aria-checked={on} className="aus-segmento aus-segmento-txt"
+                    onClick={() => accion("podcast", { modalidad: m.id }, m.descripcion)}>
+                    <span className="aus-seg-titulo">{m.label}</span>
+                    <span className="aus-seg-precio" style={{ marginTop: 2 }}>Desde {fmtCLP(desde)}</span>
+                    {m.id === "vivo" && <span className="aus-vivo" aria-hidden="true">● Al aire</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="aus-modalidad-desc" key={modalidadPodcast?.id}>{modalidadPodcast?.descripcion}</p>
+
+            <Etiqueta>Episodios por mes</Etiqueta>
             {(podcast?.unidades || []).map((u) => (
               <div key={u.id} className="aus-fila">
-                <span>{u.label}<small>{fmtCLP(u.precio)} + IVA por episodio</small></span>
+                <span>{u.label}<small>{fmtCLP(precioPodcast(u, modalidadPodcast))} + IVA por episodio</small></span>
                 <Contador valor={Number(sel.podcast.cantidades?.[u.id]) || 0} etiqueta={u.label}
                   onChange={(v) => accion("podcast", { cantidades: { ...sel.podcast.cantidades, [u.id]: v } })} />
               </div>
             ))}
+
+            <div style={{ marginTop: 26 }}>
+              <Etiqueta>¿Por cuánto tiempo?</Etiqueta>
+              <div className="aus-segmentos" role="radiogroup" aria-label="Plazo del podcast">
+                {plazos.map((pl) => {
+                  const on = (Number(sel.podcast.meses) || plazos[0].meses) === pl.meses;
+                  const porMes = (podcast?.unidades || []).reduce((t, u) => t + (Number(sel.podcast.cantidades?.[u.id]) || 0) * precioPodcast(u, modalidadPodcast), 0);
+                  const mensual = Math.round(porMes * (1 - pl.descuento / 100));
+                  return (
+                    <button key={pl.meses} type="button" role="radio" aria-checked={on} className="aus-segmento"
+                      aria-label={`${pl.meses} ${pl.meses === 1 ? "mes" : "meses"}${pl.descuento ? `, ${pl.descuento}% de descuento` : ""}`}
+                      onClick={() => accion("podcast", { meses: pl.meses }, pl.descuento
+                        ? `Con ${pl.meses} meses, ${pl.descuento}% menos${porMes ? `: ${fmtCLP(mensual)} al mes en vez de ${fmtCLP(porMes)}` : ""}.`
+                        : "Un mes para probar, sin compromiso de permanencia.")}>
+                      <span className="aus-seg-num">{pl.meses}</span>
+                      <span className="aus-seg-uni">{pl.meses === 1 ? "mes" : "meses"}</span>
+                      <span className="aus-seg-precio">{porMes ? `${fmtCLP(mensual)} al mes` : pl.descuento ? `${pl.descuento}% menos` : "Sin compromiso"}</span>
+                      {pl.descuento > 0 && <span className="aus-badge">−{pl.descuento}%</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </Bloque>
 
           {/* 05 · Envío */}
@@ -700,6 +743,9 @@ function EstilosAuspicios() {
       .aus-seg-uni { font: 700 15px var(--barlow); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(246,243,238,0.7); }
       .aus-seg-titulo { font: 400 22px/1 var(--anton); text-transform: uppercase; }
       .aus-seg-precio { grid-column: 1 / -1; font-size: 13px; color: rgba(246,243,238,0.7); margin-top: 6px; font-variant-numeric: tabular-nums; }
+      .aus-vivo { position: absolute; top: 12px; right: 14px; font: 700 12px var(--barlow); letter-spacing: 0.14em; text-transform: uppercase; color: #FFA69B; animation: ausLatido 1.6s ease-in-out infinite; }
+      @keyframes ausLatido { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+      .aus-modalidad-desc { margin: 14px 0 22px; font-size: 13px; line-height: 1.55; color: rgba(246,243,238,0.72); max-width: 60ch; animation: ausUp 380ms var(--salida) both; }
       .aus-badge { position: absolute; top: -9px; right: 10px; font: 700 14px var(--barlow); letter-spacing: 0.04em; color: ${PANEL}; background: ${LIMA}; border-radius: 6px; padding: 2px 8px; }
       .aus-packs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
       .aus-pack { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 14px 4px 12px; }

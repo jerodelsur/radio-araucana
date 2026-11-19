@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { OPCIONES_TIPO_PROMOCION } from "./Identificacion.jsx";
 import {
   SELECCION_INICIAL, calcular, fmtCLP, auspicioDe, auspicioMensualBase,
-  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast,
+  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast, reelsPodcast,
 } from "./auspicios-calc.js";
 
 /* ─── /cotiza/auspicios ──────────────────────────────────────────────────
@@ -271,6 +271,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   const entrevista = formatoDe(tarifas, "entrevista");
   const podcast = formatoDe(tarifas, "podcast");
   const modalidades = modalidadesPodcast(tarifas);
+  const reels = reelsPodcast(tarifas);
   const modalidadPodcast = modalidades.find((m) => m.id === sel.podcast.modalidad) || modalidades[0];
   const horarioFrases = frase?.horarios?.find((h) => h.id === sel.frases.horario) || frase?.horarios?.[0];
   const packFrases = horarioFrases?.packs?.find((p) => p.id === sel.frases.pack) || horarioFrases?.packs?.[0];
@@ -282,10 +283,6 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
     if (mensaje) setNota(mensaje);
     setPulso((p) => p + 1);
   };
-
-  const cambiarCantidad = (n) => accion("auspicio", { cantidad: n },
-    n === 1 ? "Un programa: dos menciones y dos frases cada día, de lunes a viernes."
-      : `${n} programas: ${n * 4} salidas por día hábil con tu marca.`);
 
   const toggleFranja = (f) => {
     const actuales = sel.auspicio.franjas || [];
@@ -354,7 +351,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
             <p className="aus-kicker">Auspicios · Radio Araucana FM 95.9</p>
             <h1 className="aus-h1">Arma tu auspicio <em>a tu medida</em></h1>
             <p className="aus-hero-texto">
-              Elige un programa, súmale frases, entrevistas o un podcast y mira el precio moverse.
+              Arma un auspicio, súmale frases, entrevistas o un podcast y mira el precio moverse.
               Cuando te guste la combinación, nos la envías.
             </p>
             <p className="aus-hero-datos">
@@ -373,12 +370,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
             desde={`Desde ${fmtCLP(Math.round(baseAuspicio * (1 - mejorDescuento / 100)))} + IVA al mes`}
             activo={sel.auspicio.activo}
             onToggle={(v) => accion("auspicio", { activo: v }, v ? "Auspicio de programa incluido." : "Sacaste el auspicio de programa.")}>
-            <div className="aus-fila" style={{ marginTop: 0, borderTop: 0, paddingTop: 4 }}>
-              <span>¿Cuántos programas?<small>Cada uno lleva sus menciones y frases. El programa lo definimos contigo.</small></span>
-              <Contador valor={Number(sel.auspicio.cantidad) || 1} min={1} max={6} etiqueta="programas" onChange={cambiarCantidad} />
-            </div>
-
-            <div style={{ marginTop: 22 }}>
+            <div>
               <Etiqueta>¿En qué franja prefieres sonar? (opcional)</Etiqueta>
               <div className="aus-franjas">
                 {FRANJAS.map((f) => (
@@ -491,7 +483,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
           {/* 04 · Podcast */}
           <Bloque indice="04" titulo="Graba tu propio" acento="podcast"
-            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
+            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Entregamos el video y 3 reels. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
             desde={`Desde ${fmtCLP(Math.min(...(podcast?.unidades || []).map((u) => u.precio)))} + IVA por episodio`}
             activo={sel.podcast.activo}
             onToggle={(v) => accion("podcast", { activo: v }, v ? "Podcast incluido: grabas en el estudio del muro verde." : "Sacaste el podcast.")}>
@@ -511,6 +503,13 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
               })}
             </div>
             <p className="aus-modalidad-desc" key={modalidadPodcast?.id}>{modalidadPodcast?.descripcion}</p>
+
+            {reels.cantidad > 0 && (
+              <ul className="aus-incluye" style={{ marginTop: 0, marginBottom: 24 }}>
+                <li><b>{reels.cantidad}</b><span><strong>Reels por episodio</strong><small>Van incluidos en la entrega, además del video.</small></span></li>
+                <li><b>48</b><span><strong>Horas para la grabación en bruto</strong><small>Te la entregamos a más tardar en dos días.</small></span></li>
+              </ul>
+            )}
 
             <Etiqueta>Episodios por mes</Etiqueta>
             {(podcast?.unidades || []).map((u) => (

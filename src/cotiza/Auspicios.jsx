@@ -23,7 +23,7 @@ const LIMA = "#92BD55";
 const PROFUNDO = "#29623A";
 const PANEL = "#0A3D23";
 const FONDO = "#0B1610";
-const STORAGE_SEL = "cotiza_auspicios_sel_v4";
+const STORAGE_SEL = "cotiza_auspicios_sel_v5";
 
 const esEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
 const azar = (a, b = 0) => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };

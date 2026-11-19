@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { OPCIONES_TIPO_PROMOCION } from "./Identificacion.jsx";
 import {
   SELECCION_INICIAL, calcular, fmtCLP, auspicioDe, auspicioMensualBase,
-  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast, reelsPodcast,
+  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS, modalidadesPodcast, precioPodcast, reelsPodcast, personasEstudio,
 } from "./auspicios-calc.js";
 
 /* ─── /cotiza/auspicios ──────────────────────────────────────────────────
@@ -272,6 +272,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   const podcast = formatoDe(tarifas, "podcast");
   const modalidades = modalidadesPodcast(tarifas);
   const reels = reelsPodcast(tarifas);
+  const personas = personasEstudio(tarifas);
   const modalidadPodcast = modalidades.find((m) => m.id === sel.podcast.modalidad) || modalidades[0];
   const horarioFrases = frase?.horarios?.find((h) => h.id === sel.frases.horario) || frase?.horarios?.[0];
   const packFrases = horarioFrases?.packs?.find((p) => p.id === sel.frases.pack) || horarioFrases?.packs?.[0];
@@ -483,7 +484,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
           {/* 04 · Podcast */}
           <Bloque indice="04" titulo="Graba tu propio" acento="podcast"
-            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Entregamos el video y 3 reels. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
+            bajada="Un episodio producido en el estudio de Radio Araucana, con control y moderador. Entregamos el video y 3 reels. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
             desde={`Desde ${fmtCLP(Math.min(...(podcast?.unidades || []).map((u) => u.precio)))} + IVA por episodio`}
             activo={sel.podcast.activo}
             onToggle={(v) => accion("podcast", { activo: v }, v ? "Podcast incluido: grabas en el estudio del muro verde." : "Sacaste el podcast.")}>
@@ -506,6 +507,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
             {reels.cantidad > 0 && (
               <ul className="aus-incluye" style={{ marginTop: 0, marginBottom: 24 }}>
+                <li><b>{personas}</b><span><strong>Personas en el estudio de Radio Araucana</strong><small>Incluye el control y un moderador que conduce la conversación.</small></span></li>
                 <li><b>{reels.cantidad}</b><span><strong>Reels por episodio</strong><small>Van incluidos en la entrega, además del video.</small></span></li>
                 <li><b>48</b><span><strong>Horas para la grabación en bruto</strong><small>Te la entregamos a más tardar en dos días.</small></span></li>
               </ul>

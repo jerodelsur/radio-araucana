@@ -84,12 +84,13 @@
         { "id": "30min", "label": "Podcast de 30 minutos", "precio": 300000, "minutos": 30 },
         { "id": "60min", "label": "Podcast de 60 minutos", "precio": 500000, "minutos": 60 }
       ],
+      "personasEstudio": 4,
       "reelsIncluidos": 3,
       "reelsDesdeMeses": 1,
       "modalidades": [
-        { "id": "grabado", "label": "Solo grabado", "descripcion": "Incluye control y quien entrevista. No sale al aire.", "recargoPorMinuto": 0 },
+        { "id": "grabado", "label": "Solo grabado", "descripcion": "Se graba en el estudio y no sale al aire.", "recargoPorMinuto": 0 },
         { "id": "diferido", "label": "Diferido", "descripcion": "Se graba y sale al aire después, por la radio y el streaming, en el horario que acordemos..", "recargoPorMinuto": 2500 },
-        { "id": "vivo", "label": "En vivo", "descripcion": "Sale en directo por la radio, el streaming y nuestras redes sociales. Suma la entrevista al aire, con bonificación..", "recargoPorMinuto": 5000 }
+        { "id": "vivo", "label": "En vivo", "descripcion": "Sale en directo por la radio, el streaming y nuestras redes sociales. Suma la entrevista al aire, con bonificación.", "recargoPorMinuto": 5000 }
       ],
       "unidadNombre": "episodios"
     }

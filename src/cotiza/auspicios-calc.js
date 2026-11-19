@@ -67,6 +67,13 @@ export function modalidadesPodcast(tarifas) {
   return Array.isArray(propias) && propias.length ? propias : defaultsBundled.formatos.find((f) => f.id === "podcast").modalidades;
 }
 
+/** Personas que caben en el estudio incluido con el podcast (control y moderador van aparte). */
+export function personasEstudio(tarifas) {
+  const f = formatoDe(tarifas, "podcast");
+  const base = defaultsBundled.formatos.find((x) => x.id === "podcast");
+  return Number.isFinite(f?.personasEstudio) ? f.personasEstudio : base.personasEstudio;
+}
+
 /** Reels que se entregan con el video del podcast en planes largos (6 y 12 meses). */
 export function reelsPodcast(tarifas) {
   const f = formatoDe(tarifas, "podcast");
@@ -191,6 +198,7 @@ export function calcular(sel, tarifas) {
       const conReels = reels.cantidad > 0 && plazo.meses >= reels.desdeMeses;
       const extras = [
         modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null,
+        `Estudio de Radio Araucana para ${personasEstudio(tarifas)} personas, con control y moderador`,
         conReels ? `Incluye ${reels.cantidad} reels por episodio, además del video` : null,
       ];
       if (plazo.meses > 1) {

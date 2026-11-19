@@ -485,11 +485,11 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
           </Bloque>
 
           {/* 03 · Entrevistas */}
-          <Bloque indice="03" titulo="Cuenta tu historia en una" acento="entrevista"
-            bajada="Conversación en estudio o por teléfono dentro de los bloques periodísticos. Para voceros, lanzamientos y autoridades."
+          <Bloque indice="03" titulo="Cuenta tu historia en una" acento="entrevista radial"
+            bajada="Una conversación de audio que sale al aire por Radio Araucana 95.9, en el estudio o por teléfono, dentro de los bloques periodísticos. No incluye video. Para voceros, lanzamientos y autoridades."
             desde={`Desde ${fmtCLP(Math.min(...(entrevista?.unidades || []).map((u) => u.precio)))} + IVA`}
             activo={sel.entrevistas.activo}
-            onToggle={(v) => accion("entrevistas", { activo: v }, v ? "Entrevista incluida: una conversación en vivo sobre tu marca." : "Sacaste las entrevistas.")}>
+            onToggle={(v) => accion("entrevistas", { activo: v }, v ? "Entrevista radial incluida: una conversación al aire sobre tu marca." : "Sacaste las entrevistas.")}>
             {(entrevista?.unidades || []).map((u) => (
               <div key={u.id} className="aus-fila">
                 <span>{u.label}<small>{fmtCLP(u.precio)} + IVA cada una</small></span>
@@ -521,13 +521,14 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
                   <button key={m.id} type="button" role="radio" aria-checked={on} className="aus-segmento aus-segmento-txt"
                     onClick={() => accion("podcast", { modalidad: m.id }, m.descripcion)}>
                     <span className="aus-seg-titulo">{m.label}</span>
+                    <span className="aus-seg-canal">{m.id === "grabado" ? "Sin emisión por Radio Araucana" : "Por Radio Araucana 95.9"}</span>
                     <span className="aus-seg-precio" style={{ marginTop: 2 }}>Desde {fmtCLP(desde)}</span>
                     {m.id === "vivo" && <span className="aus-vivo" aria-hidden="true">● Al aire</span>}
                   </button>
                 );
               })}
             </div>
-            <p className="aus-modalidad-desc" key={modalidadPodcast?.id}>{modalidadPodcast?.descripcion}</p>
+<div style={{ height: 22 }} />
 
             <ul className="aus-incluye" style={{ marginTop: 0, marginBottom: 24 }}>
               <li><b>{personas}</b><span><strong>Personas en el estudio de Radio Araucana</strong><small>{sel.podcast.moderador ? `${personas - 1} invitados más el moderador. Incluye el control.` : `${personas} invitados. Incluye el control.`}</small></span></li>
@@ -773,10 +774,10 @@ function EstilosAuspicios() {
       .aus-seg-num { font: 400 38px/1 var(--anton); font-variant-numeric: tabular-nums; }
       .aus-seg-uni { font: 700 15px var(--barlow); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(246,243,238,0.7); }
       .aus-seg-titulo { font: 400 22px/1 var(--anton); text-transform: uppercase; }
+      .aus-seg-canal { grid-column: 1 / -1; font: 600 13px/1.3 var(--barlow); letter-spacing: 0.04em; color: #92BD55; margin-top: 6px; }
       .aus-seg-precio { grid-column: 1 / -1; font-size: 13px; color: rgba(246,243,238,0.7); margin-top: 6px; font-variant-numeric: tabular-nums; }
       .aus-vivo { position: absolute; top: 12px; right: 14px; font: 700 12px var(--barlow); letter-spacing: 0.14em; text-transform: uppercase; color: #FFA69B; animation: ausLatido 1.6s ease-in-out infinite; }
       @keyframes ausLatido { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-      .aus-modalidad-desc { margin: 14px 0 22px; font-size: 13px; line-height: 1.55; color: rgba(246,243,238,0.72); max-width: 60ch; animation: ausUp 380ms var(--salida) both; }
       .aus-badge { position: absolute; top: -9px; right: 10px; font: 700 14px var(--barlow); letter-spacing: 0.04em; color: ${PANEL}; background: ${LIMA}; border-radius: 6px; padding: 2px 8px; }
       .aus-packs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
       .aus-packs.aus-packs-3 { grid-template-columns: repeat(3, 1fr); }

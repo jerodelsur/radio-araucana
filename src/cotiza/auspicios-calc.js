@@ -195,7 +195,7 @@ export function calcular(sel, tarifas) {
   }
 
   // ── Unidades: entrevistas y podcast ───────────────────────────────────
-  for (const [clave, formatoId, nombre] of [["entrevistas", "entrevista", "Entrevistas"], ["podcast", "podcast", "Podcast"]]) {
+  for (const [clave, formatoId, nombre] of [["entrevistas", "entrevista", "Entrevistas radiales"], ["podcast", "podcast", "Podcast"]]) {
     const s = sel?.[clave];
     if (!s?.activo) continue;
     const formato = formatoDe(tarifas, formatoId);

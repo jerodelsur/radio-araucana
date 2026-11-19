@@ -164,6 +164,57 @@ function Contador({ valor, min = 0, max = 50, onChange, etiqueta }) {
   );
 }
 
+/* Clip del podcast en el hero: parte solo y sin sonido (única forma en que los
+   navegadores dejan reproducir sin un toque), se pausa fuera de pantalla y el
+   sonido se activa con el botón. Con "reducir movimiento" no parte solo. */
+function ClipPodcast() {
+  const ref = useRef(null);
+  const [sonido, setSonido] = useState(false);
+  const [andando, setAndando] = useState(false);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || reduceMotion()) return undefined;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) v.play().catch(() => {});
+      else v.pause();
+    }, { threshold: 0.35 });
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
+
+  const alternarSonido = () => {
+    const v = ref.current;
+    if (!v) return;
+    const nuevo = !sonido;
+    v.muted = !nuevo;
+    if (nuevo) { v.currentTime = 0; v.play().catch(() => {}); }
+    setSonido(nuevo);
+  };
+  const alternarPlay = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {}); else v.pause();
+  };
+
+  return (
+    <figure className="aus-clip aus-reveal">
+      <video ref={ref} src="/cotiza-podcast-reel.mp4" poster="/cotiza-podcast-reel.jpg" muted loop playsInline preload="metadata"
+        onPlay={() => setAndando(true)} onPause={() => setAndando(false)} onClick={alternarPlay}
+        aria-label="Clip con momentos del podcast Araucana Digital grabado en el estudio de Radio Araucana" />
+      {!andando && (
+        <button type="button" className="aus-clip-play" onClick={alternarPlay} aria-label="Reproducir el clip">▶</button>
+      )}
+      <figcaption className="aus-clip-pie">
+        <span><b>Araucana Digital</b> Así se ve un podcast en nuestro estudio</span>
+        <button type="button" className="aus-clip-sonido" onClick={alternarSonido} aria-pressed={sonido}>
+          {sonido ? "Silenciar" : "Activar sonido"}
+        </button>
+      </figcaption>
+    </figure>
+  );
+}
+
 /* Plazo por tramos: 1 a 5 meses sin descuento, 6 a 11 y 12 o más con
    descuento. El tramo se elige de un toque y el contador fija el mes exacto. */
 function Plazo({ meses, plazos, base, fijo = 0, etiqueta, onChange }) {
@@ -397,6 +448,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
               <span><b>−{mejorDescuento}%</b> desde 12 meses</span>
             </p>
           </div>
+          <ClipPodcast />
         </div>
       </section>
 
@@ -716,7 +768,15 @@ function EstilosAuspicios() {
       /* ── Hero ── */
       .aus-hero { position: relative; overflow: hidden; min-height: clamp(380px, 52vw, 520px); display: flex; align-items: center; }
       .aus-hero-velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,22,16,0) 55%, ${FONDO} 100%); }
-      .aus-hero-in { position: relative; width: 100%; max-width: 1180px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 40px); }
+      .aus-hero-in { position: relative; width: 100%; max-width: 1180px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 40px); display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: clamp(24px, 3.5vw, 48px); align-items: center; }
+      .aus-clip { position: relative; margin: 0; border-radius: 22px; overflow: hidden; background: ${PANEL}; box-shadow: 10px 12px 0 rgba(4,24,13,0.55); }
+      .aus-clip video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; cursor: pointer; background: #0b1610; }
+      .aus-clip-play { position: absolute; left: 50%; top: calc(50% - 26px); transform: translate(-50%, -50%); width: 64px; height: 64px; border-radius: 50%; border: 0; background: ${LIMA}; color: #0A3D23; font-size: 22px; padding-left: 4px; cursor: pointer; box-shadow: 4px 5px 0 rgba(4,24,13,0.6); }
+      .aus-clip-pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; font-size: 13px; color: rgba(246,243,238,0.78); }
+      .aus-clip-pie b { font: 700 13px var(--barlow); letter-spacing: 0.16em; text-transform: uppercase; color: ${LIMA}; margin-right: 8px; }
+      .aus-clip-sonido { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(246,243,238,0.28); background: transparent; color: ${CREMA}; font: 700 13px var(--barlow); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: background 160ms ease, color 160ms ease; }
+      .aus-clip-sonido:hover, .aus-clip-sonido[aria-pressed="true"] { background: ${LIMA}; color: #0A3D23; border-color: ${LIMA}; }
+      .aus-clip-sonido:focus-visible, .aus-clip-play:focus-visible { outline: 2px solid ${CREMA}; outline-offset: 3px; }
       .aus-hero-panel { background: ${PANEL}; border-radius: 22px; padding: clamp(24px, 3.6vw, 44px); max-width: 560px; box-shadow: 10px 12px 0 rgba(4,24,13,0.55); }
       .aus-kicker { font: 700 14px var(--barlow); letter-spacing: 0.2em; text-transform: uppercase; color: ${LIMA}; }
       .aus-h1 { font: 400 clamp(44px, 7vw, 84px)/0.96 var(--anton); text-transform: uppercase; letter-spacing: 0.005em; margin-top: 14px; text-shadow: 3px 4px 0 rgba(4,24,13,0.6); }
@@ -875,6 +935,8 @@ function EstilosAuspicios() {
       @keyframes ausToast { 0% { opacity: 0; transform: translateY(12px); } 10%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(6px); } }
 
       @media (max-width: 960px) {
+        .aus-hero-in { grid-template-columns: 1fr; }
+        .aus-clip { max-width: 560px; }
         .aus-grid { grid-template-columns: 1fr; }
         .aus-lateral { display: none; }
         .aus-resumen-inline { display: block; margin-bottom: 24px; }

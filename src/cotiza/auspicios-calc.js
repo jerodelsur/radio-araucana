@@ -15,7 +15,11 @@
  *     auspicio:    { activo, franjas: ["manana"|"tarde"|"noche"], meses },  (paquete único)
  *     frases:      { activo, horario: "base"|"prime", pack: "suelta"|"30"|…, cantidad, meses },
  *     entrevistas: { activo, cantidades: { "5min": n, … }, despacho },
- *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } (por mes), meses: 1|6|12 },
+ *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } (por mes),
+ *                    moderador: bool, reels: "0"|"3"|"6" (pack por episodio), express: bool (entrega en 24 h), meses },
+ *
+ * Plazo (auspicio y podcast): de 1 a 5 meses sin descuento, de 6 a 11 −20%,
+ * 12 o más −36%. En el JSON cada plazo marca desde qué mes rige su descuento.
  *   }
  */
 
@@ -30,6 +34,7 @@ export const FRANJAS = [
   { id: "noche", label: "Noche", desde: 18, hasta: 20 },
 ];
 const MAX_MESES = 12;
+const MAX_MESES_PLAZO = 36;
 const MAX_UNIDADES = 50;
 const MAX_SUELTAS = 500;
 
@@ -74,14 +79,25 @@ export function personasEstudio(tarifas) {
   return Number.isFinite(f?.personasEstudio) ? f.personasEstudio : base.personasEstudio;
 }
 
-/** Reels que se entregan con el video del podcast en planes largos (6 y 12 meses). */
-export function reelsPodcast(tarifas) {
+function extraPodcast(tarifas, clave) {
   const f = formatoDe(tarifas, "podcast");
   const base = defaultsBundled.formatos.find((x) => x.id === "podcast");
-  return {
-    cantidad: Number.isFinite(f?.reelsIncluidos) ? f.reelsIncluidos : base.reelsIncluidos,
-    desdeMeses: Number.isFinite(f?.reelsDesdeMeses) ? f.reelsDesdeMeses : base.reelsDesdeMeses,
-  };
+  return f?.[clave] ?? base[clave];
+}
+
+/** Moderador opcional: precio por episodio según duración. */
+export function precioModerador(tarifas, unidadId) {
+  return Number(extraPodcast(tarifas, "moderador")?.precios?.[unidadId]) || 0;
+}
+
+/** Packs de reels por episodio (sin reels, 3 o 6). */
+export function packsReels(tarifas) {
+  return extraPodcast(tarifas, "packsReels") || [];
+}
+
+/** Plazo de entrega de la grabación y recargo por entrega rápida. */
+export function entregaPodcast(tarifas) {
+  return extraPodcast(tarifas, "entrega") || { horas: 48, expressHoras: 24, expressPrecio: 0 };
 }
 
 /** Precio de un episodio según modalidad: base + recargo por minuto. */
@@ -94,11 +110,21 @@ export function plazosAuspicio(tarifas) {
   return auspicioDe(tarifas).plazos;
 }
 
+/** Descuento que corresponde a un número de meses (el tramo más alto alcanzado). */
+export function descuentoPorMeses(tarifas, meses) {
+  const m = entero(meses, 1, MAX_MESES_PLAZO);
+  return plazosAuspicio(tarifas).reduce((d, p) => (m >= p.meses ? Math.max(d, p.descuento) : d), 0);
+}
+
+export function mesesPlazo(meses) {
+  return entero(meses, 1, MAX_MESES_PLAZO);
+}
+
 export const SELECCION_INICIAL = {
   auspicio: { activo: true, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
-  podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 }, meses: 1 },
+  podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 }, moderador: true, reels: "0", express: false, meses: 1 },
 };
 
 /**
@@ -113,8 +139,7 @@ export function calcular(sel, tarifas) {
   const a = sel?.auspicio;
   if (a?.activo) {
     const franjas = FRANJAS.filter((f) => Array.isArray(a.franjas) && a.franjas.includes(f.id));
-    const plazos = plazosAuspicio(tarifas);
-    const plazo = plazos.find((p) => p.meses === Number(a.meses)) || plazos[0];
+    const plazo = { meses: mesesPlazo(a.meses), descuento: descuentoPorMeses(tarifas, a.meses) };
     const base = auspicioMensualBase(tarifas);
     // Paquete único: el precio no depende de cuántos programas se usen; el
     // programa y la distribución se definen internamente con el cliente.
@@ -187,25 +212,40 @@ export function calcular(sel, tarifas) {
       subtotal += n * precio;
       total += n;
       partes.push(`${n} × ${u.label.replace(/^(Entrevista|Podcast) de /, "")} (${fmtCLP(precio)})`);
+      if (clave === "podcast" && s.moderador) {
+        const mod = precioModerador(tarifas, u.id);
+        subtotal += n * mod;
+        if (mod) partes.push(`Moderador ${u.label.replace(/^Podcast de /, "")} (${n} × ${fmtCLP(mod)})`);
+      }
     }
-    // El podcast se contrata con plazo (1, 6 o 12 meses): las cantidades son
-    // episodios por mes y el descuento del plazo rebaja el valor mensual.
+    // El podcast se contrata con plazo: las cantidades son episodios por mes,
+    // los extras (reels, entrega en 24 h) se cobran por episodio y el
+    // descuento del tramo rebaja todo el valor mensual.
     if (total > 0 && clave === "podcast") {
-      const plazos = plazosAuspicio(tarifas);
-      const plazo = plazos.find((p) => p.meses === Number(s.meses)) || plazos[0];
+      const pack = packsReels(tarifas).find((p) => p.id === String(s.reels));
+      const entrega = entregaPodcast(tarifas);
+      const extras = [modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null];
+      const personas = personasEstudio(tarifas);
+      extras.push(s.moderador
+        ? `Estudio de Radio Araucana para ${personas} personas: ${personas - 1} invitados y el moderador, con control`
+        : `Estudio de Radio Araucana para ${personas} personas, con control`);
+      if (pack?.reels) {
+        subtotal += total * pack.precio;
+        extras.push(`Pack de ${pack.reels} reels por episodio (${total} × ${fmtCLP(pack.precio)})`);
+      }
+      if (s.express && entrega.expressPrecio) {
+        subtotal += total * entrega.expressPrecio;
+        extras.push(`Entrega en ${entrega.expressHoras} horas (${total} × ${fmtCLP(entrega.expressPrecio)})`);
+      } else {
+        extras.push(`Entrega de la grabación en ${entrega.horas} horas`);
+      }
+      const plazo = { meses: mesesPlazo(s.meses), descuento: descuentoPorMeses(tarifas, s.meses) };
       const mensual = Math.round(subtotal * (1 - plazo.descuento / 100));
-      const reels = reelsPodcast(tarifas);
-      const conReels = reels.cantidad > 0 && plazo.meses >= reels.desdeMeses;
-      const extras = [
-        modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null,
-        `Estudio de Radio Araucana para ${personasEstudio(tarifas)} personas, con control y moderador`,
-        conReels ? `Incluye ${reels.cantidad} reels por episodio, además del video` : null,
-      ];
       if (plazo.meses > 1) {
         lineas.push({
           id: clave,
           titulo: `Podcast · ${total} al mes por ${plazo.meses} meses`,
-          detalle: [...partes.map((x) => `${x} al mes`), ...extras, `${plazo.meses} meses (−${plazo.descuento}%)`].filter(Boolean),
+          detalle: [...partes.map((x) => `${x} al mes`), ...extras, `${plazo.meses} meses${plazo.descuento ? ` (−${plazo.descuento}%)` : ""}`].filter(Boolean),
           mensual,
           meses: plazo.meses,
           subtotal: mensual * plazo.meses,

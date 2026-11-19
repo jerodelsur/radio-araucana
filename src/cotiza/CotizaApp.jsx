@@ -4,6 +4,7 @@ import { GlobalStyles, Header, FooterMini } from "./Layout.jsx";
 import Identificacion from "./Identificacion.jsx";
 import Solicitud from "./Solicitud.jsx";
 import Confirmacion from "./Confirmacion.jsx";
+import Auspicios from "./Auspicios.jsx";
 import Admin from "./Admin.jsx";
 import { TARIFAS_DEFAULT } from "./tarifas.js";
 import { AuthProvider } from "../extractos/lib/auth.jsx";
@@ -116,6 +117,12 @@ function FlujoPublico() {
               onVolver={limpiarCliente}
               onEnviar={enviar} enviando={enviando} errorEnvio={errorEnvio} />
           : <Identificacion valorInicial={cliente} onContinuar={guardarCliente} />
+      } />
+      {/* Cotizador de auspicios: precios a la vista y total en vivo. Comparte
+          el envío (/api/cotiza/submit) y la confirmación con el flujo clásico. */}
+      <Route path="/auspicios" element={
+        <Auspicios tarifas={tarifas} cliente={cliente} onGuardarCliente={guardarCliente}
+          onEnviar={enviar} enviando={enviando} errorEnvio={errorEnvio} />
       } />
       <Route path="/gracias" element={
         enviado

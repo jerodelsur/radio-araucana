@@ -66,7 +66,7 @@
       "unidades": [
         { "id": "5min", "label": "Entrevista de 5 minutos", "precio": 50000 },
         { "id": "10min", "label": "Entrevista de 10 minutos", "precio": 100000 },
-        { "id": "15min", "label": "Entrevista de 15 minutos", "precio": 130000 }
+        { "id": "15min", "label": "Entrevista de 15 minutos", "precio": 150000 }
       ],
       "unidadNombre": "entrevistas",
       "permiteDespacho": true,
@@ -87,6 +87,19 @@
       "unidadNombre": "episodios"
     }
   ],
+  "auspicio": {
+    "titulo": "Auspicio de programa",
+    "descripcion": "Tu marca acompaña un programa completo de lunes a viernes: el conductor te menciona en vivo y tus frases salen dentro del mismo programa.",
+    "componentes": [
+      { "id": "menciones", "label": "Menciones en vivo", "detalle": "2 por programa, de lunes a viernes, leídas por el conductor", "cantidadMensual": 40, "precioUnitario": 11500 },
+      { "id": "frases", "label": "Frases de 30 segundos", "detalle": "2 por programa, de lunes a viernes, dentro del mismo programa", "cantidadMensual": 40, "precioUnitario": 8500 }
+    ],
+    "plazos": [
+      { "meses": 1, "descuento": 0 },
+      { "meses": 6, "descuento": 20 },
+      { "meses": 12, "descuento": 36 }
+    ]
+  },
   "cupones": [],
   "descuentosInternos": {
     "pyme": {

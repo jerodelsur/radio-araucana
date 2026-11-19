@@ -2234,6 +2234,7 @@ const FOOTER_LINKS = [
   ]},
   { title: "Empresas", links: [
     { label: "Cotiza tu publicidad", href: "/cotiza" },
+    { label: "Arma tu auspicio",     href: "/cotiza/auspicios" },
     { label: "Extractos legales",    href: "/frontera/extractos" },
   ]},
 ];

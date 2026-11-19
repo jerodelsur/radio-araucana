@@ -491,7 +491,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
 
           {/* 04 · Podcast */}
           <Bloque indice="04" titulo="Graba tu propio" acento="podcast"
-            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Tú eliges si queda grabado o si además sale al aire."
+            bajada="Un episodio producido en el estudio de Araucana Digital, con control y quien te entrevista. Tú eliges si queda grabado o si además sale al aire y por nuestras redes."
             desde={`Desde ${fmtCLP(Math.min(...(podcast?.unidades || []).map((u) => u.precio)))} + IVA por episodio`}
             activo={sel.podcast.activo}
             onToggle={(v) => accion("podcast", { activo: v }, v ? "Podcast incluido: grabas en el estudio del muro verde." : "Sacaste el podcast.")}>

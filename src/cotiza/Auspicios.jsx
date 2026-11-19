@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OPCIONES_TIPO_PROMOCION } from "./Identificacion.jsx";
-import defaultContent from "../content/site.json";
 import {
   SELECCION_INICIAL, calcular, fmtCLP, auspicioDe, auspicioMensualBase,
-  plazosAuspicio, formatoDe, salidasAlAire,
+  plazosAuspicio, formatoDe, salidasAlAire, FRANJAS,
 } from "./auspicios-calc.js";
 
 /* ─── /cotiza/auspicios ──────────────────────────────────────────────────
@@ -23,26 +22,11 @@ const LIMA = "#92BD55";
 const PROFUNDO = "#29623A";
 const PANEL = "#0A3D23";
 const FONDO = "#0B1610";
-const STORAGE_SEL = "cotiza_auspicios_sel_v2";
+const STORAGE_SEL = "cotiza_auspicios_sel_v3";
 
 const esEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
-const sinTildes = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-const conductorDe = (p) => String(p?.host || "").split("·")[0].trim();
-const horaDecimal = (hhmm) => { const [h, m] = String(hhmm).split(":").map(Number); return h + (m || 0) / 60; };
 const azar = (a, b = 0) => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };
 const reduceMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
-// Retratos reales de los conductores (los mismos de la parrilla de la portada).
-const FOTOS = {
-  "alejandro contreras": "/programas/alejandro-contreras.jpg",
-  "miguel angel contreras": "/programas/miguel-angel-contreras.jpg",
-  "mariela gonzalez": "/programas/mariela-gonzalez.jpg",
-  "cristian inostroza": "/programas/cristian-inostroza.jpg",
-  "luis vega": "/programas/luis-vega.jpg",
-  "rolando gomez": "/programas/rolando-gomez.jpg",
-};
-const fotoDe = (p) => (typeof p?.photo === "string" && p.photo.trim()) || FOTOS[sinTildes(conductorDe(p))] || "";
-const iniciales = (n) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
 
 function leerSeleccion() {
   try {
@@ -201,12 +185,14 @@ function Bloque({ indice, titulo, acento, bajada, desde, activo, onToggle, child
 const Etiqueta = ({ children }) => <p className="aus-etiqueta">{children}</p>;
 
 /* ─── Tu día al aire ───────────────────────────────────────────────────────
-   La parrilla de un día hábil. Los programas auspiciados se encienden con
-   sus 2 menciones (crema) y 2 frases (lima); las frases del pack se reparten
-   por el día o se agrupan en los bloques de mayor audiencia. */
-function DiaAlAire({ programas, sel, frasesAlDia, prime, mini }) {
-  const inicio = Math.min(...programas.map((p) => horaDecimal(p.start)), 6);
-  const fin = Math.max(...programas.map((p) => horaDecimal(p.end)), 20);
+   Un día hábil dividido en franjas. Las franjas preferidas se encienden con
+   las 2 menciones (crema) y 2 frases (lima) de cada programa; sin franja
+   elegida, el auspicio se reparte entre ellas y se define con el equipo. Las
+   frases del pack se reparten por el día o se agrupan en los bloques de
+   mayor audiencia. Nunca se nombra un programa. */
+function DiaAlAire({ sel, frasesAlDia, prime, mini }) {
+  const inicio = FRANJAS[0].desde;
+  const fin = FRANJAS[FRANJAS.length - 1].hasta;
   const pct = (h) => ((h - inicio) / (fin - inicio)) * 100;
   const horas = [];
   for (let h = Math.ceil(inicio); h <= fin; h += 2) horas.push(h);
@@ -218,17 +204,17 @@ function DiaAlAire({ programas, sel, frasesAlDia, prime, mini }) {
       puntos.push(prime ? picos[i] : inicio + ((i + 0.5 + (azar(i, frasesAlDia) - 0.5) * 0.5) / frasesAlDia) * (fin - inicio));
     }
   }
-  const elegidos = sel.auspicio.activo ? sel.auspicio.programas : [];
+  const a = sel.auspicio;
+  const encendidas = !a.activo ? [] : a.franjas?.length ? a.franjas : FRANJAS.map((f) => f.id);
 
   return (
     <div className="aus-dia" data-mini={mini || undefined}>
       <div className="aus-dia-pista">
-        {programas.map((p) => {
-          const on = elegidos.includes(p.name);
-          const a = horaDecimal(p.start), b = horaDecimal(p.end);
+        {FRANJAS.map((f) => {
+          const on = encendidas.includes(f.id);
           return (
-            <div key={p.name} className="aus-dia-prog" data-on={on || undefined} title={`${p.name} · ${p.start} a ${p.end}`}
-              style={{ left: `${pct(a)}%`, width: `calc(${pct(b) - pct(a)}% - 3px)` }}>
+            <div key={f.id} className="aus-dia-prog" data-on={on || undefined} data-suave={(on && !a.franjas?.length) || undefined}
+              title={f.label} style={{ left: `${pct(f.desde)}%`, width: `calc(${pct(f.hasta) - pct(f.desde)}% - 3px)` }}>
               {on && [0, 1, 2, 3].map((i) => (
                 <i key={i} data-tipo={i % 2 ? "frase" : "mencion"} style={{ left: `${12 + i * 25}%`, animationDelay: `${i * 70}ms` }} />
               ))}
@@ -256,7 +242,6 @@ function DiaAlAire({ programas, sel, frasesAlDia, prime, mini }) {
 
 export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarCliente, onEnviar, enviando, errorEnvio }) {
   const [sel, setSel] = useState(leerSeleccion);
-  const [programas, setProgramas] = useState(defaultContent.programs || []);
   const [cliente, setCliente] = useState(() => ({
     nombre: "", empresa: "", telefono: "", email: "", tipoPromocion: "", tipoPromocionOtro: "",
     ...(clienteInicial || {}),
@@ -264,18 +249,8 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   const [comentarios, setComentarios] = useState("");
   const [intento, setIntento] = useState(false);
   const [pulso, setPulso] = useState(0);
-  const [nota, setNota] = useState("Elige un programa y mira cómo se enciende tu día al aire.");
+  const [nota, setNota] = useState("Arma tu auspicio y mira cómo se enciende tu día al aire.");
   const formRef = useRef(null);
-
-  // La parrilla vive en el contenido editable del sitio; si falla, la del bundle.
-  useEffect(() => {
-    let cancel = false;
-    fetch("/api/content", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (!cancel && Array.isArray(d?.programs) && d.programs.length) setProgramas(d.programs); })
-      .catch(() => {});
-    return () => { cancel = true; };
-  }, []);
 
   useEffect(() => {
     const antes = document.title;
@@ -306,12 +281,15 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
     setPulso((p) => p + 1);
   };
 
-  const togglePrograma = (p) => {
-    const actuales = sel.auspicio.programas || [];
-    const estaba = actuales.includes(p.name);
-    accion("auspicio",
-      { programas: estaba ? actuales.filter((n) => n !== p.name) : [...actuales, p.name] },
-      estaba ? `Quitaste ${p.name}.` : `${conductorDe(p)} te nombra en vivo dos veces por programa, de ${p.start} a ${p.end}.`);
+  const cambiarCantidad = (n) => accion("auspicio", { cantidad: n },
+    n === 1 ? "Un programa: dos menciones y dos frases cada día, de lunes a viernes."
+      : `${n} programas: ${n * 4} salidas por día hábil con tu marca.`);
+
+  const toggleFranja = (f) => {
+    const actuales = sel.auspicio.franjas || [];
+    const estaba = actuales.includes(f.id);
+    accion("auspicio", { franjas: estaba ? actuales.filter((id) => id !== f.id) : [...actuales, f.id] },
+      estaba ? `Sacaste la franja de ${f.label.toLowerCase()}.` : `Franja de ${f.label.toLowerCase()}, de ${String(f.desde).padStart(2, "0")}:00 a ${String(f.hasta).padStart(2, "0")}:00: lo conversamos contigo y lo cerramos.`);
   };
 
   const elegirPlazo = (pl) => {
@@ -356,7 +334,7 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
   );
 
   const mejorDescuento = Math.max(...plazos.map((p) => p.descuento));
-  const dia = (mini) => <DiaAlAire programas={programas} sel={sel} frasesAlDia={frasesAlDia} prime={horarioFrases?.id === "prime"} mini={mini} />;
+  const dia = (mini) => <DiaAlAire sel={sel} frasesAlDia={frasesAlDia} prime={horarioFrases?.id === "prime"} mini={mini} />;
   const resumen = (compacto) => (
     <Resumen presupuesto={presupuesto} salidas={salidas} nota={nota} pulso={pulso} nivel={nivel} compacto={compacto} dia={dia(false)} />
   );
@@ -393,30 +371,23 @@ export default function Auspicios({ tarifas, cliente: clienteInicial, onGuardarC
             desde={`Desde ${fmtCLP(Math.round(baseAuspicio * (1 - mejorDescuento / 100)))} + IVA al mes`}
             activo={sel.auspicio.activo}
             onToggle={(v) => accion("auspicio", { activo: v }, v ? "Auspicio de programa incluido." : "Sacaste el auspicio de programa.")}>
-            <Etiqueta>¿Con quién quieres sonar?</Etiqueta>
-            <div className="aus-programas">
-              {programas.map((p, i) => {
-                const on = sel.auspicio.programas.includes(p.name);
-                const foto = fotoDe(p);
-                return (
-                  <button key={p.name} type="button" className="aus-programa" aria-pressed={on} onClick={() => togglePrograma(p)}
-                    style={{ animationDelay: `${i * 50}ms` }}>
-                    <span className="aus-retrato">
-                      {foto ? <img src={foto} alt="" loading="lazy" /> : <b>{iniciales(conductorDe(p))}</b>}
-                    </span>
-                    <span className="aus-programa-txt">
-                      <span className="aus-programa-hora">{p.start} a {p.end}</span>
-                      <strong>{p.name}</strong>
-                      <span className="aus-programa-host">{p.host}</span>
-                    </span>
-                    <span className="aus-check" aria-hidden="true">✓</span>
-                  </button>
-                );
-              })}
+            <div className="aus-fila" style={{ marginTop: 0, borderTop: 0, paddingTop: 4 }}>
+              <span>¿Cuántos programas?<small>Cada uno lleva sus menciones y frases. El programa lo definimos contigo.</small></span>
+              <Contador valor={Number(sel.auspicio.cantidad) || 1} min={1} max={6} etiqueta="programas" onChange={cambiarCantidad} />
             </div>
-            {sel.auspicio.programas.length === 0 && (
-              <p className="aus-aviso">Elige al menos un programa para ver el precio.</p>
-            )}
+
+            <div style={{ marginTop: 22 }}>
+              <Etiqueta>¿En qué franja prefieres sonar? (opcional)</Etiqueta>
+              <div className="aus-franjas">
+                {FRANJAS.map((f) => (
+                  <button key={f.id} type="button" className="aus-franja" aria-pressed={(sel.auspicio.franjas || []).includes(f.id)} onClick={() => toggleFranja(f)}>
+                    <strong>{f.label}</strong>
+                    <span>{String(f.desde).padStart(2, "0")}:00 a {String(f.hasta).padStart(2, "0")}:00</span>
+                    <i className="aus-check" aria-hidden="true">✓</i>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div style={{ marginTop: 28 }}>
               <Etiqueta>¿Por cuánto tiempo?</Etiqueta>
@@ -705,23 +676,18 @@ function EstilosAuspicios() {
       .aus-switch[aria-checked="true"] span { transform: translateX(22px) rotate(90deg); background: ${PANEL}; }
       .aus :is(button, input, select, textarea):focus-visible { outline: 2px solid ${LIMA}; outline-offset: 3px; }
 
-      /* ── Programas ── */
-      .aus-programas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .aus-programa { position: relative; display: flex; align-items: center; gap: 14px; text-align: left; padding: 12px 40px 12px 12px; border-radius: 14px; border: 1px solid ${L}; background: rgba(246,243,238,0.035); color: ${CREMA}; cursor: pointer; font-family: inherit;
-        transition: transform 260ms var(--salida), box-shadow 260ms var(--salida), border-color 200ms ease, background-color 200ms ease; animation: ausUp 600ms var(--salida) both; }
-      .aus-programa:hover { border-color: rgba(146,189,85,0.55); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 ${PANEL}; }
-      .aus-programa:active { transform: translate(1px, 1px); box-shadow: none; }
-      .aus-retrato { width: 58px; height: 58px; border-radius: 12px; overflow: hidden; flex-shrink: 0; background: ${PROFUNDO}; display: grid; place-items: center; }
-      .aus-retrato img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); transition: filter 320ms ease, transform 420ms var(--salida); }
-      .aus-retrato b { font: 400 20px var(--anton); color: ${CREMA}; }
-      .aus-programa-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-      .aus-programa-hora { font: 700 14px var(--barlow); letter-spacing: 0.08em; color: ${LIMA}; font-variant-numeric: tabular-nums; }
-      .aus-programa strong { font: 400 19px/1.1 var(--anton); text-transform: uppercase; letter-spacing: 0.01em; }
-      .aus-programa-host { font-size: 12px; color: rgba(246,243,238,0.6); }
-      .aus-check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 6px; border: 1px solid rgba(246,243,238,0.25); display: grid; place-items: center; font-size: 12px; font-weight: 800; color: transparent; transition: background-color 200ms ease, transform 320ms var(--salida); }
-      .aus-programa[aria-pressed="true"] { border-color: ${LIMA}; background: rgba(82,184,112,0.16); transform: translate(-3px, -3px); box-shadow: 6px 6px 0 ${PROFUNDO}; }
-      .aus-programa[aria-pressed="true"] img { filter: none; transform: scale(1.08); }
-      .aus-programa[aria-pressed="true"] .aus-check { background: ${LIMA}; border-color: ${LIMA}; color: ${PANEL}; transform: scale(1.12); }
+      /* ── Franjas ── */
+      .aus-check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 6px; border: 1px solid rgba(246,243,238,0.25); display: grid; place-items: center; font-size: 12px; font-weight: 800; font-style: normal; color: transparent; transition: background-color 200ms ease, transform 320ms var(--salida); }
+      .aus-franjas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+      .aus-franja { position: relative; display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 16px 44px 14px 16px; border-radius: 14px; border: 1px solid ${L}; background: rgba(246,243,238,0.035); color: ${CREMA}; cursor: pointer; font-family: inherit;
+        transition: transform 260ms var(--salida), box-shadow 260ms var(--salida), border-color 200ms ease, background-color 200ms ease; }
+      .aus-franja strong { font: 400 24px/1 var(--anton); text-transform: uppercase; letter-spacing: 0.01em; }
+      .aus-franja span { font: 700 14px var(--barlow); letter-spacing: 0.08em; color: ${LIMA}; font-variant-numeric: tabular-nums; }
+      .aus-franja:hover { border-color: rgba(146,189,85,0.55); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 ${PANEL}; }
+      .aus-franja:active { transform: translate(1px, 1px); box-shadow: none; }
+      .aus-franja[aria-pressed="true"] { border-color: ${LIMA}; background: rgba(82,184,112,0.16); transform: translate(-3px, -3px); box-shadow: 6px 6px 0 ${PROFUNDO}; }
+      .aus-franja[aria-pressed="true"] .aus-check { background: ${LIMA}; border-color: ${LIMA}; color: ${PANEL}; transform: scale(1.12); }
+      .aus-dia-prog[data-suave] { opacity: 0.65; }
 
       /* ── Segmentos y packs ── */
       .aus-segmentos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -847,7 +813,7 @@ function EstilosAuspicios() {
         .aus-bloque-body { padding: 0 16px 22px; }
         .aus-indice { font-size: 28px; width: 30px; }
         .aus-bloque[data-on] { box-shadow: 5px 6px 0 ${PANEL}; }
-        .aus-programas { grid-template-columns: 1fr; }
+        .aus-franjas { grid-template-columns: 1fr; }
         .aus-segmentos { grid-template-columns: 1fr; }
         .aus-segmentos-2 { grid-template-columns: 1fr 1fr; }
         .aus-packs { grid-template-columns: repeat(3, 1fr); }

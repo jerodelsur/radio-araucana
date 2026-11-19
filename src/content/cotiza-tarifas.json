@@ -93,9 +93,9 @@
       ],
       "entrega": { "horas": 48, "expressHoras": 24, "expressPrecio": 50000 },
       "modalidades": [
-        { "id": "grabado", "label": "Solo grabado", "descripcion": "Se graba en el estudio y no sale al aire. Te entregamos la grabación.", "recargoPorMinuto": 0 },
-        { "id": "diferido", "label": "Diferido", "descripcion": "Se graba y sale al aire después por la radio 95.9, en el horario que acordemos.", "recargoPorMinuto": 2500 },
-        { "id": "vivo", "label": "En vivo", "descripcion": "Sale en directo por la radio 95.9. Suma la entrevista al aire, con bonificación. La grabación te la entregamos después.", "recargoPorMinuto": 5000 }
+        { "id": "grabado", "label": "Solo grabado", "descripcion": "Solo grabado. No se emite por la radio.", "recargoPorMinuto": 0 },
+        { "id": "diferido", "label": "Diferido", "descripcion": "Diferido por Radio Araucana 95.9.", "recargoPorMinuto": 2500 },
+        { "id": "vivo", "label": "En vivo", "descripcion": "En vivo por Radio Araucana 95.9.", "recargoPorMinuto": 5000 }
       ],
       "unidadNombre": "episodios"
     }

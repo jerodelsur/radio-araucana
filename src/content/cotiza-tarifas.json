@@ -81,8 +81,13 @@
       "icon": "🎧",
       "descripcion": "Programa de larga duración producido en estudios de Radio Araucana. Se publica en el sitio, en plataformas y sale al aire.",
       "unidades": [
-        { "id": "30min", "label": "Podcast de 30 minutos", "precio": 300000 },
-        { "id": "60min", "label": "Podcast de 60 minutos", "precio": 500000 }
+        { "id": "30min", "label": "Podcast de 30 minutos", "precio": 300000, "minutos": 30 },
+        { "id": "60min", "label": "Podcast de 60 minutos", "precio": 500000, "minutos": 60 }
+      ],
+      "modalidades": [
+        { "id": "grabado", "label": "Solo grabado", "descripcion": "Incluye control y quien entrevista. Se publica en el sitio y en las plataformas, sin salir al aire.", "recargoPorMinuto": 0 },
+        { "id": "diferido", "label": "Diferido", "descripcion": "Se graba y sale al aire después, por la radio y el streaming, en el horario que acordemos.", "recargoPorMinuto": 2500 },
+        { "id": "vivo", "label": "En vivo", "descripcion": "Sale al aire mientras se graba, por la radio y el streaming. Suma la entrevista al aire, con bonificación.", "recargoPorMinuto": 5000 }
       ],
       "unidadNombre": "episodios"
     }

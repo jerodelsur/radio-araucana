@@ -15,7 +15,7 @@
  *     auspicio:    { activo, cantidad, franjas: ["manana"|"tarde"|"noche"], meses },
  *     frases:      { activo, horario: "base"|"prime", pack: "suelta"|"30"|…, cantidad, meses },
  *     entrevistas: { activo, cantidades: { "5min": n, … }, despacho },
- *     podcast:     { activo, cantidades: { "30min": n, … } },
+ *     podcast:     { activo, modalidad: "grabado"|"diferido"|"vivo", cantidades: { "30min": n, … } },
  *   }
  */
 
@@ -59,6 +59,21 @@ export function auspicioMensualBase(tarifas) {
     .reduce((s, c) => s + c.cantidadMensual * c.precioUnitario, 0);
 }
 
+/**
+ * Modalidades del podcast (grabado, diferido, en vivo). Si el tarifario
+ * guardado en el blob todavía no las trae, valen las del bundle.
+ */
+export function modalidadesPodcast(tarifas) {
+  const propias = formatoDe(tarifas, "podcast")?.modalidades;
+  return Array.isArray(propias) && propias.length ? propias : defaultsBundled.formatos.find((f) => f.id === "podcast").modalidades;
+}
+
+/** Precio de un episodio según modalidad: base + recargo por minuto. */
+export function precioPodcast(unidad, modalidad) {
+  const minutos = Number(unidad.minutos) || parseInt(unidad.id, 10) || 0;
+  return unidad.precio + minutos * (Number(modalidad?.recargoPorMinuto) || 0);
+}
+
 export function plazosAuspicio(tarifas) {
   return auspicioDe(tarifas).plazos;
 }
@@ -67,7 +82,7 @@ export const SELECCION_INICIAL = {
   auspicio: { activo: true, cantidad: 1, franjas: [], meses: 1 },
   frases: { activo: false, horario: "base", pack: "60", cantidad: 10, meses: 1 },
   entrevistas: { activo: false, cantidades: { "5min": 0, "10min": 1, "15min": 0 }, despacho: false },
-  podcast: { activo: false, cantidades: { "30min": 0, "60min": 1 } },
+  podcast: { activo: false, modalidad: "grabado", cantidades: { "30min": 0, "60min": 1 } },
 };
 
 /**
@@ -143,13 +158,15 @@ export function calcular(sel, tarifas) {
     if (!s?.activo) continue;
     const formato = formatoDe(tarifas, formatoId);
     const recargo = clave === "entrevistas" && s.despacho && formato?.permiteDespacho ? (formato.recargoDespacho || 0) : 0;
+    const modalidades = clave === "podcast" ? modalidadesPodcast(tarifas) : [];
+    const modalidad = modalidades.find((m) => m.id === s.modalidad) || modalidades[0];
     const partes = [];
     let subtotal = 0;
     let total = 0;
     for (const u of formato?.unidades || []) {
       const n = entero(s.cantidades?.[u.id], 0, MAX_UNIDADES);
       if (!n) continue;
-      const precio = Math.round(u.precio * (1 + recargo));
+      const precio = clave === "podcast" ? precioPodcast(u, modalidad) : Math.round(u.precio * (1 + recargo));
       subtotal += n * precio;
       total += n;
       partes.push(`${n} × ${u.label.replace(/^(Entrevista|Podcast) de /, "")} (${fmtCLP(precio)})`);
@@ -158,7 +175,7 @@ export function calcular(sel, tarifas) {
       lineas.push({
         id: clave,
         titulo: `${nombre} · ${total} ${clave === "podcast" ? (total === 1 ? "episodio" : "episodios") : (total === 1 ? "entrevista" : "entrevistas")}`,
-        detalle: [...partes, recargo ? `Despacho en terreno (+${Math.round(recargo * 100)}%)` : null].filter(Boolean),
+        detalle: [...partes, recargo ? `Despacho en terreno (+${Math.round(recargo * 100)}%)` : null, modalidad ? `Modalidad: ${modalidad.label.toLowerCase()}` : null].filter(Boolean),
         unico: subtotal,
         subtotal,
       });

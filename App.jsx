@@ -163,6 +163,24 @@ const GlobalStyles = () => (
     .wave-bar { animation: waveform 0.8s ease-in-out alternate infinite; transform-origin: bottom; }
     .marquee-track { animation: marquee 34s linear infinite; white-space: nowrap; display: inline-block; }
     .marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+
+    /* Huincha del tiempo */
+    .wx { display: flex; align-items: stretch; overflow: hidden; background: var(--ink-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .wx-tag { display: flex; flex-direction: column; justify-content: center; gap: 2px; flex-shrink: 0; padding: 0 14px; background: var(--green); color: #0f1a12; }
+    .wx-tag-title { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+    .wx-tag-sub { display: none; font-weight: 600; font-size: 11px; letter-spacing: .02em; white-space: nowrap; opacity: .72; }
+    .wx-view { flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 56px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 56px), transparent 100%); }
+    .wx-track { display: inline-flex; align-items: center; animation-duration: 70s; }
+    .wx-item { display: inline-flex; align-items: center; gap: 10px; padding: 14px 0; }
+    .wx-item::after { content: ''; width: 6px; height: 6px; margin: 0 26px 0 16px; background: var(--green); opacity: .5; }
+    .wx-icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--green); }
+    .wx-city { font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--cream-70); }
+    .wx-temp { font-weight: 800; font-size: 17px; line-height: 1; letter-spacing: -0.01em; color: var(--cream); font-variant-numeric: tabular-nums; }
+    .wx-label { font-weight: 500; font-size: 13px; color: var(--cream-55); }
+    @media (min-width: 640px) {
+      .wx-tag { padding: 0 22px; }
+      .wx-tag-sub { display: block; }
+    }
     .fiu-0 { animation: fadeInUp .7s var(--ease) forwards 0s; opacity: 0; }
     .fiu-1 { animation: fadeInUp .7s var(--ease) forwards .12s; opacity: 0; }
     .fiu-2 { animation: fadeInUp .7s var(--ease) forwards .24s; opacity: 0; }
@@ -1011,35 +1029,84 @@ const WMO = {
   51: "Llovizna", 53: "Llovizna", 55: "Llovizna", 61: "Lluvia leve", 63: "Lluvia", 65: "Lluvia intensa",
   71: "Nieve", 73: "Nieve", 75: "Nieve intensa", 80: "Chubascos", 81: "Chubascos", 82: "Chubascos fuertes", 95: "Tormenta",
 };
+const WX_KIND = {
+  0: "sun", 1: "sun", 2: "partly", 3: "cloud", 45: "fog", 48: "fog",
+  51: "drizzle", 53: "drizzle", 55: "drizzle", 61: "drizzle", 63: "rain", 65: "rain",
+  71: "snow", 73: "snow", 75: "snow", 80: "rain", 81: "rain", 82: "rain", 95: "storm",
+};
+const WX_CLOUD = "M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 7 18z";
+const WX_CLOUD_UP = "M7 15h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 8.1 3.5 3.5 0 0 0 7 15z";
+const WX_PATHS = {
+  sun: ["M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z", "M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"],
+  moon: ["M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"],
+  partly: ["M8 3v1.5M3.6 5.6l1 1M2 10h1.5M12.4 5.6l-1 1", "M5.5 11.5a3.5 3.5 0 0 1 6-3.2", "M9 20h8.5a3.5 3.5 0 0 0 .5-6.96A5 5 0 0 0 8.3 14.2 3 3 0 0 0 9 20z"],
+  cloud: [WX_CLOUD],
+  fog: [WX_CLOUD_UP, "M5 18.5h14M8 22h8"],
+  drizzle: [WX_CLOUD_UP, "M9.5 18l-.8 2.5M15 18l-.8 2.5"],
+  rain: [WX_CLOUD_UP, "M8 18l-1 3M12 18l-1 3M16 18l-1 3"],
+  snow: [WX_CLOUD_UP, "M8 19h.01M12 21.5h.01M16 19h.01"],
+  storm: [WX_CLOUD_UP, "M13 16.5l-3 3.5h4l-2 3"],
+};
+
+function WxIcon({ kind }) {
+  return (
+    <svg className="wx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {(WX_PATHS[kind] ?? WX_PATHS.cloud).map((d) => <path key={d} d={d} />)}
+    </svg>
+  );
+}
 
 function WeatherTicker() {
   const [weather, setWeather] = useState(null);
   useEffect(() => {
     Promise.all(WEATHER_CITIES.map((c) =>
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,weathercode&timezone=America/Santiago`)
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,weathercode,is_day&timezone=America/Santiago`)
         .then((r) => r.json())
-        .then((d) => ({ name: c.name, temp: Math.round(d.current.temperature_2m), label: WMO[d.current.weathercode] ?? "Variable" }))
+        .then((d) => {
+          const code = d.current.weathercode;
+          const night = d.current.is_day === 0;
+          const kind = WX_KIND[code] ?? "cloud";
+          return {
+            name: c.name,
+            temp: Math.round(d.current.temperature_2m),
+            label: WMO[code] ?? "Variable",
+            kind: night && kind === "sun" ? "moon" : night && kind === "partly" ? "cloud" : kind,
+          };
+        })
         .catch(() => null)
     )).then((results) => setWeather(results.filter(Boolean)));
   }, []);
 
-  const items = weather === null
-    ? ["Cargando el tiempo en La Araucanía"]
+  const base = weather === null
+    ? [{ name: "Cargando el tiempo en La Araucanía" }]
     : weather.length > 0
-      ? weather.map((c) => `${c.name} ${c.temp}°C · ${c.label}`)
-      : WEATHER_CITIES.map((c) => c.name);
-  const text = items.join("      ·      ") + "      ·      ";
+      ? weather
+      : WEATHER_CITIES.map((c) => ({ name: c.name }));
+  // Cada mitad se repite hasta cubrir pantallas anchas: el bucle (-50%) no deja huecos.
+  const half = Array.from({ length: Math.ceil(12 / base.length) }, () => base).flat();
+
+  const renderHalf = (hidden) => (
+    <span style={{ display: "inline-flex" }} aria-hidden={hidden || undefined}>
+      {half.map((c, i) => (
+        <span className="wx-item" key={i}>
+          {c.kind && <WxIcon kind={c.kind} />}
+          <span className="wx-city">{c.name}</span>
+          {c.temp != null && <span className="wx-temp">{c.temp}°</span>}
+          {c.label && <span className="wx-label">{c.label}</span>}
+        </span>
+      ))}
+    </span>
+  );
 
   return (
-    <div className="marquee" style={{ background: "var(--green-deep)", borderTop: "1px solid rgba(246,243,238,.08)", borderBottom: "1px solid rgba(246,243,238,.08)", display: "flex", alignItems: "stretch", overflow: "hidden" }}>
-      <div className="hidden sm:flex" style={{ background: "#1e4b2c", padding: "11px 18px", alignItems: "center", gap: 8, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.15)" }}>
-        <span style={K({ fontWeight: 800, fontSize: 12, color: "#fff", textTransform: "uppercase", letterSpacing: "0.16em", whiteSpace: "nowrap" })}>El tiempo</span>
+    <div className="marquee wx">
+      <div className="wx-tag">
+        <span className="wx-tag-title">El tiempo</span>
+        <span className="wx-tag-sub">La Araucanía, ahora</span>
       </div>
-      <div style={{ overflow: "hidden", flex: 1, padding: "11px 0" }} aria-live="off">
-        <div className="marquee-track">
-          <span style={K({ fontWeight: 600, fontSize: 13, color: "#fff", letterSpacing: "0.03em", fontVariantNumeric: "tabular-nums" })}>
-            {text}<span aria-hidden="true">{text}</span>
-          </span>
+      <div className="wx-view" aria-live="off">
+        <div className="marquee-track wx-track">
+          {renderHalf(false)}{renderHalf(true)}
         </div>
       </div>
     </div>

@@ -132,11 +132,6 @@ function reducer(state, action) {
 
 /* ─── Página principal ────────────────────────────────────────────────────── */
 export default function Cotizador() {
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="robots"]');
-    if (meta) meta.setAttribute("content", "index, follow, max-image-preview:large");
-  }, []);
-
   const navigate = useNavigate();
   const settings = useSettings();
   const [state, dispatch] = useReducer(reducer, initialState);

@@ -49,14 +49,6 @@
       "destination": "/frontera.html"
     },
     {
-      "source": "/socios-rds",
-      "destination": "/socios"
-    },
-    {
-      "source": "/socios-rds/:path*",
-      "destination": "/socios"
-    },
-    {
       "source": "/propuesta",
       "destination": "/api/propuesta"
     }

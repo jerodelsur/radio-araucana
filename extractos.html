@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Default a noindex; el componente público del cotizador lo sobreescribe a index. -->
-    <meta name="robots" content="noindex, nofollow" />
+    <!-- Indexable: Google no ejecuta el JS antes de leer un noindex, así que el
+         default tiene que ser index. /admin y /orden quedan fuera por el header
+         X-Robots-Tag de vercel.json. -->
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <title>Difusión Radial de Extractos Legales — Radio La Frontera 1110 AM</title>
     <meta

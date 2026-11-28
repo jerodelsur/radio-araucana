@@ -2447,6 +2447,27 @@ function AppInner() {
   const yt = useYouTube();
   const portada = useMemo(() => repartirCapitulos(yt.episodes, settings, yt.loading), [yt.episodes, settings, yt.loading]);
 
+  // Links con ancla (radioaraucana.cl/#albiverde): el navegador salta antes de
+  // que React pinte las secciones, así que se salta acá cuando ya llegó el
+  // contenido. Mientras la página termina de acomodar su altura se vuelve a
+  // alinear; al primer gesto de la persona, o a los 3 s, se suelta.
+  useEffect(() => {
+    if (yt.loading) return;
+    const destino = document.getElementById(window.location.hash.slice(1));
+    if (!destino) return;
+    const alinear = new ResizeObserver(() => destino.scrollIntoView({ block: "start", behavior: "instant" }));
+    const gestos = ["wheel", "touchstart", "pointerdown", "keydown"];
+    const soltar = () => {
+      alinear.disconnect();
+      clearTimeout(plazo);
+      gestos.forEach((g) => window.removeEventListener(g, soltar));
+    };
+    const plazo = setTimeout(soltar, 3000);
+    gestos.forEach((g) => window.addEventListener(g, soltar, { passive: true }));
+    alinear.observe(document.body);
+    return soltar;
+  }, [yt.loading]);
+
   const play = (which) => {
     const audio = audioRef.current;
     if (!audio) return;

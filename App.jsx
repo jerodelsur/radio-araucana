@@ -2450,19 +2450,24 @@ function AppInner() {
   // Links con ancla (radioaraucana.cl/#albiverde): el navegador salta antes de
   // que React pinte las secciones, así que se salta acá cuando ya llegó el
   // contenido. Mientras la página termina de acomodar su altura se vuelve a
-  // alinear; al primer gesto de la persona, o a los 3 s, se suelta.
+  // alinear; al primer gesto de la persona, o a los 3 s, se suelta. Los 3 s
+  // corren recién con la pestaña a la vista: de fondo no hay ResizeObserver.
   useEffect(() => {
     if (yt.loading) return;
     const destino = document.getElementById(window.location.hash.slice(1));
     if (!destino) return;
     const alinear = new ResizeObserver(() => destino.scrollIntoView({ block: "start", behavior: "instant" }));
     const gestos = ["wheel", "touchstart", "pointerdown", "keydown"];
+    let plazo;
+    const contar = () => { if (!document.hidden && !plazo) plazo = setTimeout(soltar, 3000); };
     const soltar = () => {
       alinear.disconnect();
+      document.removeEventListener("visibilitychange", contar);
       clearTimeout(plazo);
       gestos.forEach((g) => window.removeEventListener(g, soltar));
     };
-    const plazo = setTimeout(soltar, 3000);
+    document.addEventListener("visibilitychange", contar);
+    contar();
     gestos.forEach((g) => window.addEventListener(g, soltar, { passive: true }));
     alinear.observe(document.body);
     return soltar;
